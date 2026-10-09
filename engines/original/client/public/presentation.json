@@ -1,0 +1,4 @@
+{
+  "_readme": "Optional original artwork/lore overrides for the static browser arena. Add family objects here after copying approved assets under art/. Presentation only; these fields never configure model adapters or scores.",
+  "families": {}
+}

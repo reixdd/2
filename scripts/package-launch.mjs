@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+const root=path.resolve(import.meta.dirname,'..');
+const parent=path.dirname(root);
+if(!fs.existsSync(path.join(root,'public-dist/index.html')))throw Error('Run pnpm build:static first.');
+const site=path.join(parent,'COLOSSEUM-PHASE4-SITE.zip'),source=path.join(parent,'COLOSSEUM-PHASE4-SOURCE.zip');
+for(const file of [site,source])fs.rmSync(file,{force:true});
+execFileSync('zip',['-qr',site,'.'],{cwd:path.join(root,'public-dist')});
+execFileSync('zip',['-qr',source,path.basename(root),'-x','*/node_modules/*','*/.next/*','*/.next-phase4/*','*/.runtime-cache/*','*/public/runtime/*','*/public/wasm/*','*/public-dist/*','*/.validation/*','*/test-results/*','*/playwright-report/*','*/playwright-phase4-report/*','*/.git/*','*/.env','*/.env.local','*/.env.production','*.tsbuildinfo','*.log'],{cwd:parent});
+console.log(`Website: ${site}\nComplete source: ${source}`);

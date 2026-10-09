@@ -1,0 +1,4 @@
+import {it,expect} from "vitest"
+import {scaleAmount,ledgerFindings,gradeLedger,SOLANA_DATA} from "@/lib/colosseum/solana"
+it("scales raw large token integers without losing precision",()=>{expect(scaleAmount("9007199254740993123",6)).toBe("9007199254740.993123");expect(scaleAmount("100000",2)).toBe("1000");expect(()=>scaleAmount("1.2",2)).toThrow()})
+it("grades real documented fields and rejects cross-mint concentration and holder assumptions",()=>{expect(SOLANA_DATA.kind).toBe("official-documentation-examples");expect(ledgerFindings()).toEqual({scaledSupply:"1000",accountSum:"10",sameMint:false,accountCount:2});expect(gradeLedger({supply:"1000",sum:"10",concentration:"cannot-combine",holders:"unknown"})).toEqual({supply:true,sum:true,concentration:true,holders:true});expect(gradeLedger({supply:"1000abc",sum:"10",concentration:"one-percent",holders:"two"})).toEqual({supply:false,sum:true,concentration:false,holders:false})})

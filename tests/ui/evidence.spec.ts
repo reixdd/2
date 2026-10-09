@@ -1,0 +1,15 @@
+import {test,expect} from '@playwright/test'
+
+test('archive exports original evidence and developer validation rejects a forged verdict',async({page})=>{
+ await page.goto('/');await page.evaluate(()=>localStorage.setItem('colosseum:evidence:v1',JSON.stringify([{id:'test-only',timestamp:1000,challengeId:'the-first-sigil',challengeName:'The First Sigil',discipline:'Mathematics',contenderId:'capybara-sage',contenderName:'Capybara',correct:true,latencyMs:10,extracted:'297',response:'ANSWER: 297'}])));
+ await page.goto('/battle-archive');await expect(page.getByRole('heading',{name:'Capybara',exact:true})).toBeVisible();const d=page.waitForEvent('download');await page.getByRole('button',{name:'Export local JSON',exact:true}).click();expect((await d).suggestedFilename()).toBe('colosseum-archive-export.json');
+ await page.goto('/developers');await page.getByLabel('Validate evidence file').setInputFiles({name:'forged.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify([{id:'forged',contenderId:'capybara-sage',challengeId:'the-first-sigil',response:'ANSWER: 8',extracted:'8',correct:true,claimedLevel:'graded',source:'owner-curated'}]))});await expect(page.getByText('0 accepted · 1 rejected.',{exact:false})).toBeVisible();await expect(page.getByText(/Re-grading says incorrect/)).toBeVisible();
+})
+
+
+
+test('explicit overlay recovery preserves the original key and an older four-relic build',async({page})=>{
+ page.on('dialog',d=>d.accept());const build={id:'older',name:'Older four relics',contenderId:'capybara-sage',skillIds:['proof-scaffolding','socratic-inquiry','fermi-estimation','narrative-voice'],parentId:'missing-parent',revision:2,createdAt:'2026-01-01T00:00:00Z',fingerprint:'old-untrusted'};const raw=JSON.stringify({draft:{contenderId:build.contenderId,skillIds:build.skillIds},builds:[build],practice:[]});
+ await page.goto('/');await page.evaluate(value=>localStorage.setItem('colosseum:v1',value),raw);await page.goto('/developers');await page.getByText('Earlier overlay save found',{exact:true}).click();const backup=page.waitForEvent('download');await page.getByRole('button',{name:'Export unchanged overlay save'}).click();expect((await backup).suggestedFilename()).toBe('colosseum-overlay-original.json');
+ await page.goto('/workshop');await page.getByLabel('Import champion JSON').setInputFiles({name:'old.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'colosseum-build',version:1,build}))});await expect(page.getByLabel('Champion name')).toHaveValue(build.name);await expect(page.getByText('Legacy fourth relic retained.',{exact:false})).toBeVisible();await page.getByRole('button',{name:'Save build',exact:true}).click();await expect(page.locator('.feedback')).toContainText('Saved revision');await page.reload();await expect(page.getByLabel('Champion name')).toHaveValue(build.name);await page.goto('/lineage');await expect(page.getByText('unknown revision (legacy)',{exact:false})).toBeVisible();expect(await page.evaluate(()=>localStorage.getItem('colosseum:v1'))).toBe(raw)
+})
