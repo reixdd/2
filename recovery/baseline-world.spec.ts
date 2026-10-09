@@ -1,3 +1,4 @@
+// Preserved pre-Phase-4 interface tests. Current journeys are in tests/ui/phase4.spec.ts.
 import {test,expect} from '@playwright/test'
 
 test('world hub remembers keyboard and pointer swipe selection and makes zero API calls',async({page})=>{

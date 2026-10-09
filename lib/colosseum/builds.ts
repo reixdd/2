@@ -156,7 +156,7 @@ export function saveBuildEdit(
   const now = (deps.now ?? Date.now)()
   const name = next.name.trim().slice(0, BUILD_LIMITS.maxNameLength) || build.name
   if (configsEqual(build.config, next.config)) {
-    return { ...build, name, updatedAt: now }
+    return { ...build, name, config:cloneConfig(next.config), updatedAt: now }
   }
   const revisions: BuildRevision[] = [
     { version: build.version, savedAt: build.updatedAt, config: cloneConfig(build.config) },
@@ -214,7 +214,7 @@ export function changeContender(config: BuildConfig, contenderId: string): { con
     else dropped.push(id)
   }
   return {
-    config: { ...config, contenderId, modelId: localModel(contender.id)?.modelId ?? contender.modelId, runtime:localModel(contender.id)?"browser-wasm":DEFAULT_RUNTIME, skillIds: kept },
+    config: { ...config, contenderId, modelId: localModel(contender.id)?.modelId ?? contender.modelId, runtime:localModel(contender.id)?"browser-wasm":DEFAULT_RUNTIME, skillIds: kept, ...(config.equipmentSlots?{equipmentSlots:config.equipmentSlots.map(id=>id&&kept.includes(id)?id:null)}:{}) },
     dropped,
   }
 }
@@ -258,6 +258,7 @@ export function validateBuild(build: Pick<AgentBuild, "name" | "config">): Build
   if (config.skillIds.length > BUILD_LIMITS.maxSkills) {
     issues.push({ severity: "error", field: "skills", message: `At most ${BUILD_LIMITS.maxSkills} skills can be equipped.` })
   }
+  if(config.equipmentSlots){const ids=config.equipmentSlots.filter((id):id is string=>!!id);if(config.equipmentSlots.length<3||config.equipmentSlots.length>4||new Set(ids).size!==ids.length||ids.length!==config.skillIds.length||ids.some(id=>!config.skillIds.includes(id)))issues.push({severity:"error",field:"skills",message:"Socket presentation must match the equipped instruction relics exactly."})}
   const seen = new Set<string>()
   for (const id of config.skillIds) {
     const skill = getSkill(id)

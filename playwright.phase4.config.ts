@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test'
+export default defineConfig({testDir:'./tests/ui',testMatch:['phase4.spec.ts','evidence.spec.ts'],workers:1,timeout:45000,expect:{timeout:10000},use:{baseURL:process.env.COLOSSEUM_QA_URL||'http://127.0.0.1:8792',viewport:{width:1440,height:900},launchOptions:{executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium'},trace:'retain-on-failure'},reporter:[['list'],['json',{outputFile:'.validation/phase4/ui-results.json'}]]})

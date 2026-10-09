@@ -30,3 +30,7 @@ Authoritative celestial source: this project; retained inference implementation:
 Installed seven supplied skills plus four repeatable COLOSSEUM workflows. Preserved the uploaded partial recovery bundle unchanged. Ported its browsing/selection distinction, mutation URL/name validation, storage conflict handling, actual relic SVGs, and actual recovered battle-stage markup/logic. Added a shared active build, reachable equipment dock, deterministic practice, consent-based browser worker adapter, genuine CPU replay captures, missions, journal, and repository dispatch feed.
 
 First browser proof: equip → save → reload → practice → skip animation → inspect checker. Existing 90 logic tests passed before integration. Current type check passed. Fresh native CPU Qwen3/Qwen2.5 generation completed; original records are retained, including the incorrect-format verdict. Browser model generation, full journey tests, static release, and final exports remain in progress at this checkpoint.
+
+## Phase 4 milestone C/D checkpoint
+
+Shared equipment, mutations, ancestry, practice battle stage, four Ledger missions, journal/daily contracts and published dispatch feed are implemented. 100 logic tests pass. Full gameplay journey plus four viewport route checks pass. Cross-tab drafts now use per-tab session storage; indexed saves reject stale overwrites. Browser CPU SmolLM2 genuinely initialized and generated an incorrect answer (retained, not promoted as accurate). Other real browser model checks, final static QA and packaging remain pending.

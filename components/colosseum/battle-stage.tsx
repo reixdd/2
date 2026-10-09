@@ -26,7 +26,7 @@ const usePrefersReducedMotion = () => {
  * the outcome is `record.correct` from the deterministic checker, shown verbatim.
  * Invalid or mislabelled records are refused (see lib/battle.ts), never rendered as a battle.
  */
-export function BattleStage({ record, contender, onInspect }: { record: BattleRecord; contender: Contender; onInspect?: () => void }) {
+export function BattleStage({ record, contender, opponent, onInspect }: { record: BattleRecord; contender: Contender; opponent?:Contender; onInspect?: () => void }) {
   const check = validateBattleRecord(record)
   const reduced = usePrefersReducedMotion()
   const [phase, setPhase] = useState<BattlePhase>('idle')
@@ -100,13 +100,13 @@ export function BattleStage({ record, contender, onInspect }: { record: BattleRe
           </p>
         </div>
 
-        <figure className="bs-crystal">
+        {opponent ? <figure className="bs-opponent"><ContenderArt contender={opponent}/><figcaption>{opponent.name} · comparison contender</figcaption></figure> : <figure className="bs-crystal">
           <svg viewBox="0 0 120 150" role="img" aria-label={`Challenge crystal: ${record.challengeTitle}`}>
             <polygon points="60,6 108,50 90,134 30,134 12,50" className="bs-crystal-body" />
             <polyline points="60,6 60,134 12,50 108,50 30,134 90,134" className="bs-crystal-facets" />
           </svg>
           <figcaption>The challenge<span className="sr-only"> (not a contender)</span></figcaption>
-        </figure>
+        </figure>}
       </div>
 
       <p className="bs-caption" role="status" aria-live="polite">{caption}</p>

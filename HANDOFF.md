@@ -76,3 +76,7 @@ Continue on `phase4-playable-arena` in `reixdd/2`. The complete source and eleve
 The Phase 4 test server uses its own `.next-phase4` build directory and port 8792; the earlier running application was not restarted. Build state is shared by a provider, saved builds stay in the existing IndexedDB schema, and personal journey events use a separate transaction-based database. Browser model verification is session-based and requires real generation; configured artifacts are not PLAYABLE by default. Public hosted inference guards are unchanged.
 
 Remaining at this checkpoint: real browser-local model tests, complete keyboard/touch/laptop/mobile QA, migration/import cases, build/export validation, final documentation, PR and static publication access. Do not present this checkpoint as a published public release.
+
+## Phase 4 milestone C/D checkpoint
+
+Shared equipment, mutations, ancestry, practice battle stage, four Ledger missions, journal/daily contracts and published dispatch feed are implemented. 100 logic tests pass. Full gameplay journey plus four viewport route checks pass. Cross-tab drafts now use per-tab session storage; indexed saves reject stale overwrites. Browser CPU SmolLM2 genuinely initialized and generated an incorrect answer (retained, not promoted as accurate). Other real browser model checks, final static QA and packaging remain pending.

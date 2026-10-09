@@ -5,7 +5,7 @@ import './prepare-public.mjs';
 const root=path.resolve(import.meta.dirname,'..');
 const stage=fs.mkdtempSync(path.join(root,'../.colosseum-static-'));
 try{
- const skip=new Set(['node_modules','tests','.next','out','public-dist','.validation','test-results','playwright-report','.git','.agents']);
+ const skip=new Set(['node_modules','tests','.next-phase4','.runtime-cache','.next','out','public-dist','.validation','test-results','playwright-report','.git','.agents']);
  fs.cpSync(root,stage,{recursive:true,filter:src=>!path.relative(root,src).split(path.sep).some(p=>skip.has(p)||p.endsWith('.tsbuildinfo'))});
  fs.rmSync(path.join(stage,'app/api'),{recursive:true,force:true});
  fs.symlinkSync(path.join(root,'node_modules'),path.join(stage,'node_modules'),'dir');

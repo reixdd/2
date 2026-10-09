@@ -19,6 +19,9 @@ self.onmessage = async ({data}) => {
   if(data.type==='load') {
    if(allowed.get(data.model)!==data.revision)throw Error('Model artifact/revision is not approved.');
    if(generator&&model!==data.model){await generator.dispose();generator=null;}
+   // Pipeline metadata helpers in Transformers.js 4.3.1 do not forward revision.
+   // Pin the URL template too, so config, tokenizer, HEAD and weight requests all use this commit.
+   env.remotePathTemplate = `{model}/resolve/${data.revision}/`;
    if(!generator)generator=await pipeline('text-generation',data.model,{device:'wasm',dtype:'q4',revision:data.revision,progress_callback:p=>self.postMessage({type:'progress',id:data.id,report:{progress:(p.progress??0)/100,text:`${p.status}${p.file?' · '+p.file:''}`,status:p.status,file:p.file}})});
    model=data.model;
   }else if(data.type==='run') {
