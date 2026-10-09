@@ -1,0 +1,36 @@
+1:"$Sreact.fragment"
+2:"static/chunks/215-34f057542999cc22.js"
+3:"static/chunks/380-5ac6779ba9b8fe13.js"
+4:"static/chunks/607-4c557aa3842f0f13.js"
+5:"static/chunks/app/layout-adfa60a3d9c26ba1.js"
+6:I[1607,["215","$2","380","$3","607","$4","177","$5"],"GameProvider"]
+7:I[7048,["215","$2","380","$3","607","$4","177","$5"],"DeviceProvider"]
+8:I[4468,["215","$2","380","$3","607","$4","177","$5"],"ColosseumNav"]
+9:I[1530,[],""]
+a:I[5720,[],""]
+e:I[4283,[],"ClientPageRoot"]
+f:"static/chunks/484-92ea14ea43e4409c.js"
+10:"static/chunks/35-96f58dc7c0b98bf4.js"
+11:"static/chunks/454-62d7620bdd8bc041.js"
+12:"static/chunks/764-319f6ed3caced82b.js"
+13:"static/chunks/app/leaderboards/page-fb234acf4eda6775.js"
+14:I[5419,["215","$2","380","$3","484","$f","35","$10","454","$11","607","$4","764","$12","51","$13"],"default"]
+17:I[8643,[],"OutletBoundary"]
+18:"$Sreact.suspense"
+1a:"ViewportBoundary"
+1b:I[8643,[],"$1a"]
+1d:"MetadataBoundary"
+1e:I[8643,[],"$1d"]
+20:I[2386,[],"default",1]
+:HL["/2/_next/static/css/b01b561822a1a9f7.css","style"]
+:HL["/2/_next/static/css/0a6c8282a38fe96f.css","style"]
+c:X
+d:[["children",{"s":"__PAGE__","h":512,"d":{"r":["$","$1","c",{"children":[["$","$Le",null,{"Component":"$14","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@15","$@16"]}}],null,["$","$L17",null,{"children":["$","$18",null,{"name":"Next.MetadataOutlet","children":"$@19"}]}]]}],"p":false,"v":null}}]]
+b:[["children",{"s":"leaderboards","h":512,"d":{"r":["$","$1","c",{"children":[null,["$","$L9",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$La",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],"p":false,"v":"$c"},"c":"$Qd"}]]
+0:{"P":null,"c":["","leaderboards",""],"q":"","i":false,"t":{"t":{"s":"","h":528,"d":{"r":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/2/_next/static/css/b01b561822a1a9f7.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}],["$","link","1",{"rel":"stylesheet","href":"/2/_next/static/css/0a6c8282a38fe96f.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":["$","body",null,{"className":"font-sans antialiased min-h-screen","children":["$","$L6",null,{"children":["$","$L7",null,{"children":[["$","a",null,{"href":"#main-content","className":"skip-link","children":"Skip to content"}],["$","div",null,{"className":"floating-world","aria-hidden":"true","style":{"--world-image":"url(\"/2/world/floating-lands.svg\")"},"children":[["$","div",null,{"className":"world-haze"}],["$","div",null,{"className":"world-cloud cloud-one"}],["$","div",null,{"className":"world-cloud cloud-two"}]]}],["$","$L8",null,{}],["$","main",null,{"id":"main-content","className":"world-content","children":["$","$L9",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$La",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],[]],"forbidden":"$undefined","unauthorized":"$undefined"}]}]]}]}]}]}]]}],"p":false,"v":null},"c":"$Qb"},"h":{"r":["$","$1","h",{"children":[null,["$","$L1b",null,{"children":"$L1c"}],["$","$L1e",null,{"children":[["$","div",null,{"hidden":true,"children":["$","$18",null,{"name":"Next.Metadata","children":"$L1f"}]}],null]}],null]}],"p":false,"v":null}},"m":"$undefined","G":["$20",[]],"S":true,"r":"$undefined","s":"$undefined","a":"$undefined","l":"$undefined","p":"$undefined","d":"$undefined","b":"zReA6BJLEVjU6SICzL6Wl"}
+c:C
+15:{}
+16:"$d:0:1:d:r:props:children:0:props:serverProvidedParams:params"
+1c:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#080c1b"}],["$","meta","3",{"name":"color-scheme","content":"dark"}]]
+19:null
+1f:[["$","title","0",{"children":"COLOSSEUM — Intelligence Must Be Proven"}],["$","meta","1",{"name":"description","content":"COLOSSEUM is a proving ground where real AI models are summoned as contenders, face identical trials, and earn verified evidence of their strengths."}],["$","meta","2",{"name":"generator","content":"v0.app"}]]
