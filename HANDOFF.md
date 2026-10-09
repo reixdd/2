@@ -17,3 +17,7 @@ Run commands, restoration and limits are in README.md. `pnpm dev` prepares the w
 Saved builds remain in the existing IndexedDB database. Unsaved active drafts are isolated per tab in session storage. Saved writes reject stale revisions, and journal events merge transactionally. Earlier overlay records remain in `colosseum:v1`; explicit imports preserve exact originals and identify unknown historical parent revisions. Changing site origins requires explicit export/import.
 
 Website archive: `COLOSSEUM-PHASE4-SITE.zip`. Source archive: `COLOSSEUM-PHASE4-SOURCE.zip`. Models, private environment files, dependency/build caches and generated runtime copies are excluded from source export; all eleven skills are included. Weights are excluded from website deployment and are fetched only after consent. All static files are below Cloudflare's per-file limit.
+
+## Final release validation
+
+The final root-hosted release passed `pnpm typecheck`, all 104 logic tests, production static export and all 13 combined Chromium browser tests. `COLOSSEUM-PHASE4-SITE.zip` and `COLOSSEUM-PHASE4-SOURCE.zip` are created. Source archive inspection confirms all eleven skills and no dependency/model cache; the largest website file is 14,264,838 bytes. Review: https://github.com/reixdd/2/pull/1 (not merged). GitHub project Pages activation is being checked separately; no public URL is claimed until its smoke check passes.

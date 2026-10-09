@@ -5,8 +5,8 @@ env.backends.onnx.wasm.numThreads = 1;
 env.backends.onnx.wasm.proxy = false;
 env.useWasmCache = false;
 env.backends.onnx.wasm.wasmPaths = {
- mjs: `${self.location.origin}/wasm/ort-wasm-simd-threaded.mjs`,
- wasm: `${self.location.origin}/wasm/ort-wasm-simd-threaded.wasm`,
+ mjs: new URL('../wasm/ort-wasm-simd-threaded.mjs',self.location.href).href,
+ wasm: new URL('../wasm/ort-wasm-simd-threaded.wasm',self.location.href).href,
 };
 const allowed = new Map([
  ['onnx-community/Qwen3-0.6B-ONNX','1e0a4a196ecabdf9a879664110574563d3f372d3'],
