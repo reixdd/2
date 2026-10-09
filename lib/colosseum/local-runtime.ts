@@ -1,3 +1,4 @@
+import {sitePath} from "./site-path"
 import {LOCAL_MODELS,type LocalModel} from "./models"
 export type DeviceState="untested"|"downloading"|"initializing"|"ready"|"generating"|"verified"|"failed"|"cancelled"|"unsupported"
 export type DeviceStatus={state:DeviceState;detail:string;progress?:number;initializedAt?:number;initializationMs?:number;lastGenerationMs?:number;verifiedAt?:number;error?:string}
@@ -8,7 +9,7 @@ export class LocalRuntime {
  private pending=new Map<number,{resolve:(v:{tokens:number}|null)=>void;reject:(e:Error)=>void;progress?:(p:{text:string;progress:number;status:string})=>void;delta?:(text:string)=>void}>()
  cancel(){this.worker?.terminate();this.worker=null;this.modelId=null;for(const p of this.pending.values())p.reject(Error("Cancelled by visitor."));this.pending.clear()}
  private request(type:string,payload:Record<string,unknown>,progress?:(p:{text:string;progress:number;status:string})=>void,delta?:(s:string)=>void){
-  if(!this.worker){this.worker=new Worker('/runtime/local-worker.js',{type:'module'});this.worker.onmessage=({data})=>{const p=this.pending.get(data.id);if(!p)return;if(data.type==='progress')p.progress?.(data.report);else if(data.type==='delta')p.delta?.(data.text);else{this.pending.delete(data.id);data.type==='error'?p.reject(Error(data.message)):p.resolve(data.result)}};this.worker.onerror=e=>{const error=Error(e.message||"Local worker failed. Try practice or replay.");for(const p of this.pending.values())p.reject(error);this.pending.clear();this.worker?.terminate();this.worker=null;this.modelId=null}}
+  if(!this.worker){this.worker=new Worker(sitePath('/runtime/local-worker.js'),{type:'module'});this.worker.onmessage=({data})=>{const p=this.pending.get(data.id);if(!p)return;if(data.type==='progress')p.progress?.(data.report);else if(data.type==='delta')p.delta?.(data.text);else{this.pending.delete(data.id);data.type==='error'?p.reject(Error(data.message)):p.resolve(data.result)}};this.worker.onerror=e=>{const error=Error(e.message||"Local worker failed. Try practice or replay.");for(const p of this.pending.values())p.reject(error);this.pending.clear();this.worker?.terminate();this.worker=null;this.modelId=null}}
   const id=++this.seq;return new Promise<{tokens:number}|null>((resolve,reject)=>{this.pending.set(id,{resolve,reject,progress,delta});this.worker!.postMessage({id,type,...payload})})
  }
  async load(model:LocalModel,signal:AbortSignal,onStatus:(s:DeviceStatus)=>void){

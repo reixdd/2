@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const isStatic=process.env.COLOSSEUM_STATIC_EXPORT==="1"
 const nextConfig={
+ basePath:process.env.NEXT_PUBLIC_COLOSSEUM_BASE_PATH||'',
  allowedDevOrigins:['127.0.0.1'],
  agentRules:false,
  ...(process.env.COLOSSEUM_DEV_DIR?{distDir:process.env.COLOSSEUM_DEV_DIR}:{}),

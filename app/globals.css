@@ -76,7 +76,7 @@
 .font-display {font-family:Georgia,serif}
 .eyebrow {font:600 10px/1.6 ui-monospace,monospace;letter-spacing:.23em;text-transform:uppercase;color:#376878;margin:0 0 10px}
 .floating-world {position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,#c6e6f6 0%,#e9f7fc 54%,#f5f9ee);overflow:hidden}
-.floating-world::before {content:"";position:absolute;inset:0;background:url('/world/floating-lands.svg') center center/cover no-repeat;opacity:.95}
+.floating-world::before {content:"";position:absolute;inset:0;background:var(--world-image,url('/world/floating-lands.svg')) center center/cover no-repeat;opacity:.95}
 .world-haze {position:absolute;inset:55% 0 0;background:linear-gradient(transparent,#f0f8f8e8)}
 .world-cloud {position:absolute;width:50vw;height:16vh;border-radius:50%;background:#ffffffe0;opacity:.5;filter:blur(22px);animation:cloud-sail 35s ease-in-out infinite alternate;pointer-events:none}
 .cloud-one {top:35%;left:-25%}.cloud-two {right:-25%;top:15%;animation-delay:-15s}

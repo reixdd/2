@@ -1,58 +1,50 @@
-# COLOSSEUM — Floating Lands
+# COLOSSEUM — Intelligence Must Be Proven
 
-An interactive celestial arena built from the supplied Next.js recovery project. The original character illustrations, model runner, deterministic checkers, server authorization guards, and browser storage keys are retained. Public launch emphasizes champion configurations, tutorials, and recorded evidence; it makes no model calls.
+A playable celestial AI arena continued from the complete supplied Next.js source. Select a real model, equip instruction relics, save a build, create a mutation, run a challenge, inspect evidence, and explore educational missions. Approved character artwork is unchanged.
 
-## Free publication
+## Run
 
-Follow [START-HERE.md](START-HERE.md). Upload `COLOSSEUM-FLOATING-LANDS-SITE.zip` to Cloudflare Pages Direct Upload for a free `pages.dev` URL. No home network serves visitors. No paid AI capability, wallet or database is enabled by default. Cloudflare and source repositories retain their own service limits.
-
-## Development
-
-Node **24+**, pnpm **11.19.0**, and Chromium are used here. Package releases and lockfile checks remain verified; only esbuild's necessary install script is explicitly allowed. SDK 7 is pinned to 7.0.131, an eligible release under the cloud's minimum-release-age policy; the uploaded 7.0.133 was too recent. Next.js and React received maintained version updates.
+Node 24+, pnpm 11.19.0. No inference credentials are needed.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-The cache is placed in the parent directory's `.pnpm-store` by `pnpm-workspace.yaml`. Dependencies are excluded from deliverables. `.env.example` documents the disabled public default; no credentials are needed.
+Development prepares the browser worker and WASM automatically. Model weights download from pinned Hugging Face repositories only after explicit visitor consent. The site performs generation on the visitor's device; it does not use the owner's home network or paid hosted inference.
 
 ```sh
 pnpm typecheck
 pnpm test
-pnpm build
-pnpm build:static
+pnpm build:public
 pnpm test:ui
 pnpm package:launch
 ```
 
-`pnpm build` retains server API routes. `pnpm build:static` stages source, excludes API routes and server-route tests from the staged app, validates the remaining app with Next.js, and exports `public-dist`. Original API source and tests remain untouched by staging. Webpack is used for the staged export because Turbopack restricts symlinks outside its project root. The full source type-check and tests include API safeguards. Static mode also disables the browser runtime API hook.
+The static distribution is `public-dist/`. `npm run package:public` builds it and creates `COLOSSEUM-PHASE4-SITE.zip` and `COLOSSEUM-PHASE4-SOURCE.zip` in the parent directory. Source includes all eleven `.agents/skills/` directories, the retained original CPU/Vite engine, recovery references, environment template, lockfile and tests. Generated runtimes are rebuilt; downloaded weights, credentials and caches are excluded.
 
-`pnpm test:ui` starts a static validation server on port 8791 and uses `/usr/bin/chromium`; set `CHROMIUM_PATH` for another installation. Browser evidence fixtures are test-only and never shipped as model results. Package script requires a current static build and a `zip` executable.
+For a GitHub project site, build with `COLOSSEUM_BASE_PATH=/2 pnpm build:public`. Root hosting is the default. See START-HERE.md for free hosting.
 
-## Working features
+## Working loop
 
-- Original lightweight SVG floating scenery; large champion scene; Discover/Develop destinations; mobile world map; tactile keyboard/touch controls.
-- Champion arrows, keyboard and pointer swipe, remembered selection, shortcuts to recent saved builds.
-- Workshop: four actual instruction slots, exact complete instruction preview, validation, name/model changes, explicit save, revisions, cloning, import/export, IndexedDB persistence.
-- Skill constellation: real category branches, compatibility, requirements, instruction/tool distinctions, accessible details and equip flow. External tools remain locked.
-- Mutation Lab: original versus variant portraits, exact configuration differences, local save, parent revision. Original operator experiment implementation is retained separately, outside the public UI.
-- Lineage: selectable model families and real saved build ancestry/revisions, including orphaned imports without infinite recursion.
-- Archive: search, public/personal evidence separation, original answers, provenance, JSON exports, rejection reasons; failures never receive completed-trial scores.
-- Hall of Fame: challenge/model filters, separate evidence sources, sample size and honest empty podium. No global authenticated ranking or universal intelligence score.
-- Developer Access: static datasets and schema, build exchange, answer re-grading, evidence recovery/publication workflow.
-- Sensory preferences: optional original interface tones off by default, full/reduced motion and low visual effects.
+- Model browsing and confirmed active configuration are separate.
+- Three equipment sockets support drag, keyboard/touch selection, replacement, removal and undo; older four-relic saves remain recoverable.
+- Shared Workshop/Skill Hall state, explicit saves, reload, complete configuration exports, mutation parent revisions and lineage.
+- Consent-based streamed browser generation, sequential two-model execution with identical input and budget, real timing/errors/cancellation, deterministic math and structured-reasoning checkers.
+- Animated practice and authentic recording playback, pause/resume/skip, reduced motion and low effects. Animation never assigns scores.
+- Four sourced Ledger Island missions, daily contracts, personal journal, repository dispatch notices and separate public evidence/personal recognition.
+- Existing IndexedDB saves are retained. Older overlay v1 files can be explicitly imported; exact source records are retained and unknown parent revisions remain unknown. `colosseum:v1` is never overwritten.
 
-## Evidence and Solana limits
+## Verified models and limits
 
-`data/public-trials.json` contains **zero** replayable model trials. The historical Scholar/Challenger notes do not preserve original responses, so they remain non-replayable attestations. No scores or model outputs were fabricated or reconstructed. Deterministic tutorials never append themselves to model evidence.
+Browser CPU/ONNX q4: SmolLM2 135M (~185 MB), Qwen2.5 0.5B (~794 MB), Qwen3 0.6B (~929 MB), plus ~15 MB runtime. All three genuinely initialized and generated in Chromium 151 release QA. Exact repositories, revisions and output/configuration/timing records are in `data/model-research.json` and `data/browser-verified-captures.json`.
 
-Existing browser records require their original site origin and browser profile. Archive exports preserve originals plus validated publication candidates. Developer Access re-grades stored responses, checks known challenge versions/model identity, and rejects unsupported authentication claims. This proves an answer reproduces a verdict; it does not authenticate its author or execution. Owner publication requires reviewing candidates and replacing the static source dataset, then rebuilding.
+The initial 128-token math attempts all failed the checker: their reasoning ended before a valid final answer. Generation took approximately 42, 133 and 168 seconds respectively. This establishes execution, not accuracy or superiority. Two additional genuine native CPU recordings preserve both an accepted result and a rejected final-answer format.
 
-Ledger Island uses exact request/response examples retrieved from Solana's official documentation at commit `2498072e8882ad866efa7a1b8c67a73b10a8489d`. It is labelled **documentation examples, not a live chain snapshot**. The requests name different mints, which the tutorial deliberately checks; token accounts are not unique holders. Retrieval time, source URLs, raw fields and example slots are preserved in `data/solana-snapshot.json`. No cross-mint concentration claim is calculated. The cloud proxy denied actual public RPC capture; a future recorded-chain trial requires genuine same-mint captures with timestamps and suitable context slots. The site makes zero RPC requests and connects no wallets or funds.
+The observed aggregate Chromium process RSS peaked around 6.27 GB during release QA; it includes runtime/UI and can double-count shared pages. Model-only peak and visitor-device memory are unmeasured. Prefer a desktop with several GB free. Mobile layout works; mobile model generation has not been verified. Gemma/LFM remain research candidates, and avatars without browser adapters remain SHOWCASE/OFFLINE. A visitor sees PLAYABLE—VERIFIED only after actual generation and evaluation in that session.
 
-Complete build performance is **NOT YET TESTED**. The legacy trial pipeline accepts one skill, so the public Workshop never claims to have evaluated a full build. Original authorized runner behavior is retained for future work; no fresh model calls were made during this pass. Legacy single-skill records are excluded from baseline leaderboard views. Larger-scale ranking and independent authentication remain future work.
+Practice is the player's answer. Recorded playback is prior captured output. Browser records are client controlled; published recordings are owner curated, not independently authenticated. There are no worldwide ranks or universal intelligence scores. Public hosted inference remains denied by default. No wallets, trades, funds, live chain claims or arbitrary code execution.
 
-## Files
+Ledger examples cite the exact official Solana documentation commit; they are not live chain observations. Hosting/model-hosting quotas and visitor hardware still apply. There is no promise of unlimited free inference.
 
-See [CHANGES.md](CHANGES.md) for the change inventory and [HANDOFF.md](HANDOFF.md) for the current state, startup, validation, and remaining work. The supplied video and Paint/floating-land reference images were not attached to this handoff; the included illustrations were preserved, and scenery was authored locally without paid image generation.
+See HANDOFF.md for validation and CHANGES.md for the source inventory.

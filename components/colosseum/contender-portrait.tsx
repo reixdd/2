@@ -1,3 +1,4 @@
+import {sitePath} from "@/lib/colosseum/site-path"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import type { Contender } from "@/lib/colosseum/characters"
@@ -33,7 +34,7 @@ export function ContenderPortrait({
       className={cn(SIZES[size], "edge-glow relative shrink-0 overflow-hidden rounded-full border border-border/60")}
     >
       <Image
-        src={contender.portrait || "/placeholder.svg"}
+        src={sitePath(contender.portrait || "/placeholder.svg")}
         alt={contender.name}
         fill
         sizes="112px"

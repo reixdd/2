@@ -1,15 +1,16 @@
-# Put the new COLOSSEUM world online
+# Put COLOSSEUM online for free
 
-1. Create a free account at https://dash.cloudflare.com/sign-up (or sign in).
-2. Open **Workers & Pages → Create application → Pages → Upload assets / Direct Upload**.
-3. Choose a site name such as `colosseum-arena`.
-4. Upload **COLOSSEUM-FLOATING-LANDS-SITE.zip**. This is the website ZIP, not the source ZIP.
-5. Deploy. Share the free **pages.dev** address Cloudflare supplies.
+The completed demo does not need your home computer, an AI API key or a paid database. Models run on the visitor's device after download consent. Practice, missions and recorded battles work without model downloads.
 
-No home server, domain purchase, model API key, wallet, or database is required. This new launch uses saved builds, deterministic tutorials, and preserved recordings. Public AI model execution is off. Hosting/platform limits still apply.
+Cloudflare is the simplest manual route:
 
-Try the world: select a champion, enter the tutorial, forge a build, equip abilities, save it, clone a mutation, inspect its lineage, and visit Ledger Island.
+1. Sign up or sign in at https://dash.cloudflare.com/.
+2. Open **Workers & Pages → Create application → Pages → Direct Upload / Upload assets**.
+3. Choose a site name, upload **COLOSSEUM-PHASE4-SITE.zip**, and click **Deploy**.
+4. Share the free `pages.dev` address Cloudflare supplies.
 
-The public replay dataset is empty because no complete original responses were supplied. Tutorials are clearly your own practice. Genuine records can be recovered from the Archive of the original website/browser and validated in Developer Access. Records cannot automatically cross to a new domain.
+Upload the SITE ZIP, not the SOURCE ZIP. Keep `COLOSSEUM-PHASE4-SOURCE.zip` as your complete recovery copy. All eleven skills, source, tests and the original engine are included.
 
-Source code is in **COLOSSEUM-FLOATING-LANDS-LAUNCH.zip**. Keep it as your recovery copy. Upload only the SITE ZIP to Pages.
+A GitHub project Pages build can be generated with `COLOSSEUM_BASE_PATH=/2 pnpm build:public`. If a `gh-pages` branch is prepared, enable it in https://github.com/reixdd/2/settings/pages using **Deploy from a branch → gh-pages → /(root) → Save**. Only share the URL after GitHub reports a successful deployment.
+
+Try: select a model → Forge → equip and save → practice a challenge → inspect the animated evidence → Ledger Island → complete a mission → Journal. Optional local generation is slow and requires substantial memory; the smallest download is SmolLM2 (~185 MB plus runtime). Published recordings include incorrect results. No worldwide rankings are claimed, and hosting/model-hosting service limits still apply.

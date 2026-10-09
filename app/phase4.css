@@ -39,13 +39,13 @@
 .bs:is([data-phase=preparing],[data-phase=attempting],[data-phase=revealing],[data-phase=result],[data-phase=inspecting]) .bs-crystal svg{opacity:1;filter:drop-shadow(0 0 10px rgba(79,209,255,.7))}
 .bs:is([data-phase=attempting],[data-phase=revealing],[data-phase=result],[data-phase=inspecting]) .bs-scroll{opacity:1;transform:none}
 .bs[data-outcome=correct] .bs-verdict{color:#ffe7a3;text-shadow:0 0 14px rgba(240,199,104,.9)}
-.bs[data-outcome=correct] .bs-arena{animation:bs-gold 1.2s ease-out 1}
+.bs[data-outcome=correct][data-phase=result] .bs-arena::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:radial-gradient(ellipse,#f0c76855,transparent 70%);animation:bs-gold 1.2s ease-out 1}
 .bs[data-outcome=incorrect] .bs-verdict{color:var(--c-soft)}
 .bs[data-outcome=incorrect] .bs-crystal svg{filter:grayscale(.8) brightness(.8)}
 .bs[data-outcome=unchecked] .bs-verdict{color:var(--c-soft)}
 @keyframes bs-summon{0%{opacity:0;transform:scale(.4) rotate(0)}60%{opacity:1}100%{opacity:.55;transform:scale(1) rotate(160deg)}}
 @keyframes bs-blink{50%{opacity:0}}
-@keyframes bs-gold{0%{box-shadow:inset 0 0 0 1px rgba(240,199,104,.35)}35%{box-shadow:inset 0 0 70px rgba(240,199,104,.5),inset 0 0 0 2px rgba(240,199,104,.95)}100%{box-shadow:inset 0 0 0 1px rgba(240,199,104,.35)}}
+@keyframes bs-gold{0%{opacity:0}35%{opacity:1}100%{opacity:0}}
 @media (max-width:640px){.bs-arena{grid-template-columns:1fr 1fr}.bs-center{grid-column:1/-1;order:3}.bs-evidence dl{grid-template-columns:1fr}}
 /* ---------- Hall of Fame ---------- */
 .hof-head{display:flex;gap:14px;align-items:center;color:var(--c-gold)}

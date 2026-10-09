@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import {sitePath} from "@/lib/colosseum/site-path"
 import { Eye, Play, RotateCcw, ScrollText } from 'lucide-react'
 import type { Contender } from '@/lib/colosseum/characters'
 import {
@@ -13,10 +14,11 @@ const usePrefersReducedMotion = () => {
   const [reduced, setReduced] = useState(false)
   useEffect(() => {
     const q = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const on = () => setReduced(q.matches)
+    const on = () => {const choice=document.documentElement.dataset.motion;setReduced(choice==='reduced'||(choice!=='full'&&q.matches))}
     on()
     q.addEventListener('change', on)
-    return () => q.removeEventListener('change', on)
+    const observer=new MutationObserver(on);observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-motion']})
+    return () => {q.removeEventListener('change', on);observer.disconnect()}
   }, [])
   return reduced
 }
@@ -58,6 +60,7 @@ export function BattleStage({ record, contender, opponent, onInspect }: { record
     const timer = window.setInterval(tick, 70)
     return () => window.clearInterval(timer)
   }, [playing, total, settle])
+  useEffect(()=>{if(!playing)return;const pause=()=>{if(document.hidden)setPlaying(false)};document.addEventListener('visibilitychange',pause);return()=>document.removeEventListener('visibilitychange',pause)},[playing])
   if (!check.ok) {
     return (
       <section className="bs bs-refused" role="alert" aria-label="Battle cannot be shown">
@@ -126,7 +129,7 @@ export function BattleStage({ record, contender, opponent, onInspect }: { record
           <dt>Checker</dt><dd>{record.checker} → {outcome === 'unchecked' ? 'not checked' : outcome}</dd>
           {record.model && <><dt>Model</dt><dd>{record.model}</dd></>}
           {record.recordedAt && <><dt>Recorded</dt><dd><time dateTime={record.recordedAt}>{record.recordedAt}</time></dd></>}
-          {record.evidenceHref && <><dt>Source</dt><dd><a href={record.evidenceHref}>Open the evidence record</a></dd></>}
+          {record.evidenceHref && <><dt>Source</dt><dd><a href={sitePath(record.evidenceHref)}>Open the evidence record</a></dd></>}
         </dl>
       </details>
     </section>

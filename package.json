@@ -1,6 +1,6 @@
 {
   "name": "colosseum-floating-lands",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
     "build": "next build",
@@ -15,7 +15,9 @@
     "prepare:runtime": "node scripts/prepare-runtime.mjs",
     "dev:phase4": "COLOSSEUM_DEV_DIR=.next-phase4 next dev --webpack --port 8792",
     "build:public": "npm run build:static",
-    "package:public": "npm run build:static && npm run package:launch"
+    "package:public": "npm run build:static && npm run package:launch",
+    "predev": "node scripts/prepare-public.mjs",
+    "predev:phase4": "node scripts/prepare-public.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",

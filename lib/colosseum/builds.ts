@@ -33,6 +33,8 @@ export interface BuildRevision {
 }
 
 export interface AgentBuild {
+  /** Original overlay record retained during explicit recovery; missing ancestry is never guessed. */
+  legacySource?: {format:"claude-overlay-v1";original:Record<string,unknown>;notes:string[]}
   id: string
   name: string
   config: BuildConfig

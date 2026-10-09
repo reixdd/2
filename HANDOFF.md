@@ -1,82 +1,19 @@
-# COLOSSEUM — current recovery and launch handoff
+# COLOSSEUM Phase 4 handoff
 
-## Active project
+Authoritative source: `/workspace/colosseum-floating`, remote `https://github.com/reixdd/2`, branch `phase4-playable-arena`. The original running `/workspace/colosseum` engine and JARVIS `/workspace/1` were not replaced or restarted. Pre-phase backup: `/workspace/COLOSSEUM-PRE-PHASE4-BACKUP.zip`. Earlier release archives are preserved.
 
-Continue the supplied Next.js product at `/workspace/colosseum-floating`. The earlier React/Vite prototype at `/workspace/colosseum` remains preserved and is a separate implementation/reference. Do not overwrite either or restart the product from scratch. Both were uploaded source directories, not Git checkouts. The unrelated `/workspace/1` checkout is unchanged.
+Implemented: model-first selection, shared three-socket equipment/build state, persistent save/import/export, mutations and ancestry, the recovered animated battle stage with real checker outcomes, consent-based local inference, five genuine recorded model captures, four Ledger missions, daily contracts, journal, sourced dispatch and separated public/personal recognition. Character PNG hashes match the recovery baseline.
 
-Node 24+, pnpm 11.19.0, Next.js 16.4.0, React 19.2.8, AI SDK 7.0.131. Public inference is disabled. SDK 7.0.133 from the upload was rejected by the cloud's minimum release age; the eligible same-major release passed installation. Frozen install reuses pinned dependencies; no integrity, TLS, or minimum-age check was bypassed. Only esbuild's install script is allowed. The pnpm cache path is a portable parent-directory `.pnpm-store`.
+Eleven project skills are retained in `.agents/skills/`: the seven supplied development skills plus gameplay-design, evidence-integrity, local-models and release-qa workflows. Third-party attached installers were not executed. Approved portraits, original engine weights and public hosted-inference guards remain intact.
 
-## What works
+Three genuine browser CPU generations completed from exact pinned HTTPS artifacts with LFS weight checksum verification. QA forwarded authentic HTTPS bytes through private loopback HTTP to the browser; model inference and response generation ran in an actual Chromium worker. This was transport adaptation, not mocked inference. Original outputs, parameters, configuration fingerprints, input hashes, timings and streamed events are retained in `data/browser-verified-captures.json`. All three initial math attempts failed the checker at the 128-token budget. Native recordings retain their original checker and artifact identity.
 
-- Luminous original SVG floating scenery; central supplied champion art; Discover/Develop destinations; mobile map; tactile controls; arrows, keyboard and actual pointer swipe; remembered champion and recent saved-build shortcuts.
-- Workshop: four instruction equipment slots, skill details, complete instruction composition/inspection, build validation, explicit saves, cloning, revisions, strict import/export, persistent IndexedDB using the original database/store names.
-- Skill Hall: accessible selectable capability constellation with category connections, genuine equip behavior and explicit tool/source blockers.
-- Mutation Lab: original/variant views, exact saved configuration changes, local mutation save and real parent revision. Original operator experiment code is retained in `operator-mutation-lab.tsx` but not mounted by the public app.
-- Lineage separates families from actual build parents/revisions; tree traversal handles missing parents and cycles without infinite recursion.
-- Archive: original records, search, public/personal separation, JSON exports and deterministic revalidation; failed entries remain in the original export and are rejected as scored completed trials.
-- Hall of Fame: per-challenge filters, model identity, sample size, evidence links and honest empty podium.
-- Developer Access: static evidence/schema/skill downloads, compatible build exchange, candidate validation and owner evidence recovery workflow.
-- Ledger Island: exact versioned Solana documentation examples, integer decimal scaling, cross-mint mismatch detection and token-account/holder distinction. Read-only and offline.
-- Sensory settings: sound off by default, optional original tones, motion preference and low visual effects. No sound autoplays.
+Validation: 104 logic tests passed; complete static gameplay journey and twelve desktop/laptop/mobile/failure browser checks passed. The added original-overlay recovery browser check also passed; final combined static run is recorded in `.validation/phase4/static-ui-results.json`. Type check and static production build passed. No paid inference request occurred in the tested practice/missions/build journey. Final export and publication status are appended below after completion.
 
-## What is deliberately not claimed
+The browser adapters are AVAILABLE TO PREPARE by default; a release capture does not mark another device ready. Browser CPU performance is slow, model downloads are substantial, and mobile generation remains unverified. Aggregate Chromium process RSS peaked around 6.27 GB (not model-only memory). Gemma/LFM license/backend work remains deliberately unpromoted. No independently authenticated global leaderboard exists.
 
-`data/public-trials.json` has zero complete replayable model trials. Historical Scholar/Challenger notes lack original outputs and are not playable evidence. The tutorial grades the visitor's answer, does not invoke a model, and does not enter model leaderboards. No fresh AI calls were made during this pass.
+Run commands, restoration and limits are in README.md. `pnpm dev` prepares the worker. Source includes `engines/original/` for the original native engine and `recovery/phase4/` for unchanged partial recovery references. Do not run recovery patch installers wholesale. Static build stages source without modifying the running app; source APIs remain guarded and are excluded from static output.
 
-Complete saved builds remain NOT YET TESTED. The retained legacy trial runner accepts a single skill; the public Workshop therefore does not send baseline/equipped requests or pretend it tested the complete configuration. A future authorized runner needs a validated configuration/fingerprint recorded with every trial before build-level performance comparisons are supported.
+Saved builds remain in the existing IndexedDB database. Unsaved active drafts are isolated per tab in session storage. Saved writes reject stale revisions, and journal events merge transactionally. Earlier overlay records remain in `colosseum:v1`; explicit imports preserve exact originals and identify unknown historical parent revisions. Changing site origins requires explicit export/import.
 
-Solana actual chain capture was denied by cloud egress. `data/solana-snapshot.json` is clearly labelled official documentation examples, not observed chain state. It preserves exact request/response fields, retrieval time, raw source URLs and commit `2498072e8882ad866efa7a1b8c67a73b10a8489d`. The two mints differ; no concentration estimate or unique-holder count is inferred. Example slot 1114 is not a current slot. A recorded-chain trial later requires actual same-mint finalized reads with capture times and suitable aligned contexts. No live polling, transfers, swaps, wallets, signing or funds.
-
-Answer re-grading does not authenticate execution. Public/browser records remain curator or client controlled. No model improvement, combat power, global verified rank, AI level-up or tool capability is fabricated. No arbitrary submitted/model code execution or external database is implemented.
-
-The video, Paint layout and separate floating-land reference images mentioned in the brief were not included. Included character PNG files remain byte-for-byte unchanged. Their existing nontransparent backgrounds are blended into the open scene. No paid image generation was used.
-
-## Validation completed in this cloud
-
-- Frozen pnpm install completed; current production dependency audit found no known vulnerabilities.
-- `pnpm typecheck` and both production targets (`pnpm build`, `pnpm build:static`) passed.
-- 12 Vitest files / **90 tests passed**, zero skipped. Provider calls in tests are explicit test mocks, not performance evidence.
-- **6 Chromium UI tests passed**, covering remembered/swiped champions, full equipment persistence after reload, clone/mutation ancestry, skill equip/locked details, Archive export, forged-verdict rejection, sourced Solana tutorial, mobile navigation and reduced motion.
-- The relevant public browser flows made zero `/api` calls, and Ledger Island made zero external requests.
-- Production server on loopback port 8790 returned 200 for all nine public routes. Runtime reported `{live:false}`. Unauthorized trial and probe POSTs both returned 403.
-- Headless Chromium profiling recorded 79 frame intervals during six selection/hover transitions: median and p95 about 16.7 ms; layout CPU 9.6 ms, style CPU 36.7 ms. These observations are cloud-specific and do not establish visitor-device frame rates. Nine routes fit a 390 px mobile viewport with no document overflow. Evidence `.validation/performance.json`; desktop/mobile screenshots also in `.validation`.
-- An initial browser run exposed missing direct static routes in the validation server. The final export uses route `index.html` files (`trailingSlash`), and the server handles both forms. Fresh complete UI rerun passed.
-
-## Run and restore
-
-```sh
-cd /workspace/colosseum-floating
-pnpm install --frozen-lockfile
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm build:static
-pnpm test:ui
-pnpm package:launch
-```
-
-For development, `pnpm dev`. For the built server, `COLOSSEUM_LIVE_INFERENCE=disabled pnpm start --hostname 127.0.0.1 --port 8790`. Reuse a healthy existing instance; do not start duplicates. Files/dependencies and generated builds can be retained in a snapshot; processes must restart. Chromium is `/usr/bin/chromium` here; `CHROMIUM_PATH` supports another installation. No inference credentials are needed.
-
-Static build stages source outside the application, excludes only API routes and API-referencing tests from that staged export, and type-checks the staged app. Original source API routes and full guard tests are retained and checked separately. It uses Webpack for external dependency symlink support. Static public mode disables the runtime hook and has no model API server. `public/_headers` provides Cloudflare static security headers.
-
-## Deliver and publish
-
-`COLOSSEUM-FLOATING-LANDS-LAUNCH.zip`: complete source, supplied assets, original scenery, package/lockfile, env template, docs and tests.
-
-`COLOSSEUM-FLOATING-LANDS-SITE.zip`: static website only, ready for Cloudflare Pages Direct Upload. Upload this ZIP to a free Pages account; share the supplied pages.dev address. See START-HERE.md. No public URL has been published in this session; Cloudflare authentication is absent. Earlier GitHub repository creation failed due to integration scope. No user home network serves visitors.
-
-Owner evidence recovery: original browser/origin Archive → export JSON → Developer Access validation → inspect exact originals/provenance → copy accepted trials into `data/public-trials.json` → rebuild → publish. New domains cannot read the old origin's storage automatically. Never reconstruct missing model responses from attestations.
-
-Source and website ZIPs exclude node_modules, build caches, validation records, private env files, and credentials. Review/save/publish the separate cloud environment settings to retain reusable setup; website publication is a separate action. New-task restoration has not been independently verified.
-
-## Phase 4 checkpoint
-
-Continue on `phase4-playable-arena` in `reixdd/2`. The complete source and eleven repository skills are retained. `/workspace/colosseum` remains the original running engine; `engines/original/` retains its implementation for source recovery, excluding downloaded weights. `recovery/phase4/` contains reference source, not a runnable application or an installer to execute blindly.
-
-The Phase 4 test server uses its own `.next-phase4` build directory and port 8792; the earlier running application was not restarted. Build state is shared by a provider, saved builds stay in the existing IndexedDB schema, and personal journey events use a separate transaction-based database. Browser model verification is session-based and requires real generation; configured artifacts are not PLAYABLE by default. Public hosted inference guards are unchanged.
-
-Remaining at this checkpoint: real browser-local model tests, complete keyboard/touch/laptop/mobile QA, migration/import cases, build/export validation, final documentation, PR and static publication access. Do not present this checkpoint as a published public release.
-
-## Phase 4 milestone C/D checkpoint
-
-Shared equipment, mutations, ancestry, practice battle stage, four Ledger missions, journal/daily contracts and published dispatch feed are implemented. 100 logic tests pass. Full gameplay journey plus four viewport route checks pass. Cross-tab drafts now use per-tab session storage; indexed saves reject stale overwrites. Browser CPU SmolLM2 genuinely initialized and generated an incorrect answer (retained, not promoted as accurate). Other real browser model checks, final static QA and packaging remain pending.
+Website archive: `COLOSSEUM-PHASE4-SITE.zip`. Source archive: `COLOSSEUM-PHASE4-SOURCE.zip`. Models, private environment files, dependency/build caches and generated runtime copies are excluded from source export; all eleven skills are included. Weights are excluded from website deployment and are fetched only after consent. All static files are below Cloudflare's per-file limit.
