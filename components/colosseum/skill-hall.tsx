@@ -1,0 +1,17 @@
+"use client"
+import {useEffect,useState} from "react"
+import Link from "next/link"
+import {Sparkles,Lock,BookOpen} from "lucide-react"
+import {CONTENDERS} from "@/lib/colosseum/characters"
+import {skillsByWing,type Skill} from "@/lib/colosseum/skills"
+import {loadLastChampion} from "@/lib/colosseum/local-state"
+import {equipSkill,saveBuildEdit,type AgentBuild,isSkillCompatible} from "@/lib/colosseum/builds"
+import {listBuilds,saveBuild} from "@/lib/colosseum/build-store"
+import {SkillDetails} from "./skill-details"
+import {ContenderPortrait} from "./contender-portrait"
+export function SkillHall(){const [championId,setChampionId]=useState(CONTENDERS[0].id),[builds,setBuilds]=useState<AgentBuild[]>([]),[buildId,setBuildId]=useState(""),[detail,setDetail]=useState<Skill|null>(null),[message,setMessage]=useState("")
+ useEffect(()=>{setChampionId(loadLastChampion()??CONTENDERS[0].id);listBuilds().then(setBuilds).catch(()=>setMessage("Build storage is unavailable."))},[])
+ const build=builds.find(b=>b.id===buildId),champion=CONTENDERS.find(c=>c.id===(build?.config.contenderId??championId))??CONTENDERS[0]
+ async function equip(id:string){if(!build){setMessage("Choose a saved champion or forge one in Workshop first.");return}const result=equipSkill(build.config,id);if(!result.ok){setMessage(result.reason);return}try{const next=saveBuildEdit(build,{name:build.name,config:result.config});await saveBuild(next);setBuilds(items=>items.map(b=>b.id===next.id?next:b));setMessage(`Equipped ${id}. Saved v${next.version}; NOT YET TESTED.`)}catch{setMessage("Could not save this equipment. Export from Workshop to retain your work.")}}
+ return <div className="page-shell"><header className="page-heading"><p className="eyebrow">THE CAPABILITY CONSTELLATION</p><h1>The Skill Hall</h1><p>Choose an ability, inspect its exact behavior, then equip it. Branches group categories; they do not imply unlock dependencies.</p></header><div className="selected-champion-strip"><ContenderPortrait contender={champion}/><div><h2>{champion.name}</h2><small>{champion.family} · unofficial character interpretation</small></div><label className="ml-auto text-xs">Equip to saved build<select aria-label="Equip to saved build" value={buildId} onChange={e=>setBuildId(e.target.value)}><option value="">Choose a build</option>{builds.map(b=><option key={b.id} value={b.id}>{b.name} · v{b.version}</option>)}</select></label></div><div className="constellation">{Array.from(skillsByWing()).map(([wing,skills])=><section className="skill-branch" key={wing}><p className="eyebrow">CATEGORY BRANCH</p><h2>{wing}</h2>{skills.map(s=><button key={s.id} className={`inventory-node tactile w-full ${s.available?"":"locked"}`} onClick={()=>setDetail(s)}><span className="flex gap-2 items-center">{s.available?<Sparkles size={18}/>:<Lock size={18}/>}<strong>{s.name}</strong></span><small>{s.summary}</small><small>{s.available?isSkillCompatible(s,champion)?"Compatible instruction modifier":"Incompatible family":"Locked · requirement in details"}</small><span className="text-xs mt-1"><BookOpen size={12} className="inline"/> Inspect ability →</span></button>)}</section>)}</div><p role="status" className="feedback">{message}</p><Link className="action" href="/workshop">Forge a new champion</Link><SkillDetails skill={detail} onClose={()=>setDetail(null)} onEquip={equip} compatible={detail?isSkillCompatible(detail,champion):false}/></div>
+}

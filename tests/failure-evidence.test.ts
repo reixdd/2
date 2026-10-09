@@ -1,0 +1,3 @@
+import {it,expect} from "vitest"
+import {prepareArchiveExport} from "@/lib/colosseum/public-trials"
+it("preserves a failed answer without admitting it as a completed trial",()=>{const entry={id:"failure",timestamp:123,challengeId:"the-first-sigil",challengeName:"Sigil",discipline:"Mathematics",contenderId:"capybara-sage",contenderName:"Capybara",correct:true,latencyMs:12,extracted:"297",response:"ANSWER: 297",status:"error" as const,error:"Incomplete response"};const exported=prepareArchiveExport([entry]);expect(exported.original).toEqual([entry]);expect(exported.candidates.trials).toEqual([]);expect(exported.rejected[0].reasons.join(" ")).toContain("Failed or interrupted")})

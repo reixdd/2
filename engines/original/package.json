@@ -1,0 +1,51 @@
+{
+  "name": "colosseum",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "COLOSSEUM \u2014 a cinematic AI-agent evaluation arena",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web -c gray,cyan \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "node --use-env-proxy --watch server/index.js",
+    "dev:client": "vite --config client/vite.config.js",
+    "build": "vite build --config client/vite.config.js",
+    "start": "node --use-env-proxy server/index.js",
+    "test": "node --test \"server/tests/*.test.js\"",
+    "setup:local": "node --use-env-proxy scripts/setup-local.mjs",
+    "test:ui": "playwright test",
+    "doctor": "node scripts/check-local-runtime.mjs",
+    "smoke:local": "node scripts/smoke-local.mjs",
+    "demo": "npm run setup:local && npm run build && npm start",
+    "build:public": "vite build --mode public --config client/vite.config.js",
+    "test:public": "playwright test --config playwright.public.config.js",
+    "package:public": "npm run build:public && node scripts/package-public.mjs",
+    "deploy:public": "npx wrangler pages deploy client/public-dist --project-name colosseum",
+    "smoke:browser": "node --use-env-proxy scripts/smoke-browser.mjs",
+    "prebuild": "node scripts/prepare-browser.mjs",
+    "prebuild:public": "node scripts/prepare-browser.mjs",
+    "postbuild": "node scripts/trim-browser.mjs",
+    "postbuild:public": "node scripts/trim-browser.mjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.1",
+    "@mlc-ai/web-llm": "^0.2.85",
+    "@noble/hashes": "^2.4.0",
+    "node-llama-cpp": "^3.22.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "concurrently": "^9.0.1",
+    "vite": "^7.3.7"
+  },
+  "overrides": {
+    "@simple-git/argv-parser": "^2.0.1",
+    "simple-git": "^4.0.1",
+    "shell-quote": "^1.12.0"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "trials": [],
+  "historicalAttestations": [
+    {
+      "id": "attestation-scholar-llama",
+      "contenderId": "ancient-scholar",
+      "note": "An earlier development session reported a successful Scholar (Llama) trial. The complete response record was not preserved, so it cannot be replayed or re-graded. The Labyrinth of Sequences answer key was later found to be wrong (corrected in version 2), so any result from that challenge in earlier sessions is unreliable.",
+      "replayable": false
+    },
+    {
+      "id": "attestation-challenger-grok",
+      "contenderId": "unpredictable-challenger",
+      "note": "An earlier development session reported a successful Challenger (Grok) trial. The complete response record was not preserved, so it cannot be replayed or re-graded. The Labyrinth of Sequences answer key was later found to be wrong (corrected in version 2), so any result from that challenge in earlier sessions is unreliable.",
+      "replayable": false
+    }
+  ]
+}

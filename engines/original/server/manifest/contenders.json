@@ -1,0 +1,273 @@
+{
+  "_readme": "TECHNICAL manifest. 'integrated' = an adapter exists. A contender is OPERATIONAL only if its provider is configured AND the model is confirmed available. modelVersion/sourceRepo are declared metadata (not probed). Fictional presentation lives separately in ../characters/cast.json. Add your own in contenders.local.json (merged by id).",
+  "contenders": [
+    {
+      "id": "local-qwen3-06b",
+      "name": "Qwen3 0.6B \u00b7 free CPU",
+      "family": "Qwen",
+      "kind": "model",
+      "provider": "local",
+      "model": "qwen3-0.6b-q8",
+      "modelVersion": "3 \u00b7 Q8_0",
+      "sourceRepo": "https://huggingface.co/Qwen/Qwen3-0.6B-GGUF",
+      "openWeights": true,
+      "integrated": true,
+      "config": {
+        "systemPrompt": "Solve directly without a thinking preamble. /no_think",
+        "maxTokens": 1024
+      }
+    },
+    {
+      "id": "local-qwen25-05b",
+      "name": "Qwen2.5 0.5B \u00b7 free CPU",
+      "family": "Qwen",
+      "kind": "model",
+      "provider": "local",
+      "model": "qwen2.5-0.5b-q8",
+      "modelVersion": "2.5 \u00b7 Q8_0",
+      "sourceRepo": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+      "openWeights": true,
+      "integrated": true,
+      "config": {
+        "maxTokens": 1024
+      }
+    },
+    {
+      "id": "agent-local-qwen-verifier",
+      "name": "Qwen3 0.6B \u00b7 self-check",
+      "family": "Qwen",
+      "kind": "agent",
+      "base": "local-qwen3-06b",
+      "integrated": true,
+      "config": {
+        "extendsParent": true,
+        "systemPrompt": "Before committing to your final answer, independently check the arithmetic."
+      }
+    },
+    {
+      "id": "or-qwen3-32b",
+      "name": "Qwen3 32B",
+      "family": "Qwen",
+      "kind": "model",
+      "provider": "openrouter",
+      "model": "qwen/qwen3-32b",
+      "modelVersion": "3",
+      "sourceRepo": "https://huggingface.co/Qwen/Qwen3-32B",
+      "openWeights": true,
+      "integrated": true
+    },
+    {
+      "id": "ol-qwen3-8b",
+      "name": "Qwen3 8B (local)",
+      "family": "Qwen",
+      "kind": "model",
+      "provider": "ollama",
+      "model": "qwen3:8b",
+      "modelVersion": "3",
+      "sourceRepo": "https://huggingface.co/Qwen/Qwen3-8B",
+      "openWeights": true,
+      "integrated": true
+    },
+    {
+      "id": "or-gemma-3-27b",
+      "name": "Gemma 3 27B",
+      "family": "Gemma",
+      "kind": "model",
+      "provider": "openrouter",
+      "model": "google/gemma-3-27b-it",
+      "modelVersion": "3",
+      "sourceRepo": "https://huggingface.co/google/gemma-3-27b-it",
+      "openWeights": true,
+      "integrated": true
+    },
+    {
+      "id": "ol-gemma3-4b",
+      "name": "Gemma 3 4B (local)",
+      "family": "Gemma",
+      "kind": "model",
+      "provider": "ollama",
+      "model": "gemma3:4b",
+      "modelVersion": "3",
+      "sourceRepo": "https://huggingface.co/google/gemma-3-4b-it",
+      "openWeights": true,
+      "integrated": true
+    },
+    {
+      "id": "or-deepseek-r1",
+      "name": "DeepSeek R1",
+      "family": "DeepSeek",
+      "kind": "model",
+      "provider": "openrouter",
+      "model": "deepseek/deepseek-r1",
+      "modelVersion": "R1",
+      "sourceRepo": "https://github.com/deepseek-ai/DeepSeek-R1",
+      "openWeights": true,
+      "integrated": true
+    },
+    {
+      "id": "ol-deepseek-r1-8b",
+      "name": "DeepSeek R1 8B (local)",
+      "family": "DeepSeek",
+      "kind": "model",
+      "provider": "ollama",
+      "model": "deepseek-r1:8b",
+      "modelVersion": "R1 distill",
+      "sourceRepo": "https://github.com/deepseek-ai/DeepSeek-R1",
+      "openWeights": true,
+      "integrated": true
+    },
+    {
+      "id": "or-llama-3-3-70b",
+      "name": "Llama 3.3 70B",
+      "family": "Llama",
+      "kind": "model",
+      "provider": "openrouter",
+      "model": "meta-llama/llama-3.3-70b-instruct",
+      "modelVersion": "3.3",
+      "sourceRepo": "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
+      "openWeights": true,
+      "integrated": true
+    },
+    {
+      "id": "ol-llama3-1-8b",
+      "name": "Llama 3.1 8B (local)",
+      "family": "Llama",
+      "kind": "model",
+      "provider": "ollama",
+      "model": "llama3.1:8b",
+      "modelVersion": "3.1",
+      "sourceRepo": "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct",
+      "openWeights": true,
+      "integrated": true
+    },
+    {
+      "id": "or-grok-3-mini",
+      "name": "Grok 3 Mini",
+      "family": "Grok",
+      "kind": "model",
+      "provider": "openrouter",
+      "model": "x-ai/grok-3-mini",
+      "modelVersion": "3-mini",
+      "sourceRepo": null,
+      "openWeights": false,
+      "integrated": true,
+      "note": "Hosted API model; weights are not open (only Grok-1 is). Included as a challenger, flagged openWeights=false."
+    },
+    {
+      "id": "or-gpt-oss-120b",
+      "name": "GPT-OSS 120B",
+      "family": "GPT-OSS",
+      "kind": "model",
+      "provider": "openrouter",
+      "model": "openai/gpt-oss-120b",
+      "modelVersion": "120b",
+      "sourceRepo": "https://github.com/openai/gpt-oss",
+      "openWeights": true,
+      "integrated": true
+    },
+    {
+      "id": "ol-gpt-oss-20b",
+      "name": "GPT-OSS 20B (local)",
+      "family": "GPT-OSS",
+      "kind": "model",
+      "provider": "ollama",
+      "model": "gpt-oss:20b",
+      "modelVersion": "20b",
+      "sourceRepo": "https://github.com/openai/gpt-oss",
+      "openWeights": true,
+      "integrated": true
+    },
+    {
+      "id": "agent-qwen-research",
+      "name": "Qwen3 8B \u00b7 Research agent",
+      "family": "Qwen",
+      "kind": "agent",
+      "base": "ol-qwen3-8b",
+      "integrated": true,
+      "description": "Qwen3 8B told to separate given facts from inference. Child of the base model.",
+      "config": {
+        "systemPrompt": "Separate what the task states from what you infer. Use only information present in the task. State any assumption before relying on it."
+      }
+    },
+    {
+      "id": "agent-qwen-quant",
+      "name": "Qwen3 8B \u00b7 Quant agent",
+      "family": "Qwen",
+      "kind": "agent",
+      "base": "ol-qwen3-8b",
+      "parent": "agent-qwen-research",
+      "integrated": true,
+      "description": "Research agent plus a numeric-audit discipline. Evaluates arithmetic and structured data only; it has no market access and executes nothing.",
+      "config": {
+        "extendsParent": true,
+        "systemPrompt": "Treat every task as a numeric audit: name each quantity, compute step by step with exact integers, and sanity-check the magnitude of the result before answering."
+      }
+    },
+    {
+      "id": "agent-qwen-verifier",
+      "name": "Qwen3 8B \u00b7 Verifier agent",
+      "family": "Qwen",
+      "kind": "agent",
+      "base": "ol-qwen3-8b",
+      "integrated": true,
+      "description": "Same weights as Qwen3 8B, but instructed to re-derive and cross-check before committing.",
+      "config": {
+        "systemPrompt": "Work in two passes. Pass 1: solve the task. Pass 2: independently re-derive the result by a different route and compare. If they disagree, find the error. Only then write the final line."
+      }
+    },
+    {
+      "id": "agent-gptoss-terse",
+      "name": "GPT-OSS 20B \u00b7 Terse agent",
+      "family": "GPT-OSS",
+      "kind": "agent",
+      "base": "ol-gpt-oss-20b",
+      "integrated": true,
+      "description": "Same weights as GPT-OSS 20B, constrained to minimal working.",
+      "config": {
+        "systemPrompt": "Be maximally concise. Show only essential working. Do not restate the problem."
+      }
+    },
+    {
+      "id": "agent-deepseek-verifier",
+      "name": "DeepSeek R1 \u00b7 Verifier agent",
+      "family": "DeepSeek",
+      "kind": "agent",
+      "base": "or-deepseek-r1",
+      "integrated": true,
+      "description": "DeepSeek R1 via OpenRouter with a self-verification instruction.",
+      "config": {
+        "systemPrompt": "After solving, verify your answer by an independent method before writing the final line."
+      }
+    },
+    {
+      "id": "slot-open-weight",
+      "name": "Open slot \u00b7 your open-weight model",
+      "family": "Open",
+      "kind": "model",
+      "provider": null,
+      "model": null,
+      "integrated": false,
+      "note": "Reserved slot. Add an entry to contenders.local.json with a provider and model."
+    },
+    {
+      "id": "slot-research-agent",
+      "name": "Open slot \u00b7 research agent",
+      "family": "Agent",
+      "kind": "agent",
+      "provider": null,
+      "model": null,
+      "integrated": false,
+      "note": "Reserved. Needs a frozen source corpus and citation verification before it can compete."
+    },
+    {
+      "id": "slot-chart-agent",
+      "name": "Open slot \u00b7 chart analyst",
+      "family": "Agent",
+      "kind": "agent",
+      "provider": null,
+      "model": null,
+      "integrated": false,
+      "note": "Reserved. Needs a vision-capable model and a verified chart dataset."
+    }
+  ]
+}
