@@ -21,3 +21,5 @@ Website archive: `COLOSSEUM-PHASE4-SITE.zip`. Source archive: `COLOSSEUM-PHASE4-
 ## Final release validation
 
 The final root-hosted release passed `pnpm typecheck`, all 104 logic tests, production static export and all 13 combined Chromium browser tests. `COLOSSEUM-PHASE4-SITE.zip` and `COLOSSEUM-PHASE4-SOURCE.zip` are created. Source archive inspection confirms all eleven skills and no dependency/model cache; the largest website file is 14,264,838 bytes. Review: https://github.com/reixdd/2/pull/1 (not merged). GitHub project Pages activation is being checked separately; no public URL is claimed until its smoke check passes.
+
+The GitHub project-path build passed a separate 12-route browser smoke journey including real images, model/build navigation, persistent equipment, practice, a Ledger mission, mobile navigation and correct WASM MIME. The optional Mistral VLM registration is omitted from the browser bundle because its public class identifier was misclassified by GitHub secret scanning; no credential was present, dependency files are unchanged, and the approved Qwen/SmolLM allowlist is unchanged.
