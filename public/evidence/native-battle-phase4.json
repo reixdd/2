@@ -1,0 +1,179 @@
+{
+  "schema": "colosseum.battle/v1",
+  "battleId": "b_mv0afrmk_cba2a7",
+  "challengeId": "math.warmup",
+  "challenge": {
+    "id": "math.warmup",
+    "title": "The First Sigil",
+    "discipline": "math",
+    "difficulty": "easy",
+    "version": 1,
+    "seed": 1,
+    "system": "You are a contestant in an evaluation arena. Solve the task exactly. You may reason step by step, but your reply MUST end with one final line in the exact format requested. Only the final line is graded.",
+    "user": "Compute (29 × 7) + 41 exactly.\nEnd with: FINAL: <integer>",
+    "answerFormat": "FINAL: <integer>",
+    "promptHash": "fb441540b259b5c4"
+  },
+  "status": "COMPLETED",
+  "createdAt": "2026-10-09T01:29:54.333Z",
+  "startedAt": "2026-10-09T01:29:54.334Z",
+  "completedAt": "2026-10-09T01:30:05.197Z",
+  "environment": {
+    "colosseum": "0.2.0",
+    "node": "v24.19.0"
+  },
+  "entries": [
+    {
+      "entryId": "e1",
+      "contenderId": "local-qwen3-06b",
+      "label": "Qwen3 0.6B · free CPU",
+      "kind": "model",
+      "family": "Qwen",
+      "provider": "local",
+      "model": "qwen3-0.6b-q8",
+      "modelIdentity": {
+        "modelId": "qwen3-0.6b-q8",
+        "declaredVersion": "3 · Q8_0",
+        "sourceRepository": "https://huggingface.co/Qwen/Qwen3-0.6B-GGUF"
+      },
+      "modelArtifact": {
+        "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+        "officialDownloadVerified": true,
+        "sourceRepository": "https://huggingface.co/Qwen/Qwen3-0.6B-GGUF",
+        "backend": "llama.cpp CPU",
+        "runtime": "node-llama-cpp 3.22.1"
+      },
+      "baseModelId": "local-qwen3-06b",
+      "mutationParentId": null,
+      "configuration": {
+        "systemPrompt": "Solve directly without a thinking preamble. /no_think",
+        "temperature": 0,
+        "maxTokens": 1024,
+        "configHash": "34e1ba58",
+        "mutated": false,
+        "overrides": {}
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a contestant in an evaluation arena. Solve the task exactly. You may reason step by step, but your reply MUST end with one final line in the exact format requested. Only the final line is graded.\n\nSolve directly without a thinking preamble. /no_think"
+        },
+        {
+          "role": "user",
+          "content": "Compute (29 × 7) + 41 exactly.\nEnd with: FINAL: <integer>"
+        }
+      ],
+      "status": "COMPLETED",
+      "timestamps": {
+        "createdAt": "2026-10-09T01:29:54.332Z",
+        "startedAt": "2026-10-09T01:29:54.335Z",
+        "firstTokenAt": "2026-10-09T01:29:56.487Z",
+        "completedAt": "2026-10-09T01:29:59.619Z"
+      },
+      "latency": {
+        "firstTokenMs": 2152,
+        "totalMs": 5283,
+        "queueMs": 1
+      },
+      "output": "\n\n(29 × 7) + 41 = 203 + 41 = 244\n\nFINAL: 244",
+      "reasoning": "",
+      "finishReason": "stop",
+      "usage": {
+        "completion_tokens": 33
+      },
+      "verification": {
+        "score": 100,
+        "maxScore": 100,
+        "passed": true,
+        "checks": [
+          {
+            "name": "exact integer",
+            "ok": true,
+            "weight": 1
+          }
+        ],
+        "extracted": "244",
+        "expected": "244",
+        "notes": [],
+        "verifiedAt": "2026-10-09T01:29:59.619Z"
+      },
+      "error": null
+    },
+    {
+      "entryId": "e2",
+      "contenderId": "local-qwen25-05b",
+      "label": "Qwen2.5 0.5B · free CPU",
+      "kind": "model",
+      "family": "Qwen",
+      "provider": "local",
+      "model": "qwen2.5-0.5b-q8",
+      "modelIdentity": {
+        "modelId": "qwen2.5-0.5b-q8",
+        "declaredVersion": "2.5 · Q8_0",
+        "sourceRepository": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF"
+      },
+      "modelArtifact": {
+        "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+        "officialDownloadVerified": true,
+        "sourceRepository": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+        "backend": "llama.cpp CPU",
+        "runtime": "node-llama-cpp 3.22.1"
+      },
+      "baseModelId": "local-qwen25-05b",
+      "mutationParentId": null,
+      "configuration": {
+        "systemPrompt": "",
+        "temperature": 0,
+        "maxTokens": 1024,
+        "configHash": "ac8976ef",
+        "mutated": false,
+        "overrides": {}
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a contestant in an evaluation arena. Solve the task exactly. You may reason step by step, but your reply MUST end with one final line in the exact format requested. Only the final line is graded."
+        },
+        {
+          "role": "user",
+          "content": "Compute (29 × 7) + 41 exactly.\nEnd with: FINAL: <integer>"
+        }
+      ],
+      "status": "COMPLETED",
+      "timestamps": {
+        "createdAt": "2026-10-09T01:29:54.332Z",
+        "startedAt": "2026-10-09T01:29:54.336Z",
+        "firstTokenAt": "2026-10-09T01:30:00.919Z",
+        "completedAt": "2026-10-09T01:30:05.196Z"
+      },
+      "latency": {
+        "firstTokenMs": 6584,
+        "totalMs": 10860,
+        "queueMs": 5283
+      },
+      "output": "To compute (29 × 7) + 41 exactly, we first perform the multiplication:\n\n29 × 7 = 203\n\nNow, we add 41 to the result:\n\n203 + 41 = 244\n\nTherefore, the final answer is 244.",
+      "reasoning": "",
+      "finishReason": "stop",
+      "usage": {
+        "completion_tokens": 67
+      },
+      "verification": {
+        "score": 0,
+        "maxScore": 100,
+        "passed": false,
+        "checks": [
+          {
+            "name": "exact integer",
+            "ok": false,
+            "weight": 1
+          }
+        ],
+        "extracted": null,
+        "expected": "244",
+        "notes": [],
+        "verifiedAt": "2026-10-09T01:30:05.196Z"
+      },
+      "error": null
+    }
+  ]
+}

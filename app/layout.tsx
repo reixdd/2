@@ -3,6 +3,9 @@ import type { Metadata, Viewport } from "next"
 import { ColosseumNav } from "@/components/colosseum/nav"
 import { FloatingWorld } from "@/components/colosseum/world"
 import "./globals.css"
+import "./phase4.css"
+import {GameProvider} from "@/lib/colosseum/game-store"
+import {DeviceProvider} from "@/lib/colosseum/device-store"
 
 export const metadata: Metadata = {
   title: "COLOSSEUM — Intelligence Must Be Proven",
@@ -12,8 +15,8 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#f4fafd",
-  colorScheme: "light",
+  themeColor: "#080c1b",
+  colorScheme: "dark",
 }
 
 export default function RootLayout({
@@ -26,9 +29,9 @@ export default function RootLayout({
       <body
         className="font-sans antialiased min-h-screen"
       >
-        <FloatingWorld />
+        <GameProvider><DeviceProvider><a href="#main-content" className="skip-link">Skip to content</a><FloatingWorld />
         <ColosseumNav />
-        <main className="world-content">{children}</main>
+        <main id="main-content" className="world-content">{children}</main></DeviceProvider></GameProvider>
       </body>
     </html>
   )

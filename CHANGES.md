@@ -22,3 +22,11 @@ Added:
 - `tests/{builds,solana,failure-evidence}.test.ts`, `tests/ui/world.spec.ts`, `playwright.config.ts`: build integrity, source interpretation, failure export, actual desktop/mobile interactions.
 
 Original character PNG files and original storage database/key names are unchanged. No historical model answers, model scores or chain observations were invented.
+
+## Phase 4 checkpoint — recovery and first playable journey
+
+Authoritative celestial source: this project; retained inference implementation: `engines/original/`. Original working directories and approved portraits are preserved. Backup: `/workspace/COLOSSEUM-PRE-PHASE4-BACKUP.zip`. Correct remote is `reixdd/2`, review branch `phase4-playable-arena`; JARVIS was not modified.
+
+Installed seven supplied skills plus four repeatable COLOSSEUM workflows. Preserved the uploaded partial recovery bundle unchanged. Ported its browsing/selection distinction, mutation URL/name validation, storage conflict handling, actual relic SVGs, and actual recovered battle-stage markup/logic. Added a shared active build, reachable equipment dock, deterministic practice, consent-based browser worker adapter, genuine CPU replay captures, missions, journal, and repository dispatch feed.
+
+First browser proof: equip → save → reload → practice → skip animation → inspect checker. Existing 90 logic tests passed before integration. Current type check passed. Fresh native CPU Qwen3/Qwen2.5 generation completed; original records are retained, including the incorrect-format verdict. Browser model generation, full journey tests, static release, and final exports remain in progress at this checkpoint.

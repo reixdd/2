@@ -1,0 +1,11 @@
+import research from "@/data/model-research.json"
+export type LocalModel = {contenderId:string;title:string;family:string;modelId:string;revision:string;parameters:string;developer:string;dtype:"q4";downloadBytes:number;license:string;licenseUrl:string;backend:"wasm";memory:string}
+function artifact(id:string){const row=research.find(r=>r.id===id);if(!row?.revision)throw Error("Missing pinned model revision");return {revision:row.revision,downloadBytes:(row.files??[]).filter(f=>f.path==="onnx/model_q4.onnx"||/^tokenizer|^(generation_)?config\.json$/.test(f.path)).reduce((n,f)=>n+(f.size??0),0)}}
+export const LOCAL_MODELS:LocalModel[]=[
+ {contenderId:"capybara-sage",title:"Qwen3 0.6B",family:"Qwen",modelId:"onnx-community/Qwen3-0.6B-ONNX",...artifact("onnx-community/Qwen3-0.6B-ONNX"),parameters:"0.6B",developer:"Qwen / Alibaba",dtype:"q4",license:"Apache-2.0 (base weights)",licenseUrl:"https://huggingface.co/Qwen/Qwen3-0.6B/blob/main/LICENSE",backend:"wasm",memory:"Peak memory unmeasured. Prefer a desktop with several GB free; mobile support is unverified."},
+ {contenderId:"qwen25-sage",title:"Qwen2.5 0.5B Instruct",family:"Qwen",modelId:"onnx-community/Qwen2.5-0.5B-Instruct",...artifact("onnx-community/Qwen2.5-0.5B-Instruct"),parameters:"0.5B",developer:"Qwen / Alibaba",dtype:"q4",license:"Apache-2.0 (base weights)",licenseUrl:"https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct/blob/main/LICENSE",backend:"wasm",memory:"Peak memory unmeasured. Prefer a desktop with several GB free; mobile support is unverified."},
+ {contenderId:"small-spark",title:"SmolLM2 135M Instruct",family:"SmolLM",modelId:"onnx-community/SmolLM2-135M-Instruct-ONNX",...artifact("onnx-community/SmolLM2-135M-Instruct-ONNX"),parameters:"135M",developer:"Hugging Face / HuggingFaceTB",dtype:"q4",license:"Apache-2.0 (base weights)",licenseUrl:"https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct/blob/main/LICENSE",backend:"wasm",memory:"Peak memory unmeasured. Smallest download; browser compatibility is checked before preparation."},
+]
+export function localModel(contenderId:string){return LOCAL_MODELS.find(m=>m.contenderId===contenderId)}
+export function modelTitle(contender:{id:string;family:string}){return localModel(contender.id)?.title??`${contender.family} · Showcase`}
+export function formatBytes(bytes:number){return `${Math.ceil(bytes/1_000_000)} MB`}

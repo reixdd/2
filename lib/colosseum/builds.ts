@@ -1,5 +1,6 @@
 import { getContender, type Contender } from "./characters"
 import { getSkill, type Skill } from "./skills"
+import {localModel} from "./models"
 
 export const BUILD_LIMITS = {
   maxNameLength: 48,
@@ -21,6 +22,8 @@ export interface BuildConfig {
   toolIds: string[]
   /** No knowledge sources are connected yet, so any entry here fails validation. */
   knowledgeSources: string[]
+  /** Socket positions are presentation metadata; instruction identity ignores their order. */
+  equipmentSlots?: (string | null)[]
 }
 
 export interface BuildRevision {
@@ -68,8 +71,8 @@ export function newId(prefix: string, random: () => number = Math.random, now: (
 export function configForContender(contender: Contender): BuildConfig {
   return {
     contenderId: contender.id,
-    modelId: contender.modelId,
-    runtime: DEFAULT_RUNTIME,
+    modelId: localModel(contender.id)?.modelId ?? contender.modelId,
+    runtime: localModel(contender.id) ? "browser-wasm" : DEFAULT_RUNTIME,
     soul: "",
     skillIds: [],
     toolIds: [],
@@ -120,6 +123,7 @@ export function cloneConfig(config: BuildConfig): BuildConfig {
     skillIds: [...config.skillIds],
     toolIds: [...config.toolIds],
     knowledgeSources: [...config.knowledgeSources],
+    ...(config.equipmentSlots ? {equipmentSlots:[...config.equipmentSlots]} : {}),
   }
 }
 
@@ -188,11 +192,11 @@ export function equipSkill(config: BuildConfig, skillId: string): EquipResult {
   if (config.skillIds.length >= BUILD_LIMITS.maxSkills) {
     return { ok: false, reason: `A build can carry at most ${BUILD_LIMITS.maxSkills} skills.` }
   }
-  return { ok: true, config: { ...config, skillIds: [...config.skillIds, skillId] } }
+  return { ok: true, config: { ...config, skillIds: [...config.skillIds, skillId], equipmentSlots:undefined } }
 }
 
 export function unequipSkill(config: BuildConfig, skillId: string): BuildConfig {
-  return { ...config, skillIds: config.skillIds.filter((id) => id !== skillId) }
+  return { ...config, skillIds: config.skillIds.filter((id) => id !== skillId), ...(config.equipmentSlots?{equipmentSlots:config.equipmentSlots.map(id=>id===skillId?null:id)}:{}) }
 }
 
 /**
@@ -210,7 +214,7 @@ export function changeContender(config: BuildConfig, contenderId: string): { con
     else dropped.push(id)
   }
   return {
-    config: { ...config, contenderId, modelId: contender.modelId, skillIds: kept },
+    config: { ...config, contenderId, modelId: localModel(contender.id)?.modelId ?? contender.modelId, runtime:localModel(contender.id)?"browser-wasm":DEFAULT_RUNTIME, skillIds: kept },
     dropped,
   }
 }
@@ -228,13 +232,13 @@ export function validateBuild(build: Pick<AgentBuild, "name" | "config">): Build
   if (!contender) {
     issues.push({ severity: "error", field: "contender", message: "The chosen character no longer exists." })
   } else {
-    if (contender.status !== "operational" || !contender.modelId) {
+    if (!localModel(contender.id) && (contender.status !== "operational" || !contender.modelId)) {
       issues.push({
-        severity: "error",
+        severity: "warning",
         field: "contender",
         message: contender.unavailableReason ?? `${contender.name} has no runtime connected.`,
       })
-    } else if (config.modelId !== contender.modelId) {
+    } else if (config.modelId !== (localModel(contender.id)?.modelId ?? contender.modelId)) {
       issues.push({
         severity: "warning",
         field: "model",

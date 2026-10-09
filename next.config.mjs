@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const isStatic=process.env.COLOSSEUM_STATIC_EXPORT==="1"
 const nextConfig={
+ allowedDevOrigins:['127.0.0.1'],
+ agentRules:false,
+ ...(process.env.COLOSSEUM_DEV_DIR?{distDir:process.env.COLOSSEUM_DEV_DIR}:{}),
  ...(isStatic?{output:"export",trailingSlash:true}:{}),
  turbopack:{root:process.cwd()},
  images:{unoptimized:true},

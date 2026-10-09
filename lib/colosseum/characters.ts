@@ -137,3 +137,5 @@ export const CONTENDERS: Contender[] = [
 export function getContender(id: string) {
   return CONTENDERS.find((c) => c.id === id)
 }
+
+CONTENDERS.push({...CONTENDERS[0],id:"qwen25-sage",name:"Capybara · Classic",modelId:"onnx-community/Qwen2.5-0.5B-Instruct"})

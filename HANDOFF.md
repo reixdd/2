@@ -68,3 +68,11 @@ Static build stages source outside the application, excludes only API routes and
 Owner evidence recovery: original browser/origin Archive → export JSON → Developer Access validation → inspect exact originals/provenance → copy accepted trials into `data/public-trials.json` → rebuild → publish. New domains cannot read the old origin's storage automatically. Never reconstruct missing model responses from attestations.
 
 Source and website ZIPs exclude node_modules, build caches, validation records, private env files, and credentials. Review/save/publish the separate cloud environment settings to retain reusable setup; website publication is a separate action. New-task restoration has not been independently verified.
+
+## Phase 4 checkpoint
+
+Continue on `phase4-playable-arena` in `reixdd/2`. The complete source and eleven repository skills are retained. `/workspace/colosseum` remains the original running engine; `engines/original/` retains its implementation for source recovery, excluding downloaded weights. `recovery/phase4/` contains reference source, not a runnable application or an installer to execute blindly.
+
+The Phase 4 test server uses its own `.next-phase4` build directory and port 8792; the earlier running application was not restarted. Build state is shared by a provider, saved builds stay in the existing IndexedDB schema, and personal journey events use a separate transaction-based database. Browser model verification is session-based and requires real generation; configured artifacts are not PLAYABLE by default. Public hosted inference guards are unchanged.
+
+Remaining at this checkpoint: real browser-local model tests, complete keyboard/touch/laptop/mobile QA, migration/import cases, build/export validation, final documentation, PR and static publication access. Do not present this checkpoint as a published public release.
