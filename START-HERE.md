@@ -11,6 +11,8 @@ Cloudflare is the simplest manual route:
 
 Upload the SITE ZIP, not the SOURCE ZIP. Keep `COLOSSEUM-PHASE4-SOURCE.zip` as your complete recovery copy. All eleven skills, source, tests and the original engine are included.
 
-A GitHub project Pages build can be generated with `COLOSSEUM_BASE_PATH=/2 pnpm build:public`. If a `gh-pages` branch is prepared, enable it in https://github.com/reixdd/2/settings/pages using **Deploy from a branch → gh-pages → /(root) → Save**. Only share the URL after GitHub reports a successful deployment.
+GitHub rejected automatic Pages activation with HTTP 403 because the connected integration lacks Pages administration permission. No live public URL is claimed yet.
+
+A GitHub project Pages build can be generated with `COLOSSEUM_BASE_PATH=/2 pnpm build:public`. The tested `gh-pages` branch is prepared. Enable it in https://github.com/reixdd/2/settings/pages using **Deploy from a branch → gh-pages → /(root) → Save**. Only share the URL after GitHub reports a successful deployment.
 
 Try: select a model → Forge → equip and save → practice a challenge → inspect the animated evidence → Ledger Island → complete a mission → Journal. Optional local generation is slow and requires substantial memory; the smallest download is SmolLM2 (~185 MB plus runtime). Published recordings include incorrect results. No worldwide rankings are claimed, and hosting/model-hosting service limits still apply.
