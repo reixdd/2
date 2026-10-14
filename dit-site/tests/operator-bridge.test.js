@@ -74,7 +74,7 @@ test('operator cancel records cancellation and allows later retry without perman
  fs.rmSync(tmp,{recursive:true,force:true});
 });
 
-test('JARVIS shared mode pins one lightweight provider, serializes all identities, and uses a valid DB research stage',async()=>{
+test('JARVIS shared mode pins one provider, runs three identities concurrently, and uses valid DB stage',async()=>{
  const store=new MemoryStore();await bootstrap(store);
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'dit-jarvis-lite-'));
  let release;const barrier=new Promise(r=>release=r);
@@ -87,8 +87,13 @@ test('JARVIS shared mode pins one lightweight provider, serializes all identitie
  assert.equal(save.status,200);assert.equal(op.settings.provider,'jarvis');
  const one=await op.handle(request('/operator/api/run','POST'),{agent_id:'GHOST_001',prompt:'Research a public source fact'});assert.equal(one.status,202);
  const agent=(await store.select('agents',{filters:[['id','eq','GHOST_001']]}))[0];assert.equal(agent.current_stage,'RESEARCH');
- const two=await op.handle(request('/operator/api/run','POST'),{agent_id:'NULL_ENTITY',prompt:'Research another public source'});assert.equal(two.status,429);
- release();for(let i=0;i<40&&op.running.size;i++)await wait(10);
- const rows=await store.select('agent_research_runs');assert.equal(rows.length,1);assert.equal(rows[0].status,'completed');
+ const two=await op.handle(request('/operator/api/run','POST'),{agent_id:'NULL_ENTITY',prompt:'Research another public source'});assert.equal(two.status,202);
+ const three=await op.handle(request('/operator/api/run','POST'),{agent_id:'ECHO.exe',prompt:'Research meme provenance and online culture'});assert.equal(three.status,202);
+ assert.equal(op.running.size,3);
+ const duplicate=await op.handle(request('/operator/api/run','POST'),{agent_id:'GHOST_001',prompt:'Research a new issue'});assert.equal(duplicate.status,409);
+ release();for(let i=0;i<80&&op.running.size;i++)await wait(10);
+ const rows=await store.select('agent_research_runs');assert.equal(rows.length,3);
+ assert.deepEqual(rows.map(x=>x.agent_id).sort(),['ECHO.exe','GHOST_001','NULL_ENTITY']);
+ assert.equal(rows.filter(x=>x.status==='completed').length,3);
  fs.rmSync(tmp,{recursive:true,force:true});
 });
