@@ -81,6 +81,8 @@ test('JARVIS shared mode pins one lightweight provider, serializes all identitie
  const fake=async()=>{await barrier;return new Response('{"type":"answer","text":"Cautious sourced research answer."}\n{"type":"done"}\n')};
  const op=new Operator({store,env:{DIT_JARVIS_SHARED:'1'},port:4173,fetchImpl:fake,configFile:path.join(tmp,'operator.json')});
  assert.equal(op.settings.provider,'jarvis');assert.equal(op.settings.url,'http://127.0.0.1:8768');
+ const custom=new Operator({store,env:{DIT_JARVIS_SHARED:'1',DIT_JARVIS_URL:'http://127.0.0.1:8769'},port:4173,fetchImpl:fake,configFile:path.join(tmp,'custom.json')});
+ assert.equal(custom.settings.url,'http://127.0.0.1:8769');
  const save=await op.handle(request('/operator/api/settings','POST'),testSettings);
  assert.equal(save.status,200);assert.equal(op.settings.provider,'jarvis');
  const one=await op.handle(request('/operator/api/run','POST'),{agent_id:'GHOST_001',prompt:'Research a public source fact'});assert.equal(one.status,202);
