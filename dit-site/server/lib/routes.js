@@ -2,7 +2,7 @@
 import { AGENTS, AGENT_IDS } from './agents.js';
 import { createStore } from './store-core.js';
 import { agentId, limit as vLimit, ValidationError } from './validate.js';
-import { bearer, makeVerifier, RateLimiter, AuthError } from './auth.js';
+import { bearer, makeVerifier, RateLimiter, AuthError, publicSupabaseKey } from './auth.js';
 import { castVote, voteTotals, currentVote } from './votes.js';
 import { verifyWebhook } from './circuit.js';
 import { ingestCircuitEvent, treasuryView, auditLog } from './ledger.js';
@@ -29,8 +29,9 @@ export async function handleBackendApi(request, env, deps = {}) {
   if (method !== 'GET' && !(method === 'POST' && allowedPost)) return json({ error: 'Read-only API. Token signing is never exposed to visitors.' }, 405);
   try {
     const store = deps.store || createStore(env, deps.fetchImpl);
-    const authMode = env.SUPABASE_URL && env.SUPABASE_ANON_KEY ? 'supabase' : env.DIT_DEV_AUTH === '1' ? 'dev' : 'none';
-    if (path === '/api/config') return json({ backend: { configured: !!store, kind: store?.kind || null }, auth: authMode, supabase: authMode === 'supabase' ? { url: env.SUPABASE_URL, anonKey: env.SUPABASE_ANON_KEY } : null, treasuryTargetBps: Number(env.TREASURY_BPS || 2500), simulationOnly: true });
+    const anonKey = publicSupabaseKey(env);
+    const authMode = env.SUPABASE_URL && anonKey ? 'supabase' : env.DIT_DEV_AUTH === '1' ? 'dev' : 'none';
+    if (path === '/api/config') return json({ backend: { configured: !!store, kind: store?.kind || null }, auth: authMode, supabase: authMode === 'supabase' ? { url: env.SUPABASE_URL, anonKey } : null, treasuryTargetBps: Number(env.TREASURY_BPS || 2500), simulationOnly: true });
     if (!store) return json({ error: 'backend_not_configured', message: 'The database is not connected. Nothing below is live.' }, 503);
 
     if (path === '/api/health') {

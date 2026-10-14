@@ -1434,3 +1434,23 @@ a {
     scroll-behavior: auto !important;
   }
 }
+
+/* Offline dossiers keep the character visible without inventing live records. */
+.dossier-layout-offline { min-height: min(560px, 82svh); height: auto; }
+.dossier-layout-offline .dossier-art img { max-height: 430px; object-fit: contain; }
+.dossier-offline-body { display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+.dossier-offline-body h2 { margin: 0; }
+.dossier-offline-body p { margin: 0; max-width: 55ch; }
+.dossier-connection { display: grid; gap: 10px; margin: 16px 0 4px; padding: 19px 22px; border-left: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 5%, #090f18); }
+.dossier-connection strong { color: var(--accent); font: 12px/1.5 var(--mono); letter-spacing: .11em; }
+.dossier-connection span { color: var(--sub); font: 13px/1.7 Arial, sans-serif; }
+.dossier-offline-body > .entity-vote { align-self: flex-start; margin-top: 10px; }
+.dialog-close { user-select: none; }
+.dialog-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+@media (max-width: 680px) {
+  .dossier-layout-offline { min-height: 0; }
+  .dossier-layout-offline .dossier-art { min-height: 185px; max-height: 33svh; }
+  .dossier-layout-offline .dossier-art img { max-height: 26svh; width: auto; }
+  .dossier-offline-body { padding: 22px 24px 30px; }
+  .dossier-connection { padding: 14px 16px; }
+}

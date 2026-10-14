@@ -1,10 +1,13 @@
 // Identity for voting. Browsers present a Supabase access token; we validate it with Supabase Auth (never trust a client-supplied user id).
+// The hosted Site already uses NEXT_PUBLIC_SUPABASE_ANON_KEY; this key is public by design.
+export const publicSupabaseKey = env => env.SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 export class AuthError extends Error { constructor(m, status = 401) { super(m); this.status = status; } }
 export function bearer(request) { const h = request.headers.get('authorization') || ''; const m = /^Bearer\s+(\S+)$/i.exec(h); return m ? m[1] : null; }
 
 export async function verifySupabaseUser(env, token, fetchImpl = (...a) => fetch(...a)) {
-  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) throw new AuthError('Authentication is not configured', 503);
-  const r = await fetchImpl(env.SUPABASE_URL.replace(/\/+$/, '') + '/auth/v1/user', { headers: { apikey: env.SUPABASE_ANON_KEY, authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(8000) });
+  const anonKey = publicSupabaseKey(env);
+  if (!env.SUPABASE_URL || !anonKey) throw new AuthError('Authentication is not configured', 503);
+  const r = await fetchImpl(env.SUPABASE_URL.replace(/\/+$/, '') + '/auth/v1/user', { headers: { apikey: anonKey, authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(8000) });
   if (r.status === 401 || r.status === 403) throw new AuthError('Session expired. Sign in again.');
   if (!r.ok) throw new AuthError('Authentication provider unavailable', 503);
   const u = await r.json();
