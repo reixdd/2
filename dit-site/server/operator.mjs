@@ -14,18 +14,19 @@ export class Operator {
   constructor({store,env,port,fetchImpl=fetch,configFile='.data/operator-settings.json',onSettings=async()=>{}}){
     this.store=store;this.env=env;this.port=port;this.fetchImpl=fetchImpl;this.configFile=configFile;this.onSettings=onSettings;this.running=new Map();
     this.lowLoad = env.DIT_JARVIS_SHARED === '1';
+    this.maxConcurrent = this.lowLoad ? Math.max(1, Math.min(3, Number(env.DIT_JARVIS_PARALLEL || 3))) : 3;
     const fallback={provider:this.lowLoad?'jarvis':'ollama',url:this.lowLoad?(env.DIT_JARVIS_URL||'http://127.0.0.1:8768'):(env.OLLAMA_URL||'http://127.0.0.1:11434'),models:{GHOST_001:env.DIT_MODEL_GHOST||'',NULL_ENTITY:env.DIT_MODEL_NULL||'','ECHO.exe':env.DIT_MODEL_ECHO||''}};
     let saved={};try{saved=JSON.parse(fs.readFileSync(configFile,'utf8'))}catch{}
     try{this.settings=validateSettings(this.lowLoad?fallback:{...fallback,...saved})}catch{this.settings=validateSettings(fallback)}
   }
-  publicStatus(){return {settings:this.settings,lowLoad:this.lowLoad,running:[...this.running.keys()],note:'Research only. No wallet signing or launches.'}}
+  publicStatus(){return {settings:this.settings,lowLoad:this.lowLoad,maxConcurrent:this.maxConcurrent,running:[...this.running.keys()],note:'Research only. No wallet signing or launches.'}}
   async handle(request,body={}){
     const {method,url,headers}=request;if(!allowedOperatorRequest({headers},this.port))return out({error:'Loopback operator only; Host/Origin rejected'},403);
     const p=new URL(url).pathname;
     try{
       if(p==='/operator/api/settings'&&method==='GET')return out(this.publicStatus());
       if(p==='/operator/api/settings'&&method==='POST'){
-        const next=validateSettings(this.lowLoad?{...body,provider:'jarvis',url:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',models:{}}:body);
+        const next=validateSettings(this.lowLoad?{...body,provider:'jarvis',url:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',models:this.settings.models}:body);
         this.settings=next;await this.onSettings(next);fs.mkdirSync(path.dirname(this.configFile),{recursive:true});fs.writeFileSync(this.configFile,JSON.stringify(next,null,2),{mode:0o600});
         return out(this.publicStatus());
       }
@@ -33,7 +34,7 @@ export class Operator {
       if(p==='/operator/api/run'&&method==='POST'){
         const {agent_id:id,prompt}=body;if(!IDENTITIES.includes(id))return out({error:'Invalid agent'},400);
         if(this.running.has(id))return out({error:'An operator run is already active for this agent'},409);
-        if(this.lowLoad&&this.running.size>0)return out({error:'JARVIS lite mode is busy with another agent; try again after it finishes'},429);
+        if(this.running.size>=this.maxConcurrent)return out({error:'All bounded JARVIS research slots are busy; retry shortly'},429);
         const ac=new AbortController();const run=crypto.randomUUID();this.running.set(id,{id:run,ac});
         const row={id:run,agent_id:id,prompt:tidy(prompt).slice(0,3500),provider:this.settings.provider,model:this.settings.models[id]||null,status:'running',started_at:new Date().toISOString(),finished_at:null,answer:null,error:null,source_refs:[],requested_specialists:null};
         if(!row.prompt||row.prompt.length<8){this.running.delete(id);return out({error:'Research prompt too short'},400)}
