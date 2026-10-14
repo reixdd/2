@@ -78,7 +78,7 @@ test('JARVIS shared mode pins one lightweight provider, serializes all identitie
  const store=new MemoryStore();await bootstrap(store);
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'dit-jarvis-lite-'));
  let release;const barrier=new Promise(r=>release=r);
- const fake=async()=>{await barrier;return new Response('{"type":"answer","text":"Cautious sourced research answer."}\\n{"type":"done"}\\n')};
+ const fake=async()=>{await barrier;return new Response('{"type":"answer","text":"Cautious sourced research answer."}\n{"type":"done"}\n')};
  const op=new Operator({store,env:{DIT_JARVIS_SHARED:'1'},port:4173,fetchImpl:fake,configFile:path.join(tmp,'operator.json')});
  assert.equal(op.settings.provider,'jarvis');assert.equal(op.settings.url,'http://127.0.0.1:8768');
  const save=await op.handle(request('/operator/api/settings','POST'),testSettings);
