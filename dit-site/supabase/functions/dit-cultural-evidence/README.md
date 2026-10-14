@@ -27,3 +27,7 @@ It does not create tokens, sign transactions, submit trades, transfer funds, or 
 - Supabase Free projects may pause during inactivity or be subject to platform usage limits.
 - The `pg_net` extension installed by migration `0007` is not relocatable in place. If Supabase flags it as an extension-in-public advisory, review the documented extension placement before making a disruptive reinstall.
 - Email OTP voting requires Supabase Auth's actual site URL and redirect settings, plus user-driven end-to-end testing.
+
+## Supabase-managed pg_net advisory
+
+Supabase reports that `pg_net` is installed with its extension owner in the public schema. We attempted a least-privilege REVOKE through a follow-up migration, but verified that Supabase-managed `net` function privileges still remain on `anon` and `authenticated` because the schema is owned by `supabase_admin`, not the current Postgres migration role. Do not treat the advisory as resolved. Keep the `net` schema out of the PostgREST exposed-schemas setting, and have a Supabase administrator review managed extension permissions before broader production deployment. This does not grant browser users access to the worker's dedicated token table, which has independently verified SELECT denials.
