@@ -34,7 +34,7 @@ export async function handleBackendApi(request, env, deps = {}) {
     const authMode = publicUrl && anonKey ? 'supabase' : env.DIT_DEV_AUTH === '1' && !publicUrl ? 'dev' : 'none';
     // Safe diagnostic: only missing variable NAMES, never values or secret prefixes.
     const missing = [!publicUrl && 'SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL', !env.SUPABASE_SERVICE_ROLE_KEY && 'SUPABASE_SERVICE_ROLE_KEY'].filter(Boolean);
-    if (path === '/api/config') return json({ backend: { configured: !!store, kind: store?.kind || null, missingBindings: store ? [] : missing }, auth: authMode, supabase: authMode === 'supabase' ? { url: publicUrl, anonKey } : null, treasuryTargetBps: Number(env.TREASURY_BPS || 2500), simulationOnly: true, release: 'v7-cinematic-cleanup-20261014' });
+    if (path === '/api/config') return json({ backend: { configured: !!store, kind: store?.kind || null, missingBindings: store ? [] : missing }, auth: authMode, supabase: authMode === 'supabase' ? { url: publicUrl, anonKey } : null, treasuryTargetBps: Number(env.TREASURY_BPS || 2500), simulationOnly: true, release: 'v7-interactive-2_5d-20261014' });
     if (!store) return json({ error: 'backend_not_configured', message: 'The database is not connected. Nothing below is live.' }, 503);
 
     if (path === '/api/health') {
