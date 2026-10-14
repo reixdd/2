@@ -17,7 +17,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install model exporter
-        run: python -m pip install "numpy>=1.26,<3" "trimesh>=4.5,<5" "pillow>=10"
+        run: python -m pip install "numpy>=1.26,<3" "trimesh>=4.5,<5" "pillow>=10" "scipy>=1.11"
       - name: Generate nine GLB files
         run: python dit-assets/build_models.py
       - name: Verify binary GLB models
