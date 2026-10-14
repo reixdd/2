@@ -5,7 +5,7 @@ import { createLlm, selectOllamaModels } from '../worker/llm.js';
 const file = n=>readFileSync(new URL(n, import.meta.url),'utf8');
 test('V5 keeps one open stage, top-level system, independent music controls and podiums',()=>{
  const html=file('../dist/index.html'),css=file('../dist/presence-v5.css'),stage=file('../dist/stage.js');
- assert.match(html,/presence-v5\.css/);assert.match(html,/id="dit-music-toggle"/);assert.match(html,/03 \/ SYSTEM</);
+ assert.match(html,/reference-v7\.css/);assert.match(html,/id="dit-music-toggle"/);assert.match(html,/03 \/ SYSTEM</);
  assert.match(stage,/CylinderGeometry/);assert.match(stage,/TorusGeometry/);assert.doesNotMatch(stage,/const orbitRings/);
  assert.match(css,/\.dit-stage-labels\{width:min\(67%/);assert.match(css,/grayscale\(1\)/);
 });

@@ -1,11 +1,13 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {readFileSync,existsSync} from 'node:fs';
 const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
-test('V7 reference layout is wired in last and matches the mock structure',()=>{
- const html=read('../dist/index.html'),css=read('../dist/reference-v7.css');
- assert.ok(html.indexOf('reference-v7.css')>html.indexOf('observatory-v6.css'),'v7 must load after v6');
- assert.match(html,/03 \/ SYSTEM<\/button>/);assert.match(html,/\/\/ LIVE TRANSMISSIONS/);assert.match(html,/VIEW ALL TRANSMISSIONS/);assert.match(html,/01 \/ LIVE OBSERVATION/);
- assert.match(css,/\.operating-rail\{position:absolute/);assert.match(css,/\.dit-stage-labels\{[^}]*var\(--stage-span/);
- assert.match(css,/\.agent-live-state::before/);assert.match(css,/\.command-bottom\{display:none\}/);
+test('production loads one consolidated stylesheet and a self-hosted renderer',()=>{
+ const html=read('../dist/index.html');
+ assert.equal((html.match(/rel="stylesheet"/g)||[]).length,1);
+ assert.match(html,/href="reference-v7.css"/);
+ assert.match(html,/vendor\/three.module.js/);
+ assert.doesNotMatch(html,/fonts.googleapis|cdn.jsdelivr/);
+ for(const panel of ['network','activity','system'])assert.ok(html.includes(`data-panel="${panel}"`));
+ assert.match(html,/RESEARCH TRANSMISSIONS/);
 });
 test('V7 labels carry status pill, VIEW DOSSIER, VOTE and a keyboard-operable more menu',()=>{
  const stage=read('../dist/stage.js');

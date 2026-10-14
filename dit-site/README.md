@@ -1,3 +1,13 @@
+# V7 — cinematic production pass
+
+Start the existing application with Node.js 22+: `cd dit-site` then `npm run dev`, or double-click `dit-site/START-DIT-WINDOWS.cmd` on Windows. No npm installation is required to run the local application. Open `http://127.0.0.1:4173`.
+
+The scene uses the original detailed 2.5D artwork, real reflective silver podium geometry, an instanced city, and one shared camera. The prototype GLBs remain in `../dit-assets/models/`; they are authoring assets and are not automatically substituted for the character artwork. Fonts and Three.js 0.160.0 are bundled locally with their licenses.
+
+See [production changes and verification](docs/CINEMATIC_PRODUCTION.md) and [startup / upgrade instructions](START-HERE.md). Preserve your existing `.env` and `.data` when upgrading. Backend contracts, model configuration, Windows launcher, and treasury/signing behavior are unchanged.
+
+---
+
 # V6.1 — Windows file-store crash fix
 
 Resolved the `EPERM rename .data/dit-store.json.tmp -> .data/dit-store.json` local-server crash with serialized writes, Windows lock retries, and interrupted-save recovery. **Keep your existing `.data/` directory when upgrading.** See [Windows repair / upgrade instructions](docs/WINDOWS_STORAGE_FIX.md). The Ollama `fetch failed` log is a separate model-connection issue.
@@ -8,7 +18,7 @@ Resolved the `EPERM rename .data/dit-store.json.tmp -> .data/dit-store.json` loc
 
 The latest build is `DEAD_INTERNET_THEORY_MACHINE_OBSERVATORY_V6.zip`. It preserves the DIT codebase and adds three separate transparent character cutouts above metallic podium geometry, a narrow left treasury rail, compact recorded transmissions, and a local Ollama / OpenAI-compatible / JARVIS research companion.
 
-**Run on Windows:** extract, enter `proj`, double-click `START-DIT-WINDOWS.cmd`, then open `http://127.0.0.1:4173` and `http://127.0.0.1:4173/operator`. The operator can discover installed local models and save assignments, manually run/cancel research and show recorded results. Until providers connect, actual AI generation remains unavailable. See [Observatory V6](docs/OBSERVATORY_V6.md).
+**Run on Windows:** extract, enter `dit-site`, double-click `START-DIT-WINDOWS.cmd`, then open `http://127.0.0.1:4173` and `http://127.0.0.1:4173/operator`. The operator can discover installed local models and save assignments, manually run/cancel research and show recorded results. Until providers connect, actual AI generation remains unavailable. See [Observatory V6](docs/OBSERVATORY_V6.md).
 
 The site has no automatic token deployment or guaranteed creator-fee transfers. To sync local research with a hosted website, configure shared Supabase and apply all migrations through `0004_agent_research_runs.sql`. **Changes in this ZIP were not pushed or published to the existing hosted Site.**
 
@@ -59,7 +69,7 @@ A continuation of the original cyberpunk website. Preserves the supplied artwork
 | Automated research scheduler with retries, rate limits and per-agent budgets | Implemented; runs server-side, subject to external API limits |
 | AI-generated original concept proposals | Implemented; requires supported Anthropic API key/model and successful provider calls |
 | Votes | Tested with local development identity; real public voting requires Supabase Auth and SQL migrations |
-| Agent animation | **Three.js control-room stage** (`dist/stage.js`): depth-parallax portraits, breathing, cursor head-tracking, state-driven lighting/glitch/particles, click-to-zoom into the live dossier, lazy-loaded, reduced-motion aware. Portraits are 2D art, **not rigged 3D**; drop `ghost_001.glb`, `null_entity.glb`, `echo_exe.glb` into `dist/assets/models/` and they load automatically. **Not visually QA'd in a browser in the build environment.** |
+| Agent animation | **Three.js control-room stage** (`dist/stage.js`): depth-parallax portraits, breathing, cursor head-tracking, state-driven lighting/glitch/particles, click-to-zoom into the live dossier, lazy-loaded, reduced-motion aware. Portraits are 2D art, **not rigged 3D**. The cinematic production pass keeps them above real PBR podium geometry; see `docs/CINEMATIC_PRODUCTION.md` for browser verification and measured limitations. |
 | Realtime updates | Supabase Realtime (`dist/realtime.js`) in production, SSE `/api/stream` in local mode, 15s polling fallback. Supabase path unverified against a live project. |
 | Evidence pages | `#evidence/<mint>` (`dist/evidence.js`): agent, proposal lifecycle history, linked source observations, on-chain verification links |
 | 25% of confirmed creator fees | Integer accounting and displayed calculation, **no automatic money movement** |
@@ -85,7 +95,7 @@ What *is* publicly documented is Pump.fun's native **Creator Fee Sharing** (`pum
 
 ## 3D models
 
-Place rigged GLB files at `dist/assets/models/{ghost_001,null_entity,echo_exe}.glb`. The stage loads the first animation clip, tracks the cursor with any bone named like `head`, and hides the parallax plane. Rebuild with `npm run build`.
+All nine original GLB files are retained under `../dit-assets/models/`, along with their generator and concept references. The production stage deliberately uses higher-detail 2.5D portraits. Integrating future rigged models requires a reviewed stage change; copying a GLB into the static directory no longer silently replaces the artwork.
 
 ## Main directories
 
@@ -109,7 +119,7 @@ Place rigged GLB files at `dist/assets/models/{ghost_001,null_entity,echo_exe}.g
 
 See `docs/INTEGRATION.md` for the original legacy launch verifier setup and `docs/IMPLEMENTATION_STATUS.md` for a precise change log.
 
-**Font assets:** The original uploaded ZIP contains custom font binaries. They are not redistributed in this deliverable. To restore the exact original typography, copy your own `display.woff2` and `mono.woff2` from your original ZIP back into `dist/assets/`, then rerun `npm run build`. Without them the site uses built-in fallback fonts.
+**Font assets:** Anton and IBM Plex Mono Latin WOFF2 files are bundled in `dist/assets/fonts/`, together with their open-source licenses. System fallbacks remain available. No Google Fonts request is required.
 
 ## V4 Machine Presence (October 2026)
 

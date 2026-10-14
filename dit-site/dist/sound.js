@@ -16,12 +16,12 @@ function ensureAudio() {
   } catch { return null; }
 }
 // Non-melodic machine responses: filtered relay noise plus a single low resonant pulse.
-function beep(kind='select') {
+function beep(kind='select', agent=null) {
   if(!fxEnabled)return;const c=ensureAudio();if(!c)return;
   const p=params[kind]||params.select,t=c.currentTime;
   const n=Math.max(128,Math.round(c.sampleRate*p.duration)),buffer=c.createBuffer(1,n,c.sampleRate);
   const data=buffer.getChannelData(0);for(let i=0;i<n;i++){const decay=(1-i/n)**2;data[i]=(Math.random()*2-1)*decay;}
-  const source=c.createBufferSource(),filter=c.createBiquadFilter(),amp=c.createGain();source.buffer=buffer;filter.type=kind==='transmit'?'lowpass':'bandpass';filter.frequency.value=p.frequency;filter.Q.value=kind==='hover'?2.2:1.35;
+  const source=c.createBufferSource(),filter=c.createBiquadFilter(),amp=c.createGain();source.buffer=buffer;filter.type=kind==='transmit'?'lowpass':'bandpass';filter.frequency.value=p.frequency*({'GHOST_001':.72,'NULL_ENTITY':.46,'ECHO.exe':1.45}[agent]||1);filter.Q.value=kind==='hover'?2.2:1.35;
   amp.gain.setValueAtTime(.0001,t);amp.gain.linearRampToValueAtTime(p.volume,t+.005);amp.gain.exponentialRampToValueAtTime(.0001,t+p.duration);
   source.connect(filter);filter.connect(amp);amp.connect(bus);source.start(t);source.stop(t+p.duration+.02);
   if(kind==='panel'||kind==='transmit'||kind==='vote'){
@@ -66,9 +66,11 @@ document.addEventListener('pointerover',e=>{const t=e.target.closest('button, a,
 document.addEventListener('click',e=>{if(e.target.closest('#dit-sound-toggle,#dit-music-toggle'))return;
  if(e.target.closest('[data-vote]'))beep('vote');
  else if(e.target.closest('[data-panel],.command-nav button'))beep('panel');
- else if(e.target.closest('button,a,[data-stage-agent],#dit-stage-canvas'))beep('select');
+ else if(!e.target.closest('[data-stage-open],#dit-stage-canvas')&&e.target.closest('button,a'))beep('select');
 });
-window.addEventListener('dit:transmission',()=>beep('transmit'));
+window.addEventListener('dit:select',e=>beep('select',e.detail?.id));
+window.addEventListener('dit:transmission',e=>beep('transmit',e.detail?.agent));
 window.addEventListener('dit:ui-error',()=>beep('error'));
-document.addEventListener('visibilitychange',()=>{if(!bgAudio)return;if(document.hidden&&musicEnabled)bgAudio.pause();else if(!document.hidden&&musicEnabled)bgAudio.play().catch(()=>{})});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){ctx?.suspend();bgAudio?.pause();}else{if(fxEnabled||musicEnabled)ctx?.resume();if(musicEnabled&&usingFile)bgAudio?.play().catch(()=>{});}});
+window.addEventListener('pagehide',e=>{if(e.persisted)return;stopDrone();bgAudio?.pause();ctx?.close();});
 updateToggles();
