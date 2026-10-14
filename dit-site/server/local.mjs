@@ -15,6 +15,9 @@ import { voteTotals } from './lib/votes.js';
 const dir=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const env={...process.env};
 const sharedUrl=supabaseUrlFromEnv(env);
+// A local DIT operator can reuse an existing JARVIS core without creating a second
+// research scheduler or sending competing requests to Ollama.
+if(env.DIT_JARVIS_SHARED==='1')env.DIT_START_SCHEDULER='0';
 if ((sharedUrl && !env.SUPABASE_SERVICE_ROLE_KEY)||(!sharedUrl&&env.SUPABASE_SERVICE_ROLE_KEY))throw Error('Both SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY are required for shared storage');
 const shared=!!(sharedUrl&&env.SUPABASE_SERVICE_ROLE_KEY)&&env.DIT_STORE!=='file';
 env.DIT_STORE=shared?'supabase':'file'; env.DIT_DEV_AUTH=shared?'0':(env.DIT_DEV_AUTH||'1');
