@@ -25,7 +25,7 @@ export class Operator {
     try{
       if(p==='/operator/api/settings'&&method==='GET')return out(this.publicStatus());
       if(p==='/operator/api/settings'&&method==='POST'){
-        const next=validateSettings(this.lowLoad?{...body,provider:'jarvis',url:env.DIT_JARVIS_URL||'http://127.0.0.1:8768',models:{}}:body);
+        const next=validateSettings(this.lowLoad?{...body,provider:'jarvis',url:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',models:{}}:body);
         this.settings=next;await this.onSettings(next);fs.mkdirSync(path.dirname(this.configFile),{recursive:true});fs.writeFileSync(this.configFile,JSON.stringify(next,null,2),{mode:0o600});
         return out(this.publicStatus());
       }
