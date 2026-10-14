@@ -1,0 +1,1884 @@
+{
+  "schemaVersion": 1,
+  "note": "Actual release QA captures; owner-curated, client-controlled, not independently attested. Browser CPU results do not prove readiness on another device.",
+  "records": [
+    {
+      "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d",
+      "mode": "local-ai",
+      "contenderId": "small-spark",
+      "modelId": "onnx-community/SmolLM2-135M-Instruct-ONNX",
+      "modelRevision": "b8a5c0f183b78c55955a5364f610c36668b5e681",
+      "runtime": "Transformers.js 4.3.1 / ONNX WASM CPU",
+      "challengeId": "the-first-sigil",
+      "challengeVersion": 1,
+      "prompt": "A merchant in the Colosseum bazaar sells crystal shards. On day one she sells 17 shards. Each following day she sells 4 more shards than the day before. How many shards does she sell in total over 9 days?\n\nShow brief reasoning, then end your response with a final line in the exact format: ANSWER: <number>",
+      "inputIdentity": "81dea61380660d6e3ca0f8a38ebdd804763db7f916f4cc9ab30b4f985840d140",
+      "buildId": "build-mv0b581v-h5rsd",
+      "configuration": {
+        "contenderId": "small-spark",
+        "modelId": "onnx-community/SmolLM2-135M-Instruct-ONNX",
+        "runtime": "browser-wasm",
+        "soul": "",
+        "skillIds": [],
+        "toolIds": [],
+        "knowledgeSources": []
+      },
+      "buildFingerprint": "{\"c\":\"small-spark\",\"m\":\"onnx-community/SmolLM2-135M-Instruct-ONNX\",\"r\":\"browser-wasm\",\"s\":\"\",\"k\":[],\"t\":[],\"n\":[]}",
+      "instructions": "You are an AI contestant. Follow the requested answer format.",
+      "parameters": {
+        "temperature": 0,
+        "maxTokens": 128
+      },
+      "startedAt": 1791510589247,
+      "finishedAt": 1791510631273,
+      "initializationMs": 4307.79999999702,
+      "latencyMs": 42017.39999999851,
+      "output": "On day one, the merchant sells 17 shards. On day two, she sells 4 more shards than the day before. On day three, she sells 4 more shards than the day before. On day four, she sells 4 more shards than the day before. On day five, she sells 4 more shards than the day before. On day six, she sells 4 more shards than the day before. On day seven, she sells 4 more shards than the day before. On day eight, she sells 4 more shards than the day before. On day nine",
+      "tokens": 128,
+      "status": "completed",
+      "correct": false,
+      "extracted": null,
+      "provenance": "visitor-device; client-controlled; not independently attested",
+      "events": [
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:0",
+          "type": "battle_created",
+          "at": 1791510589247
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:1",
+          "type": "model_ready",
+          "at": 1791510589247
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:2",
+          "type": "challenge_started",
+          "at": 1791510589247
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:3",
+          "type": "output_streamed",
+          "at": 1791510591226,
+          "detail": "On "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:4",
+          "type": "output_streamed",
+          "at": 1791510591535,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:5",
+          "type": "output_streamed",
+          "at": 1791510592271,
+          "detail": "one, "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:6",
+          "type": "output_streamed",
+          "at": 1791510592566,
+          "detail": "the "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:7",
+          "type": "output_streamed",
+          "at": 1791510592950,
+          "detail": "merchant "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:8",
+          "type": "output_streamed",
+          "at": 1791510593342,
+          "detail": "sells "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:9",
+          "type": "output_streamed",
+          "at": 1791510594408,
+          "detail": "17 "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:10",
+          "type": "output_streamed",
+          "at": 1791510595636,
+          "detail": "shards. "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:11",
+          "type": "output_streamed",
+          "at": 1791510595942,
+          "detail": "On "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:12",
+          "type": "output_streamed",
+          "at": 1791510596220,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:13",
+          "type": "output_streamed",
+          "at": 1791510596852,
+          "detail": "two, "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:14",
+          "type": "output_streamed",
+          "at": 1791510597231,
+          "detail": "she "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:15",
+          "type": "output_streamed",
+          "at": 1791510597595,
+          "detail": "sells "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:16",
+          "type": "output_streamed",
+          "at": 1791510598312,
+          "detail": "4 "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:17",
+          "type": "output_streamed",
+          "at": 1791510598635,
+          "detail": "more "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:18",
+          "type": "output_streamed",
+          "at": 1791510599345,
+          "detail": "shards "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:19",
+          "type": "output_streamed",
+          "at": 1791510599630,
+          "detail": "than "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:20",
+          "type": "output_streamed",
+          "at": 1791510600023,
+          "detail": "the "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:21",
+          "type": "output_streamed",
+          "at": 1791510600342,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:22",
+          "type": "output_streamed",
+          "at": 1791510601006,
+          "detail": "before. "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:23",
+          "type": "output_streamed",
+          "at": 1791510601283,
+          "detail": "On "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:24",
+          "type": "output_streamed",
+          "at": 1791510601622,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:25",
+          "type": "output_streamed",
+          "at": 1791510602299,
+          "detail": "three, "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:26",
+          "type": "output_streamed",
+          "at": 1791510602578,
+          "detail": "she "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:27",
+          "type": "output_streamed",
+          "at": 1791510602891,
+          "detail": "sells "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:28",
+          "type": "output_streamed",
+          "at": 1791510603654,
+          "detail": "4 "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:29",
+          "type": "output_streamed",
+          "at": 1791510604003,
+          "detail": "more "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:30",
+          "type": "output_streamed",
+          "at": 1791510604563,
+          "detail": "shards "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:31",
+          "type": "output_streamed",
+          "at": 1791510604849,
+          "detail": "than "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:32",
+          "type": "output_streamed",
+          "at": 1791510605141,
+          "detail": "the "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:33",
+          "type": "output_streamed",
+          "at": 1791510605411,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:34",
+          "type": "output_streamed",
+          "at": 1791510605994,
+          "detail": "before. "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:35",
+          "type": "output_streamed",
+          "at": 1791510606263,
+          "detail": "On "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:36",
+          "type": "output_streamed",
+          "at": 1791510606534,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:37",
+          "type": "output_streamed",
+          "at": 1791510607055,
+          "detail": "four, "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:38",
+          "type": "output_streamed",
+          "at": 1791510607317,
+          "detail": "she "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:39",
+          "type": "output_streamed",
+          "at": 1791510607577,
+          "detail": "sells "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:40",
+          "type": "output_streamed",
+          "at": 1791510608107,
+          "detail": "4 "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:41",
+          "type": "output_streamed",
+          "at": 1791510608380,
+          "detail": "more "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:42",
+          "type": "output_streamed",
+          "at": 1791510608901,
+          "detail": "shards "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:43",
+          "type": "output_streamed",
+          "at": 1791510609190,
+          "detail": "than "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:44",
+          "type": "output_streamed",
+          "at": 1791510609520,
+          "detail": "the "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:45",
+          "type": "output_streamed",
+          "at": 1791510609989,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:46",
+          "type": "output_streamed",
+          "at": 1791510610667,
+          "detail": "before. "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:47",
+          "type": "output_streamed",
+          "at": 1791510610937,
+          "detail": "On "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:48",
+          "type": "output_streamed",
+          "at": 1791510611206,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:49",
+          "type": "output_streamed",
+          "at": 1791510611925,
+          "detail": "five, "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:50",
+          "type": "output_streamed",
+          "at": 1791510612400,
+          "detail": "she "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:51",
+          "type": "output_streamed",
+          "at": 1791510612760,
+          "detail": "sells "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:52",
+          "type": "output_streamed",
+          "at": 1791510613369,
+          "detail": "4 "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:53",
+          "type": "output_streamed",
+          "at": 1791510613678,
+          "detail": "more "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:54",
+          "type": "output_streamed",
+          "at": 1791510614393,
+          "detail": "shards "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:55",
+          "type": "output_streamed",
+          "at": 1791510614809,
+          "detail": "than "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:56",
+          "type": "output_streamed",
+          "at": 1791510615075,
+          "detail": "the "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:57",
+          "type": "output_streamed",
+          "at": 1791510615375,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:58",
+          "type": "output_streamed",
+          "at": 1791510616012,
+          "detail": "before. "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:59",
+          "type": "output_streamed",
+          "at": 1791510616388,
+          "detail": "On "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:60",
+          "type": "output_streamed",
+          "at": 1791510616766,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:61",
+          "type": "output_streamed",
+          "at": 1791510617464,
+          "detail": "six, "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:62",
+          "type": "output_streamed",
+          "at": 1791510617791,
+          "detail": "she "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:63",
+          "type": "output_streamed",
+          "at": 1791510618252,
+          "detail": "sells "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:64",
+          "type": "output_streamed",
+          "at": 1791510619010,
+          "detail": "4 "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:65",
+          "type": "output_streamed",
+          "at": 1791510619295,
+          "detail": "more "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:66",
+          "type": "output_streamed",
+          "at": 1791510619884,
+          "detail": "shards "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:67",
+          "type": "output_streamed",
+          "at": 1791510620211,
+          "detail": "than "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:68",
+          "type": "output_streamed",
+          "at": 1791510620525,
+          "detail": "the "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:69",
+          "type": "output_streamed",
+          "at": 1791510620833,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:70",
+          "type": "output_streamed",
+          "at": 1791510621375,
+          "detail": "before. "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:71",
+          "type": "output_streamed",
+          "at": 1791510621644,
+          "detail": "On "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:72",
+          "type": "output_streamed",
+          "at": 1791510621966,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:73",
+          "type": "output_streamed",
+          "at": 1791510622568,
+          "detail": "seven, "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:74",
+          "type": "output_streamed",
+          "at": 1791510622902,
+          "detail": "she "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:75",
+          "type": "output_streamed",
+          "at": 1791510623191,
+          "detail": "sells "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:76",
+          "type": "output_streamed",
+          "at": 1791510623851,
+          "detail": "4 "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:77",
+          "type": "output_streamed",
+          "at": 1791510624209,
+          "detail": "more "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:78",
+          "type": "output_streamed",
+          "at": 1791510624878,
+          "detail": "shards "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:79",
+          "type": "output_streamed",
+          "at": 1791510625184,
+          "detail": "than "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:80",
+          "type": "output_streamed",
+          "at": 1791510625466,
+          "detail": "the "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:81",
+          "type": "output_streamed",
+          "at": 1791510625749,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:82",
+          "type": "output_streamed",
+          "at": 1791510626327,
+          "detail": "before. "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:83",
+          "type": "output_streamed",
+          "at": 1791510626604,
+          "detail": "On "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:84",
+          "type": "output_streamed",
+          "at": 1791510626870,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:85",
+          "type": "output_streamed",
+          "at": 1791510627429,
+          "detail": "eight, "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:86",
+          "type": "output_streamed",
+          "at": 1791510627718,
+          "detail": "she "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:87",
+          "type": "output_streamed",
+          "at": 1791510627992,
+          "detail": "sells "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:88",
+          "type": "output_streamed",
+          "at": 1791510628521,
+          "detail": "4 "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:89",
+          "type": "output_streamed",
+          "at": 1791510628838,
+          "detail": "more "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:90",
+          "type": "output_streamed",
+          "at": 1791510629372,
+          "detail": "shards "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:91",
+          "type": "output_streamed",
+          "at": 1791510629654,
+          "detail": "than "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:92",
+          "type": "output_streamed",
+          "at": 1791510629916,
+          "detail": "the "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:93",
+          "type": "output_streamed",
+          "at": 1791510630184,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:94",
+          "type": "output_streamed",
+          "at": 1791510630735,
+          "detail": "before. "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:95",
+          "type": "output_streamed",
+          "at": 1791510631004,
+          "detail": "On "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:96",
+          "type": "output_streamed",
+          "at": 1791510631272,
+          "detail": "day "
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:97",
+          "type": "output_streamed",
+          "at": 1791510631272,
+          "detail": "nine"
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:98",
+          "type": "output_completed",
+          "at": 1791510631273
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:99",
+          "type": "checker_completed",
+          "at": 1791510631273,
+          "detail": "incorrect"
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:100",
+          "type": "evidence_stored",
+          "at": 1791510631273
+        },
+        {
+          "id": "e9d8582d-f68f-45ac-a481-a14a2f25e59d:101",
+          "type": "battle_finished",
+          "at": 1791510631273
+        }
+      ]
+    },
+    {
+      "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99",
+      "mode": "local-ai",
+      "contenderId": "qwen25-sage",
+      "modelId": "onnx-community/Qwen2.5-0.5B-Instruct",
+      "modelRevision": "22942cb7d7ba4cc81bb4673549ca4d4614469b5e",
+      "runtime": "Transformers.js 4.3.1 / ONNX WASM CPU",
+      "challengeId": "the-first-sigil",
+      "challengeVersion": 1,
+      "prompt": "A merchant in the Colosseum bazaar sells crystal shards. On day one she sells 17 shards. Each following day she sells 4 more shards than the day before. How many shards does she sell in total over 9 days?\n\nShow brief reasoning, then end your response with a final line in the exact format: ANSWER: <number>",
+      "inputIdentity": "81dea61380660d6e3ca0f8a38ebdd804763db7f916f4cc9ab30b4f985840d140",
+      "buildId": "build-mv0b6aho-0mrck",
+      "configuration": {
+        "contenderId": "qwen25-sage",
+        "modelId": "onnx-community/Qwen2.5-0.5B-Instruct",
+        "runtime": "browser-wasm",
+        "soul": "",
+        "skillIds": [],
+        "toolIds": [],
+        "knowledgeSources": []
+      },
+      "buildFingerprint": "{\"c\":\"qwen25-sage\",\"m\":\"onnx-community/Qwen2.5-0.5B-Instruct\",\"r\":\"browser-wasm\",\"s\":\"\",\"k\":[],\"t\":[],\"n\":[]}",
+      "instructions": "You are an AI contestant. Follow the requested answer format.",
+      "parameters": {
+        "temperature": 0,
+        "maxTokens": 128
+      },
+      "startedAt": 1791510643318,
+      "finishedAt": 1791510776318,
+      "initializationMs": 8638.89999999851,
+      "latencyMs": 132985.20000000298,
+      "output": "To find out how many crystal shards the merchant sold in total over 9 days, we need to calculate the number of shards sold each day and then sum them up.\n\nOn the first day, she sold 17 shards.\nEach subsequent day, she sold 4 more shards than the previous day.\n\nLet's break it down:\n- Day 1: 17 shards\n- Day 2: 17 + 4 = 21 shards\n- Day 3: 21 + 4 = 25 shards\n- Day 4: 25 + 4 = 29 shards\n",
+      "tokens": 128,
+      "status": "completed",
+      "correct": false,
+      "extracted": null,
+      "provenance": "visitor-device; client-controlled; not independently attested",
+      "events": [
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:0",
+          "type": "battle_created",
+          "at": 1791510643318
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:1",
+          "type": "model_ready",
+          "at": 1791510643318
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:2",
+          "type": "challenge_started",
+          "at": 1791510643318
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:3",
+          "type": "output_streamed",
+          "at": 1791510648867,
+          "detail": "To "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:4",
+          "type": "output_streamed",
+          "at": 1791510649809,
+          "detail": "find "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:5",
+          "type": "output_streamed",
+          "at": 1791510650759,
+          "detail": "out "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:6",
+          "type": "output_streamed",
+          "at": 1791510651722,
+          "detail": "how "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:7",
+          "type": "output_streamed",
+          "at": 1791510652723,
+          "detail": "many "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:8",
+          "type": "output_streamed",
+          "at": 1791510653675,
+          "detail": "crystal "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:9",
+          "type": "output_streamed",
+          "at": 1791510654738,
+          "detail": "shards "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:10",
+          "type": "output_streamed",
+          "at": 1791510655922,
+          "detail": "the "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:11",
+          "type": "output_streamed",
+          "at": 1791510657033,
+          "detail": "merchant "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:12",
+          "type": "output_streamed",
+          "at": 1791510658143,
+          "detail": "sold "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:13",
+          "type": "output_streamed",
+          "at": 1791510659240,
+          "detail": "in "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:14",
+          "type": "output_streamed",
+          "at": 1791510660309,
+          "detail": "total "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:15",
+          "type": "output_streamed",
+          "at": 1791510661501,
+          "detail": "over "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:16",
+          "type": "output_streamed",
+          "at": 1791510663543,
+          "detail": "9 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:17",
+          "type": "output_streamed",
+          "at": 1791510665578,
+          "detail": "days, "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:18",
+          "type": "output_streamed",
+          "at": 1791510666731,
+          "detail": "we "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:19",
+          "type": "output_streamed",
+          "at": 1791510667774,
+          "detail": "need "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:20",
+          "type": "output_streamed",
+          "at": 1791510668786,
+          "detail": "to "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:21",
+          "type": "output_streamed",
+          "at": 1791510669800,
+          "detail": "calculate "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:22",
+          "type": "output_streamed",
+          "at": 1791510670799,
+          "detail": "the "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:23",
+          "type": "output_streamed",
+          "at": 1791510671803,
+          "detail": "number "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:24",
+          "type": "output_streamed",
+          "at": 1791510672823,
+          "detail": "of "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:25",
+          "type": "output_streamed",
+          "at": 1791510673854,
+          "detail": "shards "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:26",
+          "type": "output_streamed",
+          "at": 1791510674870,
+          "detail": "sold "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:27",
+          "type": "output_streamed",
+          "at": 1791510675887,
+          "detail": "each "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:28",
+          "type": "output_streamed",
+          "at": 1791510676890,
+          "detail": "day "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:29",
+          "type": "output_streamed",
+          "at": 1791510677870,
+          "detail": "and "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:30",
+          "type": "output_streamed",
+          "at": 1791510678810,
+          "detail": "then "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:31",
+          "type": "output_streamed",
+          "at": 1791510679722,
+          "detail": "sum "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:32",
+          "type": "output_streamed",
+          "at": 1791510680610,
+          "detail": "them "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:33",
+          "type": "output_streamed",
+          "at": 1791510681586,
+          "detail": "up.\n\n"
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:34",
+          "type": "output_streamed",
+          "at": 1791510683459,
+          "detail": "On "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:35",
+          "type": "output_streamed",
+          "at": 1791510684444,
+          "detail": "the "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:36",
+          "type": "output_streamed",
+          "at": 1791510685405,
+          "detail": "first "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:37",
+          "type": "output_streamed",
+          "at": 1791510687256,
+          "detail": "day, "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:38",
+          "type": "output_streamed",
+          "at": 1791510688228,
+          "detail": "she "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:39",
+          "type": "output_streamed",
+          "at": 1791510689211,
+          "detail": "sold "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:40",
+          "type": "output_streamed",
+          "at": 1791510692238,
+          "detail": "17 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:41",
+          "type": "output_streamed",
+          "at": 1791510693243,
+          "detail": "shards.\n"
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:42",
+          "type": "output_streamed",
+          "at": 1791510695380,
+          "detail": "Each "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:43",
+          "type": "output_streamed",
+          "at": 1791510696338,
+          "detail": "subsequent "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:44",
+          "type": "output_streamed",
+          "at": 1791510698314,
+          "detail": "day, "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:45",
+          "type": "output_streamed",
+          "at": 1791510699299,
+          "detail": "she "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:46",
+          "type": "output_streamed",
+          "at": 1791510700308,
+          "detail": "sold "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:47",
+          "type": "output_streamed",
+          "at": 1791510702311,
+          "detail": "4 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:48",
+          "type": "output_streamed",
+          "at": 1791510703278,
+          "detail": "more "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:49",
+          "type": "output_streamed",
+          "at": 1791510704273,
+          "detail": "shards "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:50",
+          "type": "output_streamed",
+          "at": 1791510705260,
+          "detail": "than "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:51",
+          "type": "output_streamed",
+          "at": 1791510706253,
+          "detail": "the "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:52",
+          "type": "output_streamed",
+          "at": 1791510707241,
+          "detail": "previous "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:53",
+          "type": "output_streamed",
+          "at": 1791510708205,
+          "detail": "day.\n\n"
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:54",
+          "type": "output_streamed",
+          "at": 1791510711093,
+          "detail": "Let's "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:55",
+          "type": "output_streamed",
+          "at": 1791510712190,
+          "detail": "break "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:56",
+          "type": "output_streamed",
+          "at": 1791510713202,
+          "detail": "it "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:57",
+          "type": "output_streamed",
+          "at": 1791510714163,
+          "detail": "down:\n"
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:58",
+          "type": "output_streamed",
+          "at": 1791510716239,
+          "detail": "- "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:59",
+          "type": "output_streamed",
+          "at": 1791510717258,
+          "detail": "Day "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:60",
+          "type": "output_streamed",
+          "at": 1791510720405,
+          "detail": "1: "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:61",
+          "type": "output_streamed",
+          "at": 1791510723709,
+          "detail": "17 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:62",
+          "type": "output_streamed",
+          "at": 1791510724868,
+          "detail": "shards\n"
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:63",
+          "type": "output_streamed",
+          "at": 1791510726952,
+          "detail": "- "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:64",
+          "type": "output_streamed",
+          "at": 1791510727965,
+          "detail": "Day "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:65",
+          "type": "output_streamed",
+          "at": 1791510730966,
+          "detail": "2: "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:66",
+          "type": "output_streamed",
+          "at": 1791510734267,
+          "detail": "17 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:67",
+          "type": "output_streamed",
+          "at": 1791510735340,
+          "detail": "+ "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:68",
+          "type": "output_streamed",
+          "at": 1791510737367,
+          "detail": "4 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:69",
+          "type": "output_streamed",
+          "at": 1791510738329,
+          "detail": "= "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:70",
+          "type": "output_streamed",
+          "at": 1791510741139,
+          "detail": "21 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:71",
+          "type": "output_streamed",
+          "at": 1791510742055,
+          "detail": "shards\n"
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:72",
+          "type": "output_streamed",
+          "at": 1791510744122,
+          "detail": "- "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:73",
+          "type": "output_streamed",
+          "at": 1791510745069,
+          "detail": "Day "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:74",
+          "type": "output_streamed",
+          "at": 1791510748062,
+          "detail": "3: "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:75",
+          "type": "output_streamed",
+          "at": 1791510751022,
+          "detail": "21 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:76",
+          "type": "output_streamed",
+          "at": 1791510752083,
+          "detail": "+ "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:77",
+          "type": "output_streamed",
+          "at": 1791510753952,
+          "detail": "4 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:78",
+          "type": "output_streamed",
+          "at": 1791510754888,
+          "detail": "= "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:79",
+          "type": "output_streamed",
+          "at": 1791510757635,
+          "detail": "25 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:80",
+          "type": "output_streamed",
+          "at": 1791510758612,
+          "detail": "shards\n"
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:81",
+          "type": "output_streamed",
+          "at": 1791510760548,
+          "detail": "- "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:82",
+          "type": "output_streamed",
+          "at": 1791510761585,
+          "detail": "Day "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:83",
+          "type": "output_streamed",
+          "at": 1791510765506,
+          "detail": "4: "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:84",
+          "type": "output_streamed",
+          "at": 1791510768708,
+          "detail": "25 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:85",
+          "type": "output_streamed",
+          "at": 1791510769693,
+          "detail": "+ "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:86",
+          "type": "output_streamed",
+          "at": 1791510771555,
+          "detail": "4 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:87",
+          "type": "output_streamed",
+          "at": 1791510772521,
+          "detail": "= "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:88",
+          "type": "output_streamed",
+          "at": 1791510775411,
+          "detail": "29 "
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:89",
+          "type": "output_streamed",
+          "at": 1791510776317,
+          "detail": "shards\n"
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:90",
+          "type": "output_completed",
+          "at": 1791510776318
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:91",
+          "type": "checker_completed",
+          "at": 1791510776318,
+          "detail": "incorrect"
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:92",
+          "type": "evidence_stored",
+          "at": 1791510776318
+        },
+        {
+          "id": "8ee7691e-eeb4-4cc1-bbf3-b37df9f69f99:93",
+          "type": "battle_finished",
+          "at": 1791510776318
+        }
+      ]
+    },
+    {
+      "id": "5099a078-57c5-469e-867d-619e76da50f9",
+      "mode": "local-ai",
+      "contenderId": "capybara-sage",
+      "modelId": "onnx-community/Qwen3-0.6B-ONNX",
+      "modelRevision": "1e0a4a196ecabdf9a879664110574563d3f372d3",
+      "runtime": "Transformers.js 4.3.1 / ONNX WASM CPU",
+      "challengeId": "the-first-sigil",
+      "challengeVersion": 1,
+      "prompt": "A merchant in the Colosseum bazaar sells crystal shards. On day one she sells 17 shards. Each following day she sells 4 more shards than the day before. How many shards does she sell in total over 9 days?\n\nShow brief reasoning, then end your response with a final line in the exact format: ANSWER: <number>",
+      "inputIdentity": "81dea61380660d6e3ca0f8a38ebdd804763db7f916f4cc9ab30b4f985840d140",
+      "buildId": "build-mv0b9efi-2mug1",
+      "configuration": {
+        "contenderId": "capybara-sage",
+        "modelId": "onnx-community/Qwen3-0.6B-ONNX",
+        "runtime": "browser-wasm",
+        "soul": "",
+        "skillIds": [],
+        "toolIds": [],
+        "knowledgeSources": []
+      },
+      "buildFingerprint": "{\"c\":\"capybara-sage\",\"m\":\"onnx-community/Qwen3-0.6B-ONNX\",\"r\":\"browser-wasm\",\"s\":\"\",\"k\":[],\"t\":[],\"n\":[]}",
+      "instructions": "You are an AI contestant. Follow the requested answer format.",
+      "parameters": {
+        "temperature": 0,
+        "maxTokens": 128
+      },
+      "startedAt": 1791510868595,
+      "finishedAt": 1791511037108,
+      "initializationMs": 88828.90000000596,
+      "latencyMs": 168498.5,
+      "output": "<think>\nOkay, let's see. The problem is about a merchant who sells crystal shards over 9 days. On day one, she sells 17 shards. Each subsequent day, she adds 4 more shards than the day before. We need to find the total number of shards sold over 9 days.\n\nFirst, I should figure out how many days there are. The question says 9 days, so starting from day one. Let me note the days and the number of shards sold each day:\n\nDay 1: 17\nDay 2: 17 + 4 = 21\nDay ",
+      "tokens": 128,
+      "status": "completed",
+      "correct": false,
+      "extracted": null,
+      "provenance": "visitor-device; client-controlled; not independently attested",
+      "events": [
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:0",
+          "type": "battle_created",
+          "at": 1791510868595
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:1",
+          "type": "model_ready",
+          "at": 1791510868596
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:2",
+          "type": "challenge_started",
+          "at": 1791510868596
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:3",
+          "type": "output_streamed",
+          "at": 1791510876779,
+          "detail": "<think>\n"
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:4",
+          "type": "output_streamed",
+          "at": 1791510880958,
+          "detail": "Okay, "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:5",
+          "type": "output_streamed",
+          "at": 1791510884019,
+          "detail": "let's "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:6",
+          "type": "output_streamed",
+          "at": 1791510887487,
+          "detail": "see. "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:7",
+          "type": "output_streamed",
+          "at": 1791510888965,
+          "detail": "The "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:8",
+          "type": "output_streamed",
+          "at": 1791510890698,
+          "detail": "problem "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:9",
+          "type": "output_streamed",
+          "at": 1791510892117,
+          "detail": "is "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:10",
+          "type": "output_streamed",
+          "at": 1791510893444,
+          "detail": "about "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:11",
+          "type": "output_streamed",
+          "at": 1791510894751,
+          "detail": "a "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:12",
+          "type": "output_streamed",
+          "at": 1791510896176,
+          "detail": "merchant "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:13",
+          "type": "output_streamed",
+          "at": 1791510897444,
+          "detail": "who "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:14",
+          "type": "output_streamed",
+          "at": 1791510898807,
+          "detail": "sells "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:15",
+          "type": "output_streamed",
+          "at": 1791510900055,
+          "detail": "crystal "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:16",
+          "type": "output_streamed",
+          "at": 1791510901442,
+          "detail": "shards "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:17",
+          "type": "output_streamed",
+          "at": 1791510902623,
+          "detail": "over "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:18",
+          "type": "output_streamed",
+          "at": 1791510904858,
+          "detail": "9 "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:19",
+          "type": "output_streamed",
+          "at": 1791510907163,
+          "detail": "days. "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:20",
+          "type": "output_streamed",
+          "at": 1791510908232,
+          "detail": "On "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:21",
+          "type": "output_streamed",
+          "at": 1791510909320,
+          "detail": "day "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:22",
+          "type": "output_streamed",
+          "at": 1791510911574,
+          "detail": "one, "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:23",
+          "type": "output_streamed",
+          "at": 1791510912686,
+          "detail": "she "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:24",
+          "type": "output_streamed",
+          "at": 1791510913781,
+          "detail": "sells "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:25",
+          "type": "output_streamed",
+          "at": 1791510917111,
+          "detail": "17 "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:26",
+          "type": "output_streamed",
+          "at": 1791510919353,
+          "detail": "shards. "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:27",
+          "type": "output_streamed",
+          "at": 1791510920462,
+          "detail": "Each "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:28",
+          "type": "output_streamed",
+          "at": 1791510921578,
+          "detail": "subsequent "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:29",
+          "type": "output_streamed",
+          "at": 1791510923845,
+          "detail": "day, "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:30",
+          "type": "output_streamed",
+          "at": 1791510924997,
+          "detail": "she "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:31",
+          "type": "output_streamed",
+          "at": 1791510926269,
+          "detail": "adds "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:32",
+          "type": "output_streamed",
+          "at": 1791510928598,
+          "detail": "4 "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:33",
+          "type": "output_streamed",
+          "at": 1791510929689,
+          "detail": "more "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:34",
+          "type": "output_streamed",
+          "at": 1791510930802,
+          "detail": "shards "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:35",
+          "type": "output_streamed",
+          "at": 1791510931900,
+          "detail": "than "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:36",
+          "type": "output_streamed",
+          "at": 1791510933093,
+          "detail": "the "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:37",
+          "type": "output_streamed",
+          "at": 1791510934355,
+          "detail": "day "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:38",
+          "type": "output_streamed",
+          "at": 1791510936824,
+          "detail": "before. "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:39",
+          "type": "output_streamed",
+          "at": 1791510937957,
+          "detail": "We "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:40",
+          "type": "output_streamed",
+          "at": 1791510939135,
+          "detail": "need "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:41",
+          "type": "output_streamed",
+          "at": 1791510940335,
+          "detail": "to "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:42",
+          "type": "output_streamed",
+          "at": 1791510941603,
+          "detail": "find "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:43",
+          "type": "output_streamed",
+          "at": 1791510942826,
+          "detail": "the "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:44",
+          "type": "output_streamed",
+          "at": 1791510944005,
+          "detail": "total "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:45",
+          "type": "output_streamed",
+          "at": 1791510945235,
+          "detail": "number "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:46",
+          "type": "output_streamed",
+          "at": 1791510946358,
+          "detail": "of "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:47",
+          "type": "output_streamed",
+          "at": 1791510947547,
+          "detail": "shards "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:48",
+          "type": "output_streamed",
+          "at": 1791510948841,
+          "detail": "sold "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:49",
+          "type": "output_streamed",
+          "at": 1791510950104,
+          "detail": "over "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:50",
+          "type": "output_streamed",
+          "at": 1791510952593,
+          "detail": "9 "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:51",
+          "type": "output_streamed",
+          "at": 1791510954016,
+          "detail": "days.\n\n"
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:52",
+          "type": "output_streamed",
+          "at": 1791510957793,
+          "detail": "First, "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:53",
+          "type": "output_streamed",
+          "at": 1791510958984,
+          "detail": "I "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:54",
+          "type": "output_streamed",
+          "at": 1791510960203,
+          "detail": "should "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:55",
+          "type": "output_streamed",
+          "at": 1791510961555,
+          "detail": "figure "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:56",
+          "type": "output_streamed",
+          "at": 1791510962729,
+          "detail": "out "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:57",
+          "type": "output_streamed",
+          "at": 1791510963938,
+          "detail": "how "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:58",
+          "type": "output_streamed",
+          "at": 1791510965174,
+          "detail": "many "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:59",
+          "type": "output_streamed",
+          "at": 1791510966429,
+          "detail": "days "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:60",
+          "type": "output_streamed",
+          "at": 1791510967679,
+          "detail": "there "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:61",
+          "type": "output_streamed",
+          "at": 1791510970133,
+          "detail": "are. "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:62",
+          "type": "output_streamed",
+          "at": 1791510971465,
+          "detail": "The "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:63",
+          "type": "output_streamed",
+          "at": 1791510972746,
+          "detail": "question "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:64",
+          "type": "output_streamed",
+          "at": 1791510973999,
+          "detail": "says "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:65",
+          "type": "output_streamed",
+          "at": 1791510976495,
+          "detail": "9 "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:66",
+          "type": "output_streamed",
+          "at": 1791510978880,
+          "detail": "days, "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:67",
+          "type": "output_streamed",
+          "at": 1791510980033,
+          "detail": "so "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:68",
+          "type": "output_streamed",
+          "at": 1791510981189,
+          "detail": "starting "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:69",
+          "type": "output_streamed",
+          "at": 1791510982334,
+          "detail": "from "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:70",
+          "type": "output_streamed",
+          "at": 1791510983493,
+          "detail": "day "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:71",
+          "type": "output_streamed",
+          "at": 1791510985818,
+          "detail": "one. "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:72",
+          "type": "output_streamed",
+          "at": 1791510986921,
+          "detail": "Let "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:73",
+          "type": "output_streamed",
+          "at": 1791510988087,
+          "detail": "me "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:74",
+          "type": "output_streamed",
+          "at": 1791510989237,
+          "detail": "note "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:75",
+          "type": "output_streamed",
+          "at": 1791510990492,
+          "detail": "the "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:76",
+          "type": "output_streamed",
+          "at": 1791510991974,
+          "detail": "days "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:77",
+          "type": "output_streamed",
+          "at": 1791510993253,
+          "detail": "and "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:78",
+          "type": "output_streamed",
+          "at": 1791510994754,
+          "detail": "the "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:79",
+          "type": "output_streamed",
+          "at": 1791510996027,
+          "detail": "number "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:80",
+          "type": "output_streamed",
+          "at": 1791510997422,
+          "detail": "of "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:81",
+          "type": "output_streamed",
+          "at": 1791510998568,
+          "detail": "shards "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:82",
+          "type": "output_streamed",
+          "at": 1791511000067,
+          "detail": "sold "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:83",
+          "type": "output_streamed",
+          "at": 1791511001514,
+          "detail": "each "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:84",
+          "type": "output_streamed",
+          "at": 1791511002926,
+          "detail": "day:\n\n"
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:85",
+          "type": "output_streamed",
+          "at": 1791511005883,
+          "detail": "Day "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:86",
+          "type": "output_streamed",
+          "at": 1791511010206,
+          "detail": "1: "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:87",
+          "type": "output_streamed",
+          "at": 1791511014305,
+          "detail": "17\n"
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:88",
+          "type": "output_streamed",
+          "at": 1791511017316,
+          "detail": "Day "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:89",
+          "type": "output_streamed",
+          "at": 1791511021621,
+          "detail": "2: "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:90",
+          "type": "output_streamed",
+          "at": 1791511026122,
+          "detail": "17 "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:91",
+          "type": "output_streamed",
+          "at": 1791511027478,
+          "detail": "+ "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:92",
+          "type": "output_streamed",
+          "at": 1791511029975,
+          "detail": "4 "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:93",
+          "type": "output_streamed",
+          "at": 1791511031128,
+          "detail": "= "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:94",
+          "type": "output_streamed",
+          "at": 1791511034859,
+          "detail": "21\n"
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:95",
+          "type": "output_streamed",
+          "at": 1791511037107,
+          "detail": "Day "
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:96",
+          "type": "output_completed",
+          "at": 1791511037108
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:97",
+          "type": "checker_completed",
+          "at": 1791511037108,
+          "detail": "incorrect"
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:98",
+          "type": "evidence_stored",
+          "at": 1791511037108
+        },
+        {
+          "id": "5099a078-57c5-469e-867d-619e76da50f9:99",
+          "type": "battle_finished",
+          "at": 1791511037108
+        }
+      ]
+    }
+  ]
+}

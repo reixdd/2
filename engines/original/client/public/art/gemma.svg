@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="gemma character artwork (original, unofficial)">
+<defs><radialGradient id="bg" cx="50%" cy="36%" r="78%"><stop offset="0" stop-color="#9fdcf0" stop-opacity=".38"/><stop offset=".6" stop-color="#12303a" stop-opacity=".55"/><stop offset="1" stop-color="#06080a"/></radialGradient></defs>
+<rect width="400" height="500" fill="url(#bg)"/>
+<g fill="none" stroke="#9fdcf0"><ellipse cx="200" cy="448" rx="160" ry="28" stroke-width="2" opacity=".75"/><ellipse cx="200" cy="448" rx="118" ry="20" stroke-width="1" stroke-dasharray="3 7" opacity=".6"/></g>
+
+<g fill="#9fdcf0" opacity=".7"><polygon points="86,170 102,150 112,184"/><polygon points="304,130 326,150 300,174"/><polygon points="92,330 114,316 122,348"/><polygon points="296,310 316,330 292,350"/></g>
+<polygon points="200,300 252,340 232,440 168,440 148,340" fill="#9fdcf0" opacity=".28" stroke="#9fdcf0" stroke-width="1.5"/>
+<polygon points="200,96 266,158 248,254 200,296 152,254 134,158" fill="#9fdcf0" opacity=".55" stroke="#eaf8fc" stroke-width="2"/>
+<g stroke="#eaf8fc" stroke-width="1.2" opacity=".75" fill="none"><path d="M200 96v200M134 158l66 50 66-50M152 254l48-46 48 46"/></g>
+<polygon points="200,208 134,158 152,254" fill="#eaf8fc" opacity=".16"/>
+<g fill="#06161c"><rect x="168" y="178" width="22" height="5" rx="2"/><rect x="210" y="178" width="22" height="5" rx="2"/></g></svg>

@@ -1,0 +1,240 @@
+[
+  {
+    "id": "onnx-community/Qwen3-0.6B-ONNX",
+    "revision": "1e0a4a196ecabdf9a879664110574563d3f372d3",
+    "files": [
+      {
+        "path": "config.json",
+        "size": 912
+      },
+      {
+        "path": "generation_config.json",
+        "size": 219
+      },
+      {
+        "path": "onnx/model_q4.onnx",
+        "size": 919096585
+      },
+      {
+        "path": "onnx/model_q4f16.onnx",
+        "size": 569789750
+      },
+      {
+        "path": "onnxruntime/cpu_and_mobile/cpu-int4-kld-block-128/config.json",
+        "size": 8957
+      },
+      {
+        "path": "onnxruntime/cpu_and_mobile/cpu-int4-kld-block-128/genai_config.json",
+        "size": 1520
+      },
+      {
+        "path": "onnxruntime/cpu_and_mobile/cpu-int4-kld-block-128/tokenizer.json",
+        "size": 11422648
+      },
+      {
+        "path": "onnxruntime/cpu_and_mobile/cpu-int4-kld-block-128/tokenizer_config.json",
+        "size": 663
+      },
+      {
+        "path": "onnxruntime/cuda/cuda-int4-kld-block-128/config.json",
+        "size": 8957
+      },
+      {
+        "path": "onnxruntime/cuda/cuda-int4-kld-block-128/genai_config.json",
+        "size": 1765
+      },
+      {
+        "path": "onnxruntime/cuda/cuda-int4-kld-block-128/tokenizer.json",
+        "size": 11422648
+      },
+      {
+        "path": "onnxruntime/cuda/cuda-int4-kld-block-128/tokenizer_config.json",
+        "size": 663
+      },
+      {
+        "path": "onnxruntime/webgpu/webgpu-int4-kld-block-32/config.json",
+        "size": 9033
+      },
+      {
+        "path": "onnxruntime/webgpu/webgpu-int4-kld-block-32/genai_config.json",
+        "size": 1752
+      },
+      {
+        "path": "onnxruntime/webgpu/webgpu-int4-kld-block-32/tokenizer.json",
+        "size": 11422648
+      },
+      {
+        "path": "onnxruntime/webgpu/webgpu-int4-kld-block-32/tokenizer_config.json",
+        "size": 663
+      },
+      {
+        "path": "tokenizer.json",
+        "size": 9117040
+      },
+      {
+        "path": "tokenizer_config.json",
+        "size": 10360
+      }
+    ],
+    "checkedAt": "2026-10-09T01:14:47.630Z"
+  },
+  {
+    "id": "onnx-community/SmolLM2-135M-Instruct-ONNX",
+    "revision": "b8a5c0f183b78c55955a5364f610c36668b5e681",
+    "files": [
+      {
+        "path": "config.json",
+        "size": 976
+      },
+      {
+        "path": "generation_config.json",
+        "size": 132
+      },
+      {
+        "path": "onnx/model_q4.onnx",
+        "size": 180581125
+      },
+      {
+        "path": "onnx/model_q4f16.onnx",
+        "size": 117266133
+      },
+      {
+        "path": "quantize_config.json",
+        "size": 312
+      },
+      {
+        "path": "tokenizer.json",
+        "size": 3522656
+      },
+      {
+        "path": "tokenizer_config.json",
+        "size": 3794
+      }
+    ],
+    "checkedAt": "2026-10-09T01:14:47.573Z"
+  },
+  {
+    "id": "onnx-community/Qwen2.5-0.5B-Instruct",
+    "revision": "22942cb7d7ba4cc81bb4673549ca4d4614469b5e",
+    "files": [
+      {
+        "path": "config.json",
+        "size": 678
+      },
+      {
+        "path": "generation_config.json",
+        "size": 242
+      },
+      {
+        "path": "onnx/model_q4.onnx",
+        "size": 786156820
+      },
+      {
+        "path": "onnx/model_q4f16.onnx",
+        "size": 483003582
+      },
+      {
+        "path": "quantize_config.json",
+        "size": 285
+      },
+      {
+        "path": "tokenizer.json",
+        "size": 7031673
+      },
+      {
+        "path": "tokenizer_config.json",
+        "size": 7849
+      }
+    ],
+    "checkedAt": "2026-10-09T01:14:47.633Z"
+  },
+  {
+    "id": "onnx-community/gemma-3-270m-it-ONNX",
+    "revision": "2dbbfdb1b59bd034eb959428c6a7da9dd7ea27f0",
+    "license": "gemma",
+    "files": [
+      {
+        "path": "config.json",
+        "size": 1652
+      },
+      {
+        "path": "generation_config.json",
+        "size": 202
+      },
+      {
+        "path": "onnx/model_q4.onnx",
+        "size": 242522
+      },
+      {
+        "path": "onnx/model_q4.onnx_data",
+        "size": 322933248
+      },
+      {
+        "path": "onnx/model_q4f16.onnx",
+        "size": 330717
+      },
+      {
+        "path": "onnx/model_q4f16.onnx_data",
+        "size": 272626176
+      },
+      {
+        "path": "tokenizer.json",
+        "size": 20323013
+      },
+      {
+        "path": "tokenizer.model",
+        "size": 4689074
+      },
+      {
+        "path": "tokenizer_config.json",
+        "size": 2313
+      }
+    ],
+    "checkedAt": "2026-10-09T01:14:47.605Z"
+  },
+  {
+    "id": "onnx-community/LFM2-350M-ONNX",
+    "revision": "ecc51d35a7edbc8f9ef6d23b59a5f036dcfc7ee8",
+    "license": "other",
+    "licenseName": "lfm1.0",
+    "files": [
+      {
+        "path": "LICENSE",
+        "size": 10556
+      },
+      {
+        "path": "config.json",
+        "size": 1384
+      },
+      {
+        "path": "generation_config.json",
+        "size": 136
+      },
+      {
+        "path": "onnx/model_q4.onnx",
+        "size": 183442
+      },
+      {
+        "path": "onnx/model_q4.onnx_data",
+        "size": 293629952
+      },
+      {
+        "path": "onnx/model_q4f16.onnx",
+        "size": 182827
+      },
+      {
+        "path": "onnx/model_q4f16.onnx_data",
+        "size": 254965760
+      },
+      {
+        "path": "tokenizer.json",
+        "size": 3296940
+      },
+      {
+        "path": "tokenizer_config.json",
+        "size": 93557
+      }
+    ],
+    "checkedAt": "2026-10-09T01:14:47.581Z"
+  }
+]

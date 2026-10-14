@@ -1,0 +1,3 @@
+import type {AgentBuild} from "./builds"
+/** Traverses actual saved parents. Orphaned/cyclic imports stay inspectable without recursive loops. */
+export function lineageRows(builds:AgentBuild[]){const ordered=builds.slice().sort((a,b)=>a.createdAt-b.createdAt),seen=new Set<string>(),rows:{build:AgentBuild;depth:number}[]=[];function visit(build:AgentBuild,depth:number){if(seen.has(build.id))return;seen.add(build.id);rows.push({build,depth});for(const child of ordered.filter(b=>b.parentId===build.id))visit(child,depth+1)}for(const b of ordered.filter(b=>!b.parentId||!ordered.some(p=>p.id===b.parentId)))visit(b,0);for(const b of ordered)visit(b,0);return rows}

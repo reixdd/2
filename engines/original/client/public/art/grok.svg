@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="grok character artwork (original, unofficial)">
+<defs><radialGradient id="bg" cx="50%" cy="36%" r="78%"><stop offset="0" stop-color="#f0d65a" stop-opacity=".38"/><stop offset=".6" stop-color="#202418" stop-opacity=".55"/><stop offset="1" stop-color="#06080a"/></radialGradient></defs>
+<rect width="400" height="500" fill="url(#bg)"/>
+<g fill="none" stroke="#f0d65a"><ellipse cx="200" cy="448" rx="160" ry="28" stroke-width="2" opacity=".75"/><ellipse cx="200" cy="448" rx="118" ry="20" stroke-width="1" stroke-dasharray="3 7" opacity=".6"/></g>
+
+<path d="M104 446C104 346 140 300 200 300s96 46 96 146z" fill="#10151a" stroke="#27313a" stroke-width="2"/>
+<polygon points="214,304 176,382 204,382 188,446 238,360 208,360" fill="#f0d65a"/>
+<polygon points="128,150 140,92 162,128 180,76 200,122 222,74 238,128 260,90 272,150" fill="#e9eef1"/>
+<path d="M200 118a72 84 0 0 0 0 168z" fill="#e9eef1"/><path d="M200 118a72 84 0 0 1 0 168z" fill="#10151a" stroke="#5d6e7a" stroke-width="2"/>
+<circle cx="170" cy="186" r="11" fill="#06080a"/><circle cx="170" cy="186" r="5" fill="#f0d65a"/>
+<path d="M222 174l28 24M250 174l-28 24" stroke="#f0d65a" stroke-width="5" stroke-linecap="round"/>
+<path d="M150 244l16 14 16-14 16 14 16-14 16 14 16-14 16 14" fill="none" stroke="#06080a" stroke-width="5" stroke-linejoin="round"/></svg>

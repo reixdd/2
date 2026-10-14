@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="70 60 260 260" role="img" aria-label="deepseek character artwork (original, unofficial)">
+<defs><radialGradient id="bg" cx="50%" cy="36%" r="78%"><stop offset="0" stop-color="#4f86d9" stop-opacity=".38"/><stop offset=".6" stop-color="#0a1730" stop-opacity=".55"/><stop offset="1" stop-color="#06080a"/></radialGradient></defs>
+<rect width="400" height="500" fill="url(#bg)"/>
+<g fill="none" stroke="#4f86d9"><ellipse cx="200" cy="448" rx="160" ry="28" stroke-width="2" opacity=".75"/><ellipse cx="200" cy="448" rx="118" ry="20" stroke-width="1" stroke-dasharray="3 7" opacity=".6"/></g>
+
+<path d="M96 450C96 300 138 190 200 140c62 50 104 160 104 310z" fill="#0c1a33"/>
+<path d="M120 440C130 330 160 250 200 214c40 36 70 116 80 226" fill="none" stroke="#4f86d9" stroke-width="1.5" opacity=".5"/>
+<ellipse cx="200" cy="204" rx="64" ry="76" fill="#02060d"/>
+<g fill="#4f86d9"><circle cx="172" cy="200" r="9"/><circle cx="228" cy="200" r="9"/><circle cx="200" cy="168" r="9"/></g>
+<g fill="#4f86d9" opacity=".25"><circle cx="172" cy="200" r="17"/><circle cx="228" cy="200" r="17"/><circle cx="200" cy="168" r="17"/></g>
+<path d="M116 380c30-30 50 30 84 0s54 30 84 0" fill="none" stroke="#4f86d9" stroke-width="2" opacity=".7"/>
+<circle cx="200" cy="350" r="28" fill="none" stroke="#4f86d9" stroke-width="2"/><circle cx="200" cy="350" r="11" fill="#4f86d9" opacity=".8"/></svg>

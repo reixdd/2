@@ -1,0 +1,305 @@
+
+/* ======================================================================
+   RPG interaction layer: tactile press, gold edge-light, equip feedback,
+   drop targets, rune circles, orbit, energy paths, transformation flash.
+   Every animation below is covered by the reduced-motion rules above.
+   ====================================================================== */
+
+/* Tactile compression for every primary control (hit-box does not move: only the painted face does). */
+.rune-btn:active:not(:disabled),
+.press:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+}
+.press {
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+/* Gold edge-light: a hairline that brightens on hover / focus-within / selected. */
+.edge-light {
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgba(240, 199, 104, 0.28),
+    0 10px 30px -14px rgba(0, 0, 0, 0.9);
+  transition:
+    box-shadow 0.22s ease,
+    transform 0.18s ease,
+    background-color 0.2s ease;
+}
+.edge-light:hover,
+.edge-light:focus-within {
+  box-shadow:
+    0 0 0 1px rgba(240, 199, 104, 0.95),
+    0 0 26px -2px rgba(240, 199, 104, 0.42),
+    0 10px 30px -14px rgba(0, 0, 0, 0.9);
+}
+.edge-light[data-selected='true'] {
+  box-shadow:
+    0 0 0 2px #f0c768,
+    0 0 34px 0 rgba(240, 199, 104, 0.5),
+    0 10px 30px -14px rgba(0, 0, 0, 0.9);
+}
+
+/* Equip: the receiving slot flares gold once. */
+@keyframes equip-burst {
+  0% {
+    transform: scale(0.86);
+    box-shadow:
+      0 0 0 2px #fff6d6,
+      0 0 0 0 rgba(255, 224, 140, 0.95);
+  }
+  55% {
+    transform: scale(1.05);
+    box-shadow:
+      0 0 0 2px #f0c768,
+      0 0 0 18px rgba(255, 224, 140, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 1px rgba(240, 199, 104, 0.9),
+      0 0 0 0 rgba(255, 224, 140, 0);
+  }
+}
+.animate-equip {
+  animation: equip-burst 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes relic-drop {
+  0% {
+    transform: translateY(-22px) scale(1.25);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(2px) scale(0.97);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-relic-drop {
+  animation: relic-drop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Visible drop targets while something is being dragged or armed. */
+@keyframes socket-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(79, 209, 255, 0.55);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(79, 209, 255, 0.95),
+      0 0 22px rgba(79, 209, 255, 0.45);
+  }
+}
+.drop-ready {
+  animation: socket-breathe 1.4s ease-in-out infinite;
+}
+.drop-over {
+  box-shadow:
+    0 0 0 2px #f0c768,
+    0 0 34px rgba(240, 199, 104, 0.7) !important;
+  transform: scale(1.03);
+}
+
+/* Rune circle + orbit + energy path */
+@keyframes rune-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes rune-spin-rev {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+.rune-ring {
+  animation: rune-spin 18s linear infinite;
+  transform-origin: 50% 50%;
+}
+.rune-ring-rev {
+  animation: rune-spin-rev 26s linear infinite;
+  transform-origin: 50% 50%;
+}
+@keyframes rune-summon {
+  0% {
+    transform: scale(0.2) rotate(-90deg);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+.animate-summon {
+  animation: rune-summon 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes orbit {
+  from {
+    transform: rotate(var(--start, 0deg));
+  }
+  to {
+    transform: rotate(calc(var(--start, 0deg) + 360deg));
+  }
+}
+@keyframes orbit-counter {
+  from {
+    transform: rotate(calc(var(--start, 0deg) * -1));
+  }
+  to {
+    transform: rotate(calc(var(--start, 0deg) * -1 - 360deg));
+  }
+}
+.orbit {
+  animation: orbit 22s linear infinite;
+}
+.orbit > .orbit-item {
+  animation: orbit-counter 22s linear infinite;
+}
+@keyframes energy-flow {
+  to {
+    stroke-dashoffset: -48;
+  }
+}
+.energy-path {
+  stroke-dasharray: 8 8;
+  animation: energy-flow 1.1s linear infinite;
+}
+.energy-burst .energy-path {
+  stroke-dasharray: 4 4;
+  animation-duration: 0.35s;
+}
+
+/* Brief transformation flash when a mutation is sealed (one-shot, not a loop). */
+@keyframes transform-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  25% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+.transform-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(255, 246, 214, 0.95) 0%, rgba(240, 199, 104, 0.5) 38%, transparent 70%);
+  animation: transform-flash 1s ease-out both;
+}
+
+/* Battle stage */
+@keyframes standee-idle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.6deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(0.6deg);
+  }
+}
+.standee-idle {
+  animation: standee-idle 4.5s ease-in-out infinite;
+}
+@keyframes standee-lunge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  45% {
+    transform: translateX(26px) scale(1.04);
+  }
+}
+.standee-attempt {
+  animation: standee-lunge 0.9s ease-in-out 1;
+}
+@keyframes crystal-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.crystal-float {
+  animation: crystal-float 5s ease-in-out infinite;
+}
+@keyframes inscribe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.animate-inscribe {
+  animation: inscribe 0.9s steps(24, end) both;
+}
+@keyframes victory-rays {
+  0% {
+    opacity: 0;
+    transform: rotate(0) scale(0.4);
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(40deg) scale(1.5);
+  }
+}
+.victory-rays {
+  animation: victory-rays 1.4s ease-out both;
+}
+@keyframes fizzle {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+.fizzle {
+  animation: fizzle 0.9s ease-out both;
+}
+
+/* Skill tree */
+.tree-line {
+  stroke: rgba(240, 199, 104, 0.28);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+.tree-line[data-active='true'] {
+  stroke: rgba(240, 199, 104, 0.85);
+  stroke-width: 2;
+}
+
+/* Trophy chamber pedestal */
+.pedestal {
+  background: linear-gradient(180deg, rgba(240, 199, 104, 0.22), rgba(240, 199, 104, 0.04));
+  border: 1px solid rgba(240, 199, 104, 0.35);
+  border-bottom-width: 4px;
+}
+
+/* Accessibility: animations added by this patch honor reduced-motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-equip, .animate-relic-drop, .animate-seal, .animate-pop, .animate-glow,
+  .drop-ready, .rune-ring, .rune-ring-reverse, .animate-rune, .animate-rune-spin {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

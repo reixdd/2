@@ -1,0 +1,17 @@
+node_modules
+dist
+.env
+data/battles/*.json
+data/results.json
+server/manifest/contenders.local.json
+server/characters/cast.local.json
+data/registry.json
+*.log
+.models/
+test-results/
+playwright-report/
+client/public-dist/
+client/github-dist/
+client/public/wasm/
+.wrangler/
+.validation/

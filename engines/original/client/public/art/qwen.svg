@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="qwen character artwork (original, unofficial)">
+<defs><radialGradient id="bg" cx="50%" cy="36%" r="78%"><stop offset="0" stop-color="#9fcbb6" stop-opacity=".38"/><stop offset=".6" stop-color="#1c2f2c" stop-opacity=".55"/><stop offset="1" stop-color="#06080a"/></radialGradient></defs>
+<rect width="400" height="500" fill="url(#bg)"/>
+<g fill="none" stroke="#9fcbb6"><ellipse cx="200" cy="448" rx="160" ry="28" stroke-width="2" opacity=".75"/><ellipse cx="200" cy="448" rx="118" ry="20" stroke-width="1" stroke-dasharray="3 7" opacity=".6"/></g>
+
+<circle cx="200" cy="170" r="104" fill="none" stroke="#9fcbb6" stroke-width="3" opacity=".75"/>
+<rect x="298" y="190" width="7" height="250" rx="3" fill="#c9b79c"/><circle cx="301" cy="184" r="15" fill="#9fcbb6"/>
+<path d="M112 446C112 336 146 292 200 292s88 44 88 154z" fill="#33485a"/>
+<path d="M168 300 200 366 232 300z" fill="#e9eef1" opacity=".88"/>
+<ellipse cx="144" cy="142" rx="17" ry="15" fill="#85623f"/><ellipse cx="256" cy="142" rx="17" ry="15" fill="#85623f"/>
+<ellipse cx="200" cy="196" rx="80" ry="68" fill="#9b7653"/>
+<ellipse cx="200" cy="226" rx="48" ry="33" fill="#b08a62"/><ellipse cx="200" cy="211" rx="11" ry="7.5" fill="#2b1d12"/>
+<path d="M156 182q14 10 28 0M216 182q14 10 28 0M186 238q14 8 28 0" stroke="#2b1d12" stroke-width="4" fill="none" stroke-linecap="round"/></svg>

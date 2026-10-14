@@ -1,0 +1,4 @@
+COLOSSEUM incorporates React and React DOM (Meta / MIT), noble-hashes (Paul Miller / MIT), and WebLLM (MLC team / Apache-2.0). License texts are included here. Additional upstream notices remain in distributed bundles.
+Model weights are downloaded from the upstream repositories identified in each contestant and artifact record; they are not included in this website archive.
+Fictional character concepts are unofficial interpretations and are not endorsements by model creators.
+The browser CPU runner incorporates Transformers.js (Hugging Face / Apache-2.0) and ONNX Runtime (Microsoft / MIT). ONNX source and licensing: https://github.com/microsoft/onnxruntime

@@ -1,0 +1,5 @@
+2026-10-08 Source recovery verification
+- Recovery source attachments: builds.ts and skill-art.tsx; original Workshop / loadout / skill-detail / CSS and tests extracted from Claude transcript.
+- TypeScript syntactic transpilation of 9 recovered/completed TS/TSX files: 0 diagnostics.
+- 21 build and persistence logic tests: PASSED using a fixture registry mirroring the transcript (8 contenders, 13 skills, 7 available).
+- Full Next.js production build: NOT RUN — original Next.js repository/package/assets were not provided.

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="llama character artwork (original, unofficial)">
+<defs><radialGradient id="bg" cx="50%" cy="36%" r="78%"><stop offset="0" stop-color="#d2b36e" stop-opacity=".38"/><stop offset=".6" stop-color="#2e2412" stop-opacity=".55"/><stop offset="1" stop-color="#06080a"/></radialGradient></defs>
+<rect width="400" height="500" fill="url(#bg)"/>
+<g fill="none" stroke="#d2b36e"><ellipse cx="200" cy="448" rx="160" ry="28" stroke-width="2" opacity=".75"/><ellipse cx="200" cy="448" rx="118" ry="20" stroke-width="1" stroke-dasharray="3 7" opacity=".6"/></g>
+
+<path d="M166 448 172 262h56l6 186z" fill="#efe6d2"/>
+<g fill="#f6f0e0"><circle cx="176" cy="300" r="20"/><circle cx="224" cy="310" r="22"/><circle cx="196" cy="340" r="22"/><circle cx="212" cy="378" r="20"/></g>
+<ellipse cx="170" cy="124" rx="12" ry="34" fill="#e3d6bb" transform="rotate(-12 170 124)"/><ellipse cx="230" cy="124" rx="12" ry="34" fill="#e3d6bb" transform="rotate(12 230 124)"/>
+<ellipse cx="200" cy="196" rx="54" ry="66" fill="#f3ecdc"/><ellipse cx="200" cy="236" rx="32" ry="25" fill="#e3d6bb"/>
+<ellipse cx="200" cy="228" rx="9" ry="6" fill="#5a4a2c"/>
+<path d="M120 112 200 78l80 34-80 32z" fill="#2a2214"/><path d="M280 112v34" stroke="#d2b36e" stroke-width="3"/><circle cx="280" cy="150" r="6" fill="#d2b36e"/>
+<g fill="none" stroke="#5a4a2c" stroke-width="3"><circle cx="178" cy="190" r="17"/><circle cx="222" cy="190" r="17"/><path d="M195 190h10"/></g>
+<g fill="#2a2214"><circle cx="178" cy="190" r="4"/><circle cx="222" cy="190" r="4"/></g>
+<rect x="238" y="356" width="104" height="30" rx="15" fill="#d8c08a"/><rect x="238" y="356" width="14" height="30" rx="7" fill="#b89a58"/><rect x="328" y="356" width="14" height="30" rx="7" fill="#b89a58"/></svg>

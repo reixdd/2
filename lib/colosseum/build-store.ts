@@ -1,0 +1,26 @@
+import {z} from "zod"
+import {recoverOverlayBuild} from "./legacy-build"
+import {validateBuild,BUILD_LIMITS,type AgentBuild} from "./builds"
+const DB_NAME="colosseum-workshop",STORE_NAME="builds",VERSION=1
+function openDb():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{if(typeof indexedDB==="undefined"){reject(new Error("Browser storage is unavailable."));return}const r=indexedDB.open(DB_NAME,VERSION);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE_NAME))r.result.createObjectStore(STORE_NAME,{keyPath:"id"})};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(new Error("Close another open Workshop tab and retry."))})}
+export async function listBuilds():Promise<AgentBuild[]>{const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE_NAME,"readonly"),r=tx.objectStore(STORE_NAME).getAll();tx.oncomplete=()=>{db.close();resolve((r.result as AgentBuild[]).sort((a,b)=>b.updatedAt-a.updatedAt))};tx.onerror=()=>{db.close();reject(tx.error)};tx.onabort=()=>{db.close();reject(tx.error??new Error("Read aborted."))}})}
+async function write(action:(store:IDBObjectStore)=>void){const db=await openDb();return new Promise<void>((resolve,reject)=>{const tx=db.transaction(STORE_NAME,"readwrite");action(tx.objectStore(STORE_NAME));tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)};tx.onabort=()=>{db.close();reject(tx.error??new Error("Save aborted."))}})}
+export async function saveBuild(build:AgentBuild,expectedUpdatedAt?:number){
+ const db=await openDb();return new Promise<void>((resolve,reject)=>{
+  const tx=db.transaction(STORE_NAME,"readwrite"),store=tx.objectStore(STORE_NAME);let conflict=false;
+  const request=store.get(build.id);request.onsuccess=()=>{const current=request.result as AgentBuild|undefined;
+   if(current&&expectedUpdatedAt!==undefined&&current.updatedAt!==expectedUpdatedAt){conflict=true;tx.abort();return}
+   if(current&&expectedUpdatedAt===undefined&&current.updatedAt>build.updatedAt){conflict=true;tx.abort();return}
+   store.put(build);
+  };
+  tx.oncomplete=()=>{db.close();if(typeof window!=="undefined"){window.dispatchEvent(new Event("colosseum-builds-changed"));try{localStorage.setItem("colosseum:build-notice",String(Date.now()))}catch{}}resolve()};
+  tx.onabort=()=>{db.close();reject(new Error(conflict?"Another tab saved a newer revision. Reload that build before saving, or export this draft.":"Save aborted."))};
+  tx.onerror=()=>{db.close();reject(tx.error)};
+ })
+}
+export async function deleteBuild(id:string){return write(store=>{store.delete(id)})}
+export function exportBuild(build:AgentBuild){return JSON.stringify({format:"colosseum-build",version:1,build},null,2)}
+const id=z.string().min(1).max(100),timestamp=z.number().finite().nonnegative(),version=z.number().int().positive()
+const config=z.object({contenderId:id,modelId:z.string().max(200).nullable(),runtime:z.string().min(1).max(80),soul:z.string().max(BUILD_LIMITS.maxSoulLength),skillIds:z.array(id).max(4),toolIds:z.array(id).max(4),knowledgeSources:z.array(id).max(4),equipmentSlots:z.array(id.nullable()).min(3).max(4).optional()})
+const buildSchema=z.object({legacySource:z.object({format:z.literal("claude-overlay-v1"),original:z.record(z.unknown()),notes:z.array(z.string()).max(10)}).optional(),id,name:z.string().min(1).max(48),config,version,parentId:id.nullable(),parentVersion:version.nullable(),createdAt:timestamp,updatedAt:timestamp,revisions:z.array(z.object({version,savedAt:timestamp,config})).max(20)})
+export function importBuild(text:string):AgentBuild{if(text.length>100000)throw new Error("Build file is too large.");const parsed=z.object({format:z.literal("colosseum-build"),version:z.literal(1),build:buildSchema}).safeParse((()=>{const value=JSON.parse(text);if(value?.format==="colosseum-build"&&value.version===1&&value.build&&!value.build.config&&value.build.contenderId)return {...value,build:recoverOverlayBuild(value.build)};return value})());if(!parsed.success)throw new Error("That file is not a valid COLOSSEUM v1 build.");const build=parsed.data.build;const validation=validateBuild(build);if(!validation.valid)throw new Error(validation.issues.filter(v=>v.severity==="error").map(v=>v.message).join(" "));if(build.parentId===build.id)throw new Error("A build cannot be its own parent.");if((build.parentId===null)!==(build.parentVersion===null)&&!(build.parentId!==null&&build.parentVersion===null&&build.legacySource?.format==="claude-overlay-v1"))throw new Error("Parent identity and revision must be recorded together.");return build}

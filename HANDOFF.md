@@ -1,0 +1,29 @@
+# COLOSSEUM Phase 4 handoff
+
+Authoritative source: `/workspace/colosseum-floating`, remote `https://github.com/reixdd/2`, branch `phase4-playable-arena`. The original running `/workspace/colosseum` engine and JARVIS `/workspace/1` were not replaced or restarted. Pre-phase backup: `/workspace/COLOSSEUM-PRE-PHASE4-BACKUP.zip`. Earlier release archives are preserved.
+
+Implemented: model-first selection, shared three-socket equipment/build state, persistent save/import/export, mutations and ancestry, the recovered animated battle stage with real checker outcomes, consent-based local inference, five genuine recorded model captures, four Ledger missions, daily contracts, journal, sourced dispatch and separated public/personal recognition. Character PNG hashes match the recovery baseline.
+
+Eleven project skills are retained in `.agents/skills/`: the seven supplied development skills plus gameplay-design, evidence-integrity, local-models and release-qa workflows. Third-party attached installers were not executed. Approved portraits, original engine weights and public hosted-inference guards remain intact.
+
+Three genuine browser CPU generations completed from exact pinned HTTPS artifacts with LFS weight checksum verification. QA forwarded authentic HTTPS bytes through private loopback HTTP to the browser; model inference and response generation ran in an actual Chromium worker. This was transport adaptation, not mocked inference. Original outputs, parameters, configuration fingerprints, input hashes, timings and streamed events are retained in `data/browser-verified-captures.json`. All three initial math attempts failed the checker at the 128-token budget. Native recordings retain their original checker and artifact identity.
+
+Validation: 104 logic tests passed; complete static gameplay journey and twelve desktop/laptop/mobile/failure browser checks passed. The added original-overlay recovery browser check also passed; final combined static run is recorded in `.validation/phase4/static-ui-results.json`. Type check and static production build passed. No paid inference request occurred in the tested practice/missions/build journey. Final export and publication status are appended below after completion.
+
+The browser adapters are AVAILABLE TO PREPARE by default; a release capture does not mark another device ready. Browser CPU performance is slow, model downloads are substantial, and mobile generation remains unverified. Aggregate Chromium process RSS peaked around 6.27 GB (not model-only memory). Gemma/LFM license/backend work remains deliberately unpromoted. No independently authenticated global leaderboard exists.
+
+Run commands, restoration and limits are in README.md. `pnpm dev` prepares the worker. Source includes `engines/original/` for the original native engine and `recovery/phase4/` for unchanged partial recovery references. Do not run recovery patch installers wholesale. Static build stages source without modifying the running app; source APIs remain guarded and are excluded from static output.
+
+Saved builds remain in the existing IndexedDB database. Unsaved active drafts are isolated per tab in session storage. Saved writes reject stale revisions, and journal events merge transactionally. Earlier overlay records remain in `colosseum:v1`; explicit imports preserve exact originals and identify unknown historical parent revisions. Changing site origins requires explicit export/import.
+
+Website archive: `COLOSSEUM-PHASE4-SITE.zip`. Source archive: `COLOSSEUM-PHASE4-SOURCE.zip`. Models, private environment files, dependency/build caches and generated runtime copies are excluded from source export; all eleven skills are included. Weights are excluded from website deployment and are fetched only after consent. All static files are below Cloudflare's per-file limit.
+
+## Final release validation
+
+The final root-hosted release passed `pnpm typecheck`, all 104 logic tests, production static export and all 13 combined Chromium browser tests. `COLOSSEUM-PHASE4-SITE.zip` and `COLOSSEUM-PHASE4-SOURCE.zip` are created. Source archive inspection confirms all eleven skills and no dependency/model cache; the largest website file is 14,264,838 bytes. Review: https://github.com/reixdd/2/pull/1 (not merged). GitHub project Pages activation is being checked separately; no public URL is claimed until its smoke check passes.
+
+The GitHub project-path build passed a separate 12-route browser smoke journey including real images, model/build navigation, persistent equipment, practice, a Ledger mission, mobile navigation and correct WASM MIME. The optional Mistral VLM registration is omitted from the browser bundle because its public class identifier was misclassified by GitHub secret scanning; no credential was present, dependency files are unchanged, and the approved Qwen/SmolLM allowlist is unchanged.
+
+## Publication handoff
+
+The tested GitHub project-site build is pushed to `reixdd/2` branch `gh-pages`. GitHub API Pages activation returned HTTP 403: "Resource not accessible by integration." The source PR is saved and attached, and remains unmerged. Enable **Deploy from a branch → gh-pages → /(root) → Save** at https://github.com/reixdd/2/settings/pages. A public smoke test remains pending until GitHub activates the site. The root-hosted Cloudflare ZIP is independently ready for Direct Upload.

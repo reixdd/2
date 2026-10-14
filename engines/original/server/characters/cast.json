@@ -1,0 +1,119 @@
+{
+  "_readme": "FICTIONAL PRESENTATION ONLY. Nothing here is a claim about a model's capability or availability. Characters are unofficial, original interpretations; they are not affiliated with or endorsed by any model creator, and use no official artwork. Technical facts live in ../manifest/contenders.json.",
+  "disclaimer": "Unofficial interpretation. Original artwork. Not affiliated with or endorsed by the model's creators.",
+  "families": {
+    "Qwen": {
+      "characterName": "Capybara Sage",
+      "archetype": "The serene polymath",
+      "artKey": "qwen",
+      "entranceAnimation": "lotus-rise",
+      "visualTheme": {
+        "primary": "#9fcbb6",
+        "secondary": "#33485a",
+        "motif": "halo"
+      },
+      "lore": "A capybara in teal robes who never hurries. Rumour says the Sage has read every scroll twice, and answers only once both readings agree."
+    },
+    "DeepSeek": {
+      "characterName": "Abyssal Oracle",
+      "archetype": "The deep-water seer",
+      "artKey": "deepseek",
+      "entranceAnimation": "abyss-rise",
+      "visualTheme": {
+        "primary": "#4f86d9",
+        "secondary": "#0c1a33",
+        "motif": "eyes"
+      },
+      "lore": "A hooded presence that surfaces from the lowest tier of the arena. It thinks in long silences and speaks only when the pattern is complete."
+    },
+    "Llama": {
+      "characterName": "Ancient Scholar",
+      "archetype": "The wool-robed lecturer",
+      "artKey": "llama",
+      "entranceAnimation": "scroll-unfurl",
+      "visualTheme": {
+        "primary": "#d2b36e",
+        "secondary": "#5a4a2c",
+        "motif": "scroll"
+      },
+      "lore": "A bespectacled llama with a mortarboard older than the arena itself. Carries one very long scroll and cites it constantly."
+    },
+    "Gemma": {
+      "characterName": "Crystal Mind",
+      "archetype": "The faceted intellect",
+      "artKey": "gemma",
+      "entranceAnimation": "crystal-shatter",
+      "visualTheme": {
+        "primary": "#9fdcf0",
+        "secondary": "#233a46",
+        "motif": "shards"
+      },
+      "lore": "A floating lattice of living glass. Every facet reflects the problem from a different angle; the Mind claims clarity is just enough angles."
+    },
+    "Grok": {
+      "characterName": "Unpredictable Challenger",
+      "archetype": "The masked wildcard",
+      "artKey": "grok",
+      "entranceAnimation": "lightning-glitch",
+      "visualTheme": {
+        "primary": "#f0d65a",
+        "secondary": "#10151a",
+        "motif": "bolt"
+      },
+      "lore": "Half bright, half shadow, entirely unannounced. The Challenger enters mid-bout and treats the rules as suggestions the judges will quietly correct."
+    }
+  },
+  "contenders": {
+    "agent-qwen-research": {
+      "characterName": "Archivist Sage",
+      "archetype": "The sourcebound scribe",
+      "artKey": "qwen-research",
+      "inheritedTraits": [
+        "silhouette",
+        "palette"
+      ],
+      "lore": "The Capybara Sage after a season in the archive: monocle, open ledger, and a strict habit of separating what is known from what is guessed."
+    },
+    "agent-qwen-quant": {
+      "characterName": "Abacus Sage",
+      "archetype": "The numeric auditor",
+      "artKey": "qwen-quant",
+      "inheritedTraits": [
+        "silhouette",
+        "palette",
+        "monocle"
+      ],
+      "lore": "The Archivist, further specialised: an abacus-framed variant that audits every quantity. Fiction only \u2014 it trades nothing and touches no funds."
+    },
+    "agent-qwen-verifier": {
+      "characterName": "Twice-Checked Sage",
+      "archetype": "The double-reader",
+      "artKey": "qwen-verifier",
+      "inheritedTraits": [
+        "silhouette",
+        "palette"
+      ],
+      "lore": "The Sage with a second halo \u2014 one for the answer, one for the check."
+    },
+    "agent-deepseek-verifier": {
+      "characterName": "Oracle of Second Sight",
+      "archetype": "The self-doubting seer",
+      "artKey": "deepseek-verifier",
+      "inheritedTraits": [
+        "silhouette",
+        "palette"
+      ],
+      "lore": "The Abyssal Oracle, ringed by a confirming glyph. It looks twice before it speaks."
+    },
+    "agent-local-qwen-verifier": {
+      "characterName": "Twice-Checked Sage",
+      "archetype": "The double-reader",
+      "artKey": "qwen-verifier",
+      "inheritedTraits": [
+        "silhouette",
+        "palette"
+      ],
+      "lore": "The Sage with a second halo \u2014 one for the answer, one for the check."
+    }
+  }
+}

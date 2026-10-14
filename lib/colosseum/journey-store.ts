@@ -1,0 +1,5 @@
+import type {GameEvent} from "./gameplay"
+function db():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{const r=indexedDB.open("colosseum-journey",1);r.onupgradeneeded=()=>r.result.createObjectStore("events",{keyPath:"id"});r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+export async function readEvents():Promise<GameEvent[]>{const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction("events","readonly"),r=tx.objectStore("events").getAll();tx.oncomplete=()=>{d.close();resolve(r.result.sort((a:GameEvent,b:GameEvent)=>b.at-a.at))};tx.onerror=()=>{d.close();reject(tx.error)}})}
+/** One read/write transaction merges event IDs atomically, including concurrent tabs. */
+export async function mergeEvents(events:GameEvent[]){const d=await db();return new Promise<void>((resolve,reject)=>{const tx=d.transaction("events","readwrite"),s=tx.objectStore("events");for(const e of events){const r=s.get(e.id);r.onsuccess=()=>{if(!r.result)s.put(e)}}tx.oncomplete=()=>{d.close();resolve()};tx.onerror=()=>{d.close();reject(tx.error)};tx.onabort=()=>{d.close();reject(tx.error??Error("Progress save aborted"))}})}
