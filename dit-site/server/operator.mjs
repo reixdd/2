@@ -19,7 +19,7 @@ export class Operator {
     let saved={};try{saved=JSON.parse(fs.readFileSync(configFile,'utf8'))}catch{}
     try{this.settings=validateSettings(this.lowLoad?fallback:{...fallback,...saved})}catch{this.settings=validateSettings(fallback)}
   }
-  publicStatus(){return {settings:this.settings,lowLoad:this.lowLoad,maxConcurrent:this.maxConcurrent,running:[...this.running.keys()],note:'Research only. No wallet signing or launches.'}}
+  publicStatus(){return {settings:this.settings,lowLoad:this.lowLoad,maxConcurrent:this.maxConcurrent,running:[...this.running.keys()],autonomous:this.autonomous?.snapshot()||null,note:'Research only. No wallet signing or launches.'}}
   async handle(request,body={}){
     const {method,url,headers}=request;if(!allowedOperatorRequest({headers},this.port))return out({error:'Loopback operator only; Host/Origin rejected'},403);
     const p=new URL(url).pathname;
@@ -30,13 +30,14 @@ export class Operator {
         this.settings=next;await this.onSettings(next);fs.mkdirSync(path.dirname(this.configFile),{recursive:true});fs.writeFileSync(this.configFile,JSON.stringify(next,null,2),{mode:0o600});
         return out(this.publicStatus());
       }
+      if(p==='/operator/api/autonomous'&&method==='GET')return out(this.autonomous?.snapshot()||{enabled:false});
       if(p==='/operator/api/discover'&&method==='POST')return out(await discoverProvider(validateSettings(body?.settings||this.settings),{fetchImpl:this.fetchImpl}));
       if(p==='/operator/api/run'&&method==='POST'){
         const {agent_id:id,prompt}=body;if(!IDENTITIES.includes(id))return out({error:'Invalid agent'},400);
         if(this.running.has(id))return out({error:'An operator run is already active for this agent'},409);
         if(this.running.size>=this.maxConcurrent)return out({error:'All bounded JARVIS research slots are busy; retry shortly'},429);
         const ac=new AbortController();const run=crypto.randomUUID();this.running.set(id,{id:run,ac});
-        const row={id:run,agent_id:id,prompt:tidy(prompt).slice(0,3500),provider:this.settings.provider,model:this.settings.models[id]||null,status:'running',started_at:new Date().toISOString(),finished_at:null,answer:null,error:null,source_refs:[],requested_specialists:null};
+        const row={id:run,agent_id:id,prompt:String(prompt||'').slice(0,3500),provider:this.settings.provider,model:this.settings.models[id]||null,status:'running',started_at:new Date().toISOString(),finished_at:null,answer:null,error:null,source_refs:[],requested_specialists:null};
         if(!row.prompt||row.prompt.length<8){this.running.delete(id);return out({error:'Research prompt too short'},400)}
         try{await this.store.insert('agent_research_runs',row);
           await this.store.update('agents',[['id','eq',id]],{state:'THINKING',current_stage:'RESEARCH',state_since:new Date().toISOString(),last_active_at:new Date().toISOString()});
