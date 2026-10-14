@@ -52,8 +52,8 @@ if (-not (Get-JarvisHealth)) {
 # Refuse to call an outdated JARVIS API that lacks bounded "lite" mode.
 $openapi = Invoke-RestMethod -Uri "http://127.0.0.1:$JarvisPort/openapi.json" -TimeoutSec 5
 $modes = @($openapi.components.schemas.ChatRequest.properties.mode.enum)
-if ('lite' -notin $modes) {
-  throw 'JARVIS is running an older API without lite mode. Update your existing reixdd/1 installation and restart JARVIS; do not launch a duplicate.'
+if ('lite' -notin $modes -or -not $openapi.components.schemas.ChatRequest.properties.model) {
+  throw 'JARVIS is running an older API without three-agent model routing. Update the existing reixdd/1 installation and restart JARVIS; do not launch a duplicate.'
 }
 try {
   $ollama = Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/tags' -TimeoutSec 3
@@ -73,9 +73,20 @@ $env:DIT_JARVIS_SHARED = '1'
 $env:DIT_JARVIS_URL = "http://127.0.0.1:$JarvisPort"
 $env:DIT_LLM_PROVIDER = 'off'
 $env:DIT_START_SCHEDULER = '0'
+# Three independently active DIT identities, two installed text models, no 14B/27B automatic use.
+$env:DIT_JARVIS_PARALLEL = '3'
+$env:DIT_AUTONOMOUS = '1'
+$env:DIT_AUTONOMOUS_INTERVAL_MINUTES = '20'
+$env:DIT_MIN_FREE_RAM_GB = '6'
+$env:DIT_MAX_LOADED_VRAM_GB = '13'
+$env:DIT_MODEL_GHOST = 'qwen3.5:4b'
+$env:DIT_MODEL_NULL = 'qwen3.5:9b'
+$env:DIT_MODEL_ECHO = 'qwen3.5:4b'
 Write-Host ""
 Write-Host 'DIT research console will open at http://127.0.0.1:4173/operator'
-Write-Host 'One JARVIS-lite request at a time; GHOST, NULL, and ECHO share the same fast Ollama model.'
+Write-Host 'GHOST, NULL, ECHO run independent 20-minute research cycles; up to 3 concurrent JARVIS-lite requests.'
+Write-Host 'Models: GHOST 4B / NULL 9B / ECHO 4B; loaded-model GPU memory guard: 13 GB; free RAM floor: 6 GB.'
+Write-Host 'Ollama service concurrency/settings must be configured on the daemon, not in this existing client.'
 Write-Host 'No new scanning loop, token launches, transaction signing, or paid APIs.'
 Write-Host 'Close this console (Ctrl+C) to stop only the DIT operator. JARVIS remains independent.'
 Start-Process "http://127.0.0.1:$Port/operator" | Out-Null
