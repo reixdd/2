@@ -8,6 +8,7 @@ import { handleApi } from './api.js';
 import { openFileStore } from './lib/store-file.js';
 import { createStore, supabaseUrlFromEnv } from './lib/store-core.js';
 import { Operator } from './operator.mjs';
+import { AutonomousResearch } from './autonomous.mjs';
 import { bootstrap } from '../worker/bootstrap.js';
 import { Scheduler } from '../worker/scheduler.js';
 import { createLlm } from '../worker/llm.js';
@@ -34,6 +35,8 @@ const configureModel=async settings=>{
   if(localLlm){localLlm=createLlm(env);await localLlm.discover();if(scheduler)scheduler.llm=localLlm;}
 };
 const operator=new Operator({store,env,port,configFile:path.join(dir,'.data','operator-settings.json'),onSettings:configureModel});
+const autonomous=new AutonomousResearch({operator,env,log:(...args)=>console.log(...args)});
+operator.autonomous=autonomous;
 await configureModel(operator.settings);
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.woff2':'font/woff2','.glb':'model/gltf-binary','.mp3':'audio/mpeg','.mp4':'video/mp4','.ogg':'audio/ogg','.webm':'video/webm'};
 const send=(res,r,bytes)=>{res.statusCode=r.status;for(const [k,v] of r.headers)res.setHeader(k,v);if(bytes!==undefined)res.end(bytes);else r.arrayBuffer().then(b=>res.end(Buffer.from(b)),()=>res.end());};
@@ -62,7 +65,7 @@ const server=http.createServer(async(req,res)=>{try{const url=new URL(req.url,`h
  if(!full.startsWith(path.resolve(dir,'dist')+path.sep)||!fs.existsSync(full)||!fs.statSync(full).isFile()){res.writeHead(404);res.end('Not found');return;}
  res.setHeader('Content-Type',types[path.extname(full)]||'application/octet-stream');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Cache-Control','no-cache');fs.createReadStream(full).pipe(res);
 }catch(e){res.writeHead(500,{'content-type':'application/json'});res.end(JSON.stringify({error:'Server error',detail:env.NODE_ENV==='development'?e.message:undefined}));}});
-server.listen(port,'127.0.0.1',()=>console.log(`DIT local companion: http://127.0.0.1:${port}/operator · ${store.kind} store · ${env.DIT_DEV_AUTH==='1'?'TEST-ONLY identity':'Supabase Auth'}`));
+server.listen(port,'127.0.0.1',()=>{console.log(`DIT local companion: http://127.0.0.1:${port}/operator · ${store.kind} store · ${env.DIT_DEV_AUTH==='1'?'TEST-ONLY identity':'Supabase Auth'}`);autonomous.start();});
 let timer=null;localLlm=createLlm(env); await localLlm.discover();console.log("[llm]",JSON.stringify(localLlm.status));
 if (!localLlm.configured && localLlm.status?.provider === 'ollama') {
  console.log('[llm] Ollama is not reachable. Start Ollama or choose JARVIS in http://127.0.0.1:'+port+'/operator. Research without an LLM will skip concept generation.');
@@ -78,6 +81,7 @@ async function shutdown() {
  if (closing) return;
  closing = true;
  if (timer) clearInterval(timer);
+ autonomous.stop();
  try { await store.flush?.(); }
  catch (error) {
    console.error('[storage] Final save failed:', error.message);
