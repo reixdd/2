@@ -1,7 +1,5 @@
-# V7 production handoff
+# V7 production handoff – responsive 2.5D pass
 
-Authoritative source: `reixdd/2`, branch `dit-3d-assets`, directory `dit-site/`.
+Source: `reixdd/2` branch `dit-3d-assets`, `dit-site/`. Release files retain the attached character art. The active scene uses transparent portraits and uniform pointer movement, an interactive parallax city, animated vertical bars and lightweight accent light. Podiums were intentionally removed as a design direction, and prototype GLBs remain in `dit-assets/`. No new data, token signing, worker logic or payment functionality was added.
 
-Read `START-HERE.md` and `docs/CINEMATIC_PRODUCTION.md` for startup and verification. The live visual stylesheet is `dist/reference-v7.css`; do not reintroduce the historical stylesheet stack. The scene uses original 2.5D portraits and real 3D podiums. Prototype GLBs are retained in `dit-assets/`, not automatically loaded.
-
-All verification uses disposable local storage. Real Ollama/JARVIS generation, Supabase authentication and high-refresh GPU performance remain environment-dependent and unverified here. No token deployment or fee transfers were activated. Do not replace the Windows launcher or overwrite the user's `.env` or `.data`.
+Check `START-HERE.md` for startup and `/api/config` checks. Hosted Supabase secrets and migrations are environment-side requirements; the GitHub commit cannot set or validate them. Do not overwrite `.env` or `.data/` or expose service keys. The local identity is for testing only. Browser screenshots need testing in a supported real Chromium environment, as the current container cannot start Chromium.

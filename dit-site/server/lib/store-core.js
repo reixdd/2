@@ -235,7 +235,11 @@ export function summarizeTreasury(ledger) {   // mirrors the treasury_summary vi
     simulated_confirmed_lamports: sum(e => e.simulated && e.entry_type === 'fee_confirmed')
   };
 }
+// The public URL may use its documented NEXT_PUBLIC_ alias on hosted Sites.
+// A *server-only* service role key is still mandatory; never expose or infer it.
+export const supabaseUrlFromEnv = env => env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || '';
 export function createStore(env, fetchImpl) {
-  if (env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) return new SupabaseStore({ url: env.SUPABASE_URL, serviceKey: env.SUPABASE_SERVICE_ROLE_KEY, fetchImpl });
+  const url = supabaseUrlFromEnv(env);
+  if (url && env.SUPABASE_SERVICE_ROLE_KEY) return new SupabaseStore({ url, serviceKey: env.SUPABASE_SERVICE_ROLE_KEY, fetchImpl });
   return null;
 }

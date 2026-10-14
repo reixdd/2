@@ -2,7 +2,7 @@
 import { AGENTS, AGENT_IDS } from './agents.js';
 import { createStore } from './store-core.js';
 import { agentId, limit as vLimit, ValidationError } from './validate.js';
-import { bearer, makeVerifier, RateLimiter, AuthError, publicSupabaseKey } from './auth.js';
+import { bearer, makeVerifier, RateLimiter, AuthError, publicSupabaseKey, publicSupabaseUrl } from './auth.js';
 import { castVote, voteTotals, currentVote } from './votes.js';
 import { verifyWebhook } from './circuit.js';
 import { ingestCircuitEvent, treasuryView, auditLog } from './ledger.js';
@@ -30,8 +30,11 @@ export async function handleBackendApi(request, env, deps = {}) {
   try {
     const store = deps.store || createStore(env, deps.fetchImpl);
     const anonKey = publicSupabaseKey(env);
-    const authMode = env.SUPABASE_URL && anonKey ? 'supabase' : env.DIT_DEV_AUTH === '1' ? 'dev' : 'none';
-    if (path === '/api/config') return json({ backend: { configured: !!store, kind: store?.kind || null }, auth: authMode, supabase: authMode === 'supabase' ? { url: env.SUPABASE_URL, anonKey } : null, treasuryTargetBps: Number(env.TREASURY_BPS || 2500), simulationOnly: true });
+    const publicUrl = publicSupabaseUrl(env);
+    const authMode = publicUrl && anonKey ? 'supabase' : env.DIT_DEV_AUTH === '1' && !publicUrl ? 'dev' : 'none';
+    // Safe diagnostic: only missing variable NAMES, never values or secret prefixes.
+    const missing = [!publicUrl && 'SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL', !env.SUPABASE_SERVICE_ROLE_KEY && 'SUPABASE_SERVICE_ROLE_KEY'].filter(Boolean);
+    if (path === '/api/config') return json({ backend: { configured: !!store, kind: store?.kind || null, missingBindings: store ? [] : missing }, auth: authMode, supabase: authMode === 'supabase' ? { url: publicUrl, anonKey } : null, treasuryTargetBps: Number(env.TREASURY_BPS || 2500), simulationOnly: true, release: 'v7-cinematic-cleanup-20261014' });
     if (!store) return json({ error: 'backend_not_configured', message: 'The database is not connected. Nothing below is live.' }, 503);
 
     if (path === '/api/health') {

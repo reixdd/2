@@ -104,22 +104,60 @@ a {
 }
 .world-canvas {
   position: fixed;
-  inset: 0;
+  inset: -28px;
   z-index: 0;
+  transform: translate3d(var(--world-x, 0px),var(--world-y, 0px),0);
+  transition: transform .35s ease-out;
+  will-change: transform;
   background:
     linear-gradient(0deg, #04080fee 0%, #050b1260 40%, #050a1490 100%),
     linear-gradient(90deg, #03060bc9, transparent 38%, #03060b20),
     url("assets/hero.webp") 58% 42% / cover no-repeat;
-  filter: saturate(0.55) brightness(0.67);
+  filter: saturate(0.4) brightness(0.52) contrast(1.15);
 }
-.world-noise {
-  pointer-events: none;
-  position: fixed;
+.world-canvas:after {
+  content: "";
+  position: absolute;
   inset: 0;
-  opacity: 0.035;
-  background: repeating-linear-gradient(0deg, transparent 0 3px, #bbcfff 4px);
-  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 45% at 52% 62%, #0a1a2a55, transparent 70%),
+    radial-gradient(ellipse at 50% 55%, transparent 35%, #010204e6 100%);
 }
+/* The backdrop stays clean: no full-screen scanline overlay across the portraits. */
+.world-bars {
+  position: fixed;
+  left: 16%; right: 4%; bottom: 10%;
+  height: min(52svh, 560px);
+  display: flex; align-items: flex-end; gap: clamp(9px, 1.8vw, 30px);
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  opacity: .32;
+  transform: translateX(var(--bars-x, 0px));
+  transition: transform .35s ease-out;
+  mask-image: linear-gradient(to top, #0005 0%, #000 20%, #0009 78%, transparent 100%);
+}
+.world-bars span {
+  display: block; flex: 1 1 0; min-width: 3px;
+  height: var(--h);
+  background: linear-gradient(to top, #16253507 0%, #344b6540 30%, #7da2bc29 78%, #99bbd130 100%);
+  border-top: 1px solid #adc3d020;
+  transform-origin: bottom center;
+  animation: bars-breathe calc(11s + var(--phase) * .53s) ease-in-out infinite alternate;
+  animation-delay: calc(var(--phase) * -.9s);
+  will-change: transform;
+}
+.world-bars span:nth-child(4n) {background: linear-gradient(to top,#101b2605,#364f5c33,#85afaa20)}
+.world-bars span:nth-child(5n) {opacity:.48}
+@keyframes bars-breathe {
+  0% {transform:scaleY(.48) translateY(4%)}
+  50% {transform:scaleY(.85) translateY(0)}
+  100% {transform:scaleY(1.11) translateY(-2%)}
+}
+@media(max-width:800px) {.world-bars {left: 4%;right: 3%;bottom: 28%;opacity:.22;height:38svh}.world-bars span:nth-child(2n){display:none}}
+@media(prefers-reduced-motion:reduce) {.world-bars span{animation:none;transform:scaleY(.72);will-change:auto}}
+
 .command-header {
   height: 68px;
   padding: 0 3vw;
@@ -316,7 +354,7 @@ a {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(0deg, #04080d30, transparent 20%);
+  background: radial-gradient(ellipse 80% 20% at 50% 95%, #05090f88, transparent 80%);
 }
 .dit-stage-still {
   position: absolute;
@@ -343,7 +381,10 @@ a {
   inset: 0 2% 6%;
   background: center bottom/contain no-repeat;
   filter: drop-shadow(0 10px 18px #000);
+  transform-origin: 50% 83%;
+  transition: transform .45s cubic-bezier(.2,.7,.15,1), filter .3s ease;
 }
+.still-agent:hover span,.still-agent:focus-visible span { transform:translateY(-10px) rotate(-1.4deg) scale(1.035);filter:drop-shadow(0 16px 25px #000); }
 .still-0 span {
   background-image: url("assets/cutouts/ghost_001.png");
 }
@@ -356,23 +397,11 @@ a {
 .still-agent:after {
   content: "";
   position: absolute;
-  left: 13%;
-  right: 13%;
-  bottom: 0;
-  height: 9%;
-  border-radius: 50%;
-  background: linear-gradient(
-    100deg,
-    #202936,
-    #d7e0e9 28%,
-    #677584 42%,
-    #1c252f 72%,
-    #a9b6c5
-  );
-  border-top: 2px solid var(--accent);
-  box-shadow:
-    0 7px 20px #000,
-    0 3px 8px color-mix(in srgb, var(--accent) 25%, transparent);
+  left: 13%; right: 13%; bottom: 0;
+  height: 8%;
+  background: radial-gradient(ellipse at center, color-mix(in srgb,var(--accent) 30%,transparent),transparent 72%);
+  filter: blur(14px);
+  pointer-events: none;
 }
 .dit-stage-fallback {
   position: absolute;
@@ -417,7 +446,15 @@ a {
   color: #8596a9;
   letter-spacing: 0.13em;
 }
+.dit-stage-label:before {
+  content: ""; display:block; width:clamp(32px,7vw,90px);height:2px; margin-bottom:5px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  box-shadow:0 0 17px color-mix(in srgb,var(--accent) 48%,transparent);
+  opacity:.65; transition:opacity .2s,transform .25s;
+}
+.dit-stage-label:hover:before,.dit-stage-label:focus-within:before {opacity:1;transform:scaleX(1.4)}
 .dit-stage-label strong {
+  text-shadow:0 2px 12px #000a;
   font: 400 clamp(22px, 2.35vw, 38px) / 1.2 var(--display);
   letter-spacing: 0.045em;
 }
@@ -1453,4 +1490,13 @@ a {
   .dossier-layout-offline .dossier-art img { max-height: 26svh; width: auto; }
   .dossier-offline-body { padding: 22px 24px 30px; }
   .dossier-connection { padding: 14px 16px; }
+}
+
+/* Art-direction guardrails: the site is 2.5D and no metallic pedestal is required. */
+.dit-stage-frame { filter: none; }
+.world-canvas, .world-bars { pointer-events: none; }
+@media (prefers-reduced-motion:reduce) {
+  .world-canvas,.world-bars{transform:none!important;transition:none!important;will-change:auto}
+  .still-agent span{transition:none!important;transform:none!important}
+  .dit-stage-label:before{transition:none}
 }

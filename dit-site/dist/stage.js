@@ -1,6 +1,6 @@
 // DEAD INTERNET THEORY — agent control-room stage (WebGL via Three.js, lazy-loaded).
 //
-// Detailed, transparent 2.5D portraits share a camera with real PBR podiums and city geometry.
+// Detailed, transparent 2.5D portraits share a camera and softly animated city backdrop.
 // Prototype GLBs remain in dit-assets for authoring; they are not the production characters.
 // Research activity always comes from the existing API. Idle motion is visual only.
 import { createQualityController, opaqueAt } from './stage-quality.js';
@@ -47,6 +47,23 @@ function boot() {
         </div>
       </div>`).join('')}</div>`;
 
+  // Grand Line-like scene depth: the city and atmospheric bars follow the cursor.
+  // A single rAF batches writes, while CSS reduced-motion keeps the scene still.
+  let worldRaf=0, worldPointer={x:0,y:0};
+  function moveWorld(e) {
+    if (reduced || e.pointerType==='touch') return;
+    worldPointer.x=(e.clientX/window.innerWidth-.5)*2;
+    worldPointer.y=(e.clientY/window.innerHeight-.5)*2;
+    if(worldRaf) return;
+    worldRaf=requestAnimationFrame(()=>{
+      worldRaf=0;
+      document.documentElement.style.setProperty('--world-x',(-worldPointer.x*16).toFixed(1)+'px');
+      document.documentElement.style.setProperty('--world-y',(-worldPointer.y*11).toFixed(1)+'px');
+      document.documentElement.style.setProperty('--bars-x',(-worldPointer.x*28).toFixed(1)+'px');
+    });
+  }
+  window.addEventListener('pointermove',moveWorld,{passive:true});
+  window.addEventListener('pagehide',()=>{window.removeEventListener('pointermove',moveWorld);cancelAnimationFrame(worldRaf);},{once:true});
   const note = document.querySelector('#dit-stage-note');
   const fallback = section.querySelector('#dit-stage-fallback');
   const canvas = section.querySelector('#dit-stage-canvas');
@@ -103,7 +120,7 @@ function boot() {
   const start = async () => {
     if (started) return; started = true;
     try {
-      note.textContent = 'LOADING 3D ENGINE…';
+      note.textContent = 'ESTABLISHING OBSERVATORY…';
       const THREE = await import(THREE_URL);
       const probe = document.createElement('canvas');
       if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) throw Error('WebGL is not available in this browser');
@@ -131,75 +148,20 @@ async function buildStage(THREE, canvas, live, section) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.18;
   const scene = new THREE.Scene();
-  const { RoomEnvironment } = await import('./vendor/RoomEnvironment.js');
-  const room = new RoomEnvironment();
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const environment = pmrem.fromScene(room, .04);
-  scene.environment = environment.texture;
-  room.dispose(); pmrem.dispose();
-  scene.fog = new THREE.FogExp2(0x0b111a, .022);
+  // No heavy environment map: transparent portrait shader needs no procedural stage lighting.
   // Transparent viewport: the city artwork is the actual shared backdrop.
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 80);
 
-  // ---- atmospheric grounding: light floor grid and three raised machine podiums --------------
-  const podiums = [];
-  const silver = new THREE.MeshStandardMaterial({color:0xb8c2cc,metalness:.91,roughness:.28,envMapIntensity:1.5});
-  const darkMetal = new THREE.MeshStandardMaterial({color:0x1d242c,metalness:.88,roughness:.32});
-  // Lathed bevel profile: a compact plinth, with the luminous seam recessed below its lip.
-  const profile = [[0,-2.30],[1.25,-2.30],[1.30,-2.26],[1.30,-2.22],[1.15,-1.98],[1.12,-1.94],[0,-1.94]];
-  const shell = new THREE.LatheGeometry(profile.map(([x,y])=>new THREE.Vector2(x,y)),64);
-  for (let i=0; i<3; i++) {
-    const accent = new THREE.Color(AGENTS[i].accent);
-    const podium = new THREE.Group();
-    const base = new THREE.Mesh(shell,silver); podium.add(base);
-    const top = new THREE.Mesh(new THREE.CylinderGeometry(1.10,1.10,.025,64),darkMetal);
-    top.position.y=-1.925; podium.add(top);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(1.155,.014,8,64),new THREE.MeshBasicMaterial({color:accent,transparent:true,opacity:.9}));
-    rim.rotation.x=Math.PI/2;rim.position.y=-1.985;podium.add(rim);
-    const under = new THREE.Mesh(new THREE.TorusGeometry(1.285,.012,8,64),silver);
-    under.rotation.x=Math.PI/2;under.position.y=-2.265;podium.add(under);
-    const marker = new THREE.Mesh(new THREE.BoxGeometry(.28,.035,.012),new THREE.MeshBasicMaterial({color:accent,transparent:true,opacity:.76}));
-    marker.position.set(0,-2.18,1.253);podium.add(marker);
-    const foot=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.25,.05,48),darkMetal);foot.position.y=-2.325;podium.add(foot);
-    // Radial fasteners sit flush in the silver top bevel.
-    const bolts=new THREE.InstancedMesh(new THREE.CylinderGeometry(.025,.025,.012,6),darkMetal,8);
-    for(let n=0;n<8;n++) {const a=n*Math.PI/4;bolts.setMatrixAt(n,new THREE.Matrix4().makeTranslation(Math.sin(a)*1.12,-1.933,Math.cos(a)*1.12));}
-    podium.add(bolts);
-    scene.add(podium);podiums.push({podium,rim,top,marker,accent});
-  }
-  const ambient = new THREE.AmbientLight(0xffffff,.62);scene.add(ambient);
-  const key = new THREE.DirectionalLight(0xe7f4fa,1.20);key.position.set(-2,5,5);scene.add(key);
-
+  // 2.5D art direction: retain the painterly city and detailed cutouts, without
+  // synthetic metallic pedestals or procedural boxes masking the original art.
   const glowTex = (() => { // radial glow sprite texture
     const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
     const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(172,213,220,.75)'); r.addColorStop(1, 'rgba(172,213,220,0)');
     g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
   })();
 
-  for (const pd of podiums) { // coloured pool of light on each podium
-    const pool = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: pd.accent, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending }));
-    pool.scale.set(3.2, .28, 1); pool.position.set(0, -2.32, .3); pd.podium.add(pool); pd.pool = pool;
-  }
-
-  const floor=new THREE.Mesh(new THREE.PlaneGeometry(65,38),new THREE.MeshStandardMaterial({color:0x070e17,metalness:.65,roughness:.32,envMapIntensity:.25,transparent:true,opacity:.65}));
-  floor.rotation.x=-Math.PI/2;floor.position.set(0,-2.37,-8);scene.add(floor);
-  // Soft contact shadows and reflected light anchor the machines without per-frame shadow maps.
-  for (const pd of podiums) {
-    const shadow = new THREE.Mesh(new THREE.PlaneGeometry(3.5,2.8),new THREE.MeshBasicMaterial({map:glowTex,color:0x000000,transparent:true,opacity:.85,depthWrite:false}));
-    shadow.rotation.x=-Math.PI/2;shadow.position.y=-2.355;pd.podium.add(shadow);
-    const contact = new THREE.Mesh(new THREE.PlaneGeometry(2.4,1.6),new THREE.MeshBasicMaterial({map:glowTex,color:0x000000,transparent:true,opacity:.9,depthWrite:false}));
-    contact.rotation.x=-Math.PI/2;contact.position.y=-1.903;pd.podium.add(contact);
-  }
-  // Three instanced architecture layers share the camera and separate the distant city from the foreground.
-  const cityGeo=new THREE.BoxGeometry(1,1,1);
-  [0,1,2].forEach(layer=>{
-    const mat=new THREE.MeshStandardMaterial({color:[0x141b25,0x111722,0x090e16][layer],roughness:.8,metalness:.3,transparent:true,opacity:.22+layer*.06});
-    const city=new THREE.InstancedMesh(cityGeo,mat,24), m=new THREE.Matrix4();
-    for(let j=0;j<24;j++) {const h=1.5+((j*13+layer*7)%11)*.55; m.compose(new THREE.Vector3((j-12)*1.9,-2.6+h/2,-12+layer*3),new THREE.Quaternion(),new THREE.Vector3(.65+(j%3)*.2,h,.7));city.setMatrixAt(j,m);}
-    scene.add(city);
-  });
   // ---- particles ------------------------------------------------------------------------------
-  const N = small ? 120 : 320; const pos = new Float32Array(N * 3); const vel = new Float32Array(N);
+  const N = small ? 64 : 130; const pos = new Float32Array(N * 3); const vel = new Float32Array(N);
   for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - .5) * 26; pos[i * 3 + 1] = Math.random() * 8 - 2; pos[i * 3 + 2] = (Math.random() - .5) * 14 - 1; vel[i] = .1 + Math.random() * .4; }
   const pGeo = new THREE.BufferGeometry(); pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const pMat = new THREE.PointsMaterial({ color: 0xb7bec2, size: small ? .05 : .04, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -208,7 +170,7 @@ async function buildStage(THREE, canvas, live, section) {
   // ---- agents ---------------------------------------------------------------------------------
   // Three separate transparent cutouts retain the supplied detail, with subtle shared-camera motion.
   const textures = await Promise.all(AGENTS.map(a=>new Promise((resolve,reject)=>new THREE.TextureLoader().load(`assets/cutouts/${a.model}.png`,resolve,undefined,()=>reject(Error('Character cutout missing: '+a.model))))));
-  const masks = textures.map(t=>{const c=document.createElement('canvas');c.width=t.image.width;c.height=t.image.height;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(t.image,0,0);const rgba=g.getImageData(0,0,c.width,c.height).data;const data=new Uint8Array(c.width*c.height);for(let i=0;i<data.length;i++){const x=(i%c.width)/c.width,y=1-Math.floor(i/c.width)/c.height;const half=.28+.22*THREE.MathUtils.smoothstep(y,0,.30);data[i]=Math.abs(x-.5)>half?0:rgba[i*4+3];}return {width:c.width,height:c.height,data};});
+  const masks = textures.map(t=>{const c=document.createElement('canvas');c.width=t.image.width;c.height=t.image.height;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(t.image,0,0);const rgba=g.getImageData(0,0,c.width,c.height).data;const data=new Uint8Array(c.width*c.height);for(let i=0;i<data.length;i++){data[i]=rgba[i*4+3];}return {width:c.width,height:c.height,data};});
   for(const t of textures){t.colorSpace=THREE.SRGBColorSpace;t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy())}
   const vert='varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}';
   const frag=`
@@ -220,40 +182,40 @@ async function buildStage(THREE, canvas, live, section) {
       float depth=dot(base.rgb,vec3(.299,.587,.114));
       // Keep silhouette UVs stable so lighting never exposes the image rectangle.
       p=vUv;
-      float dx=glitch*step(.95,fract(sin(floor(time*8.+p.y*21.)*39.)*433.));
+      // Avoid horizontal digital tear bands on character faces.
+      float dx=glitch*(.5+.5*sin(time*2.5));
       vec4 sampleColor=base;
       if(sampleColor.a < .035) discard;
       vec3 c=sampleColor.rgb;
       if(glitch>.001){c.r=texture2D(map,p+vec2(dx*.022,0.)).r;c.b=texture2D(map,p-vec2(dx*.022,0.)).b;}
-      float scan=.5+.5*sin(p.y*170.-time*2.);
-      c*=1.-.075*scan*energy;
       float edge=0.;
       if(hover>.001) edge=max(0.,sampleColor.a-texture2D(map,p+vec2(.006,0.)).a);
       c+=accent*hover*(edge*.65+depth*.08);
       float lowLight=1.0-smoothstep(0.,.46,vUv.y);
       c+=accent*lowLight*(.08+.22*depth)*(.4+.30*hover+.20*energy);
       c*=mix(.56,1.,dim)*(.90+.12*energy+.12*hover);
-      float shoulderWidth=mix(.28,.50,smoothstep(.0,.30,vUv.y));
-      float silhouette=1.-smoothstep(shoulderWidth-.018,shoulderWidth,abs(vUv.x-.5));
-      gl_FragColor=vec4(c,sampleColor.a*silhouette);
+      // Trust the cutout's real alpha instead of cropping it into a synthetic wedge.
+      // Only feather the last few bottom pixels into the podium contact shadow.
+      float seat=smoothstep(.006,.055,vUv.y);
+      gl_FragColor=vec4(c,sampleColor.a*seat);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`;
-  const FIG=1.10; // figure scale; cutouts are cropped to content (647x656)
+  const FIG=1.17; // Larger, character-first 2.5D composition with no base pedestal
   const items=AGENTS.map((a,i)=>{
     const group=new THREE.Group();
     const uniforms={map:{value:textures[i]},mouse:{value:new THREE.Vector2()},time:{value:0},energy:{value:.1},glitch:{value:0},dim:{value:1},hover:{value:0},accent:{value:new THREE.Color(a.accent)}};
-    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(3.42*FIG,3.47*FIG),new THREE.ShaderMaterial({uniforms,vertexShader:vert,fragmentShader:frag,transparent:true,depthWrite:false,side:THREE.DoubleSide}));
-    mesh.userData.agent=a.id;group.add(mesh);
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(3.42*FIG,3.47*FIG),new THREE.ShaderMaterial({uniforms,vertexShader:vert,fragmentShader:frag,transparent:true,depthWrite:false,depthTest:false,side:THREE.DoubleSide}));
+    mesh.renderOrder=20;mesh.userData.agent=a.id;group.add(mesh);
     const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:a.accent,transparent:true,opacity:.09,depthWrite:false,blending:THREE.AdditiveBlending}));
     glow.scale.set(3.8,4.8,1);glow.position.set(0,1.9,-.38);group.add(glow);
-    group.position.set((i-1)*3.85,-1.93,0);mesh.position.y=3.47*FIG/2-.23;scene.add(group);
+    group.position.set((i-1)*3.85,-2.17,0);mesh.position.y=3.47*FIG/2-.02;scene.add(group);
     return {id:a.id,group,mesh,glow,uniforms,cur:{energy:.1,glitch:0,dim:1},hover:0,phase:i*1.7,model:null,mixer:null,head:null,labelPosition:new THREE.Vector3(),label:section.querySelector(`[data-stage-agent="${CSS.escape(a.id)}"]`),lastLabelX:null,mask:masks[i],modelFile:a.model,baseX:group.position.x};
   });
   const byId=new Map(items.map(it=>[it.id,it]));
 
-  // The shipped GLBs are deliberately retained as prototypes in dit-assets, not silently
-  // substituted for the higher-fidelity artwork. All foreground podiums are real geometry.
+  // The GLBs are retained as authoring prototypes; the production scene uses these
+  // detailed transparent portraits with lightweight depth, no opaque pedestals.
 
   // ---- interaction ----------------------------------------------------------------------------
   const ray = new THREE.Raycaster(); const ndc = new THREE.Vector2(); const pointer = { x: 0, y: 0, in: false };
@@ -271,7 +233,7 @@ async function buildStage(THREE, canvas, live, section) {
   const baseZ = () => layoutFor(camera.aspect).z;
   function applyLayout() {
     const { W, spacing } = layoutFor(camera.aspect);
-    items.forEach((it, i) => { it.baseX = (i - 1) * spacing; it.group.position.x = it.baseX; podiums[i].podium.position.x = it.baseX; });
+    items.forEach((it, i) => { it.baseX = (i - 1) * spacing; it.group.position.x = it.baseX; });
     section.style.setProperty('--stage-span', (Math.min(96, 3 * spacing / W * 100)).toFixed(2) + '%');
   }
   const pick = e => {
@@ -328,15 +290,10 @@ async function buildStage(THREE, canvas, live, section) {
       const mx = still ? 0 : pointer.in ? pointer.x : Math.sin(t * .2 + it.phase) * .25, my = still ? 0 : pointer.in ? pointer.y : Math.cos(t * .17 + it.phase) * .15;
       u.mouse.value.set(mx, my);
       const breathe = still ? 0 : Math.sin(t * (.9 * p.pulse + .6) + it.phase) * (.008 + p.energy * .012);
-      it.group.scale.set(1 - breathe * .4, 1 + breathe, 1);                                  // breathing
-      it.group.rotation.y = lerp(it.group.rotation.y, mx * .055 + (it.baseX ? -it.baseX * .01 : 0), Math.min(1, dt * 4)); // head/body tracking
-      it.group.rotation.x = lerp(it.group.rotation.x, -my * .025, Math.min(1, dt * 4));
+      it.group.scale.set(1 + breathe * .4 + it.hover * .025, 1 + breathe + it.hover * .025, 1);                                  // breathing
+      it.group.rotation.y = lerp(it.group.rotation.y, mx * .22 + (it.baseX ? -it.baseX * .008 : 0), Math.min(1, dt * 5)); // restore V6 responsiveness for all THREE silhouettes
+      it.group.rotation.x = lerp(it.group.rotation.x, -my * .09, Math.min(1, dt * 5));
       it.glow.material.opacity = .11 + it.cur.energy * .15 * (.8 + .2 * Math.sin(t * p.pulse * 2 + it.phase)) + it.hover * .18;
-      const podium = podiums[items.indexOf(it)];
-      podium.rim.material.opacity = Math.min(1, .72 + it.hover * .28 + it.cur.energy * .09);
-      podium.pool.material.opacity = .20 + it.hover * .18 + it.cur.energy * .12;
-
-      podium.marker.material.opacity = .35 + it.hover * .5 + it.cur.energy * .14;
       if (it.mixer) it.mixer.update(dt);
       if (it.head) { it.head.rotation.y = lerp(it.head.rotation.y, mx * .6, .1); it.head.rotation.x = lerp(it.head.rotation.x, -my * .3, .1); }
     }
@@ -346,7 +303,7 @@ async function buildStage(THREE, canvas, live, section) {
     for (let i = 0; i < N; i++) { let y = a.getY(i) + vel[i] * dt * (anyBusy ? 2.4 : .8); if (y > 6) y = -2.2; a.setY(i, y); }
     a.needsUpdate = true;
     const ck = Math.min(1, dt * 2.5); cam.x = lerp(cam.x, camTarget.x, ck); cam.y = lerp(cam.y, camTarget.y, ck); cam.z = lerp(cam.z, camTarget.z, ck);
-    camera.position.set(cam.x + (pointer.in && !still ? pointer.x * .08 : 0), cam.y + (pointer.in && !still ? pointer.y * .04 : 0), cam.z);
+    camera.position.set(cam.x + (pointer.in && !still ? pointer.x * .35 : 0), cam.y + (pointer.in && !still ? pointer.y * .20 : 0), cam.z);
     camera.lookAt(cam.x * .9, -.32, 0);
     items.forEach(it=>{const v=it.labelPosition.set(it.baseX,-2.5,0).project(camera);const x=(v.x+1)*50;if(it.lastLabelX===null||Math.abs(x-it.lastLabelX)>.035){it.label.style.setProperty("--label-x",`${x}%`);it.lastLabelX=x;}});
   }
@@ -371,8 +328,8 @@ async function buildStage(THREE, canvas, live, section) {
   window.addEventListener('dit:motion',resume);
   canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); lost=true;cancelAnimationFrame(raf);raf=0;pending=false;canvas.hidden=true;section.querySelector('#dit-stage-still').hidden=false;section.dataset.renderer='fallback'; });
   canvas.addEventListener('webglcontextrestored', ()=>{lost=false;canvas.hidden=false;section.querySelector('#dit-stage-still').hidden=true;section.dataset.renderer='webgl';resume();});
-  window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;clearTimeout(zoom);cancelAnimationFrame(raf);resizeObserver.disconnect();visibilityObserver.disconnect();document.removeEventListener('visibilitychange',resume);window.removeEventListener('dit:motion',resume);const resources=new Set();scene.traverse(o=>{if(o.geometry)resources.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])resources.add(m);});resources.forEach(r=>r.dispose());textures.forEach(t=>t.dispose());glowTex.dispose();environment.dispose();renderer.dispose();},{once:true});
-  document.getElementById('dit-stage-note').textContent = 'LIVE CONTROL ROOM / DEPTH ARTWORK';
+  window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;clearTimeout(zoom);cancelAnimationFrame(raf);resizeObserver.disconnect();visibilityObserver.disconnect();document.removeEventListener('visibilitychange',resume);window.removeEventListener('dit:motion',resume);const resources=new Set();scene.traverse(o=>{if(o.geometry)resources.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])resources.add(m);});resources.forEach(r=>r.dispose());textures.forEach(t=>t.dispose());glowTex.dispose();renderer.dispose();},{once:true});
+  document.getElementById('dit-stage-note').textContent = 'OBSERVATORY / 2.5D DEPTH';
   requestRender();
   return { requestRender, zoomTo, zoomOut, setFocus };
 }
