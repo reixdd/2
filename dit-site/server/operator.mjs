@@ -13,9 +13,10 @@ export function allowedOperatorRequest(req,port){
 export class Operator {
   constructor({store,env,port,fetchImpl=fetch,configFile='.data/operator-settings.json',onSettings=async()=>{}}){
     this.store=store;this.env=env;this.port=port;this.fetchImpl=fetchImpl;this.configFile=configFile;this.onSettings=onSettings;this.running=new Map();
-    const fallback={provider:'ollama',url:env.OLLAMA_URL||'http://127.0.0.1:11434',models:{GHOST_001:env.DIT_MODEL_GHOST||'',NULL_ENTITY:env.DIT_MODEL_NULL||'','ECHO.exe':env.DIT_MODEL_ECHO||''}};
+    this.lowLoad = env.DIT_JARVIS_SHARED === '1';
+    const fallback={provider:this.lowLoad?'jarvis':'ollama',url:this.lowLoad?'http://127.0.0.1:8768':(env.OLLAMA_URL||'http://127.0.0.1:11434'),models:{GHOST_001:env.DIT_MODEL_GHOST||'',NULL_ENTITY:env.DIT_MODEL_NULL||'','ECHO.exe':env.DIT_MODEL_ECHO||''}};
     let saved={};try{saved=JSON.parse(fs.readFileSync(configFile,'utf8'))}catch{}
-    try{this.settings=validateSettings({...fallback,...saved})}catch{this.settings=validateSettings(fallback)}
+    try{this.settings=validateSettings(this.lowLoad?fallback:{...fallback,...saved})}catch{this.settings=validateSettings(fallback)}
   }
   publicStatus(){return {settings:this.settings,running:[...this.running.keys()],note:'Research only. No wallet signing or launches.'}}
   async handle(request,body={}){
@@ -24,7 +25,7 @@ export class Operator {
     try{
       if(p==='/operator/api/settings'&&method==='GET')return out(this.publicStatus());
       if(p==='/operator/api/settings'&&method==='POST'){
-        const next=validateSettings(body);
+        const next=validateSettings(this.lowLoad?{...body,provider:'jarvis',url:'http://127.0.0.1:8768',models:{}}:body);
         this.settings=next;await this.onSettings(next);fs.mkdirSync(path.dirname(this.configFile),{recursive:true});fs.writeFileSync(this.configFile,JSON.stringify(next,null,2),{mode:0o600});
         return out(this.publicStatus());
       }
@@ -32,11 +33,12 @@ export class Operator {
       if(p==='/operator/api/run'&&method==='POST'){
         const {agent_id:id,prompt}=body;if(!IDENTITIES.includes(id))return out({error:'Invalid agent'},400);
         if(this.running.has(id))return out({error:'An operator run is already active for this agent'},409);
+        if(this.lowLoad&&this.running.size>0)return out({error:'JARVIS lite mode is busy with another agent; try again after it finishes'},429);
         const ac=new AbortController();const run=crypto.randomUUID();this.running.set(id,{id:run,ac});
         const row={id:run,agent_id:id,prompt:tidy(prompt).slice(0,3500),provider:this.settings.provider,model:this.settings.models[id]||null,status:'running',started_at:new Date().toISOString(),finished_at:null,answer:null,error:null,source_refs:[],requested_specialists:null};
         if(!row.prompt||row.prompt.length<8){this.running.delete(id);return out({error:'Research prompt too short'},400)}
         try{await this.store.insert('agent_research_runs',row);
-          await this.store.update('agents',[['id','eq',id]],{state:'THINKING',current_stage:'operator_research',state_since:new Date().toISOString(),last_active_at:new Date().toISOString()});
+          await this.store.update('agents',[['id','eq',id]],{state:'THINKING',current_stage:'RESEARCH',state_since:new Date().toISOString(),last_active_at:new Date().toISOString()});
           await this.store.upsert('worker_heartbeats',{worker_id:'dit-operator-local',started_at:new Date().toISOString(),last_seen_at:new Date().toISOString(),version:'operator',info:{kind:'local_research',llm_provider:this.settings.provider,llm_configured:true,store:this.store.kind}},{onConflict:'worker_id'});
           await this.store.insert('activity_events',{agent_id:id,event_type:'operator_start',title:`${id} received a research brief`,detail:'Local operator request; pending model response.'});}catch(e){this.running.delete(id);throw e}
         // Fire and forget, but retain the AbortController and persist all outcomes.
