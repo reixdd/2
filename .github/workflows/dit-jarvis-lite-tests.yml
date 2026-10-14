@@ -1,10 +1,13 @@
-name: Verify DIT JARVIS-lite local connector
+name: Verify DIT three-agent JARVIS local runtime
 on:
   push:
     branches: [dit-3d-assets]
     paths:
       - 'dit-site/server/operator.mjs'
       - 'dit-site/server/local.mjs'
+      - 'dit-site/server/autonomous.mjs'
+      - 'dit-site/tests/autonomous-research.test.js'
+      - 'dit-site/Start-DIT-With-JARVIS.ps1'
       - 'dit-site/worker/provider-bridge.js'
       - 'dit-site/tests/operator-bridge.test.js'
       - '.github/workflows/dit-jarvis-lite-tests.yml'
@@ -22,7 +25,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify operator bridge and shared-model mode
+      - name: Verify three-agent operator bridge
         run: node --test tests/operator-bridge.test.js
       - name: Run existing source regression tests
         run: npm test
