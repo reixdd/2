@@ -1,0 +1,57 @@
+name: Import DIT V7 source
+on:
+  push:
+    branches: [dit-3d-assets]
+    paths:
+      - 'dit-transfer/source_part_*.txt'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import-v7:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Reconstruct and verify source archive
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import base64, io, hashlib
+          parts = sorted(Path("dit-transfer").glob("source_part_*.txt"))
+          assert len(parts) == 9, f"Expected 9 source parts, found {len(parts)}"
+          data = base64.b64decode("".join(p.read_text() for p in parts), validate=True)
+          actual = hashlib.sha256(data).hexdigest()
+          expected = "1659fefaa5330635792ef91710d9ae8861634b76b7d14aeec0d548864a21acc4"
+          assert actual == expected, f"Archive SHA256 mismatch: {actual}"
+          with ZipFile(io.BytesIO(data)) as archive:
+              assert archive.testzip() is None, "Corrupted ZIP"
+              names = [n for n in archive.namelist() if not n.endswith("/")]
+              assert len(names) == 93, f"Expected 93 files, found {len(names)}"
+              for name in names:
+                  assert name.startswith("proj/"), f"Unexpected source path: {name}"
+                  rel = Path(name.removeprefix("proj/"))
+                  assert not rel.is_absolute() and ".." not in rel.parts, f"Unsafe path: {name}"
+                  dst = Path("dit-site") / rel
+                  dst.parent.mkdir(parents=True, exist_ok=True)
+                  dst.write_bytes(archive.read(name))
+          print(f"Verified DIT V7: 93 files, ZIP SHA256 {actual}")
+          PY
+      - name: Run V7 source tests
+        run: |
+          cd dit-site
+          node --version
+          npm test
+      - name: Commit isolated DIT website sources
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f dit-site
+          git rm -r -q -- dit-transfer
+          if ! git diff --cached --quiet; then
+            git commit -m "Import verified DIT V7 website source [skip dit import]"
+            git push origin HEAD:dit-3d-assets
+          fi

@@ -1,0 +1,10 @@
+*.png
+node_modules/
+build/
+.env*
+!.env.example
+launch-records/
+
+.data/
+
+.qa/
