@@ -18,7 +18,7 @@ export class Operator {
     let saved={};try{saved=JSON.parse(fs.readFileSync(configFile,'utf8'))}catch{}
     try{this.settings=validateSettings(this.lowLoad?fallback:{...fallback,...saved})}catch{this.settings=validateSettings(fallback)}
   }
-  publicStatus(){return {settings:this.settings,running:[...this.running.keys()],note:'Research only. No wallet signing or launches.'}}
+  publicStatus(){return {settings:this.settings,lowLoad:this.lowLoad,running:[...this.running.keys()],note:'Research only. No wallet signing or launches.'}}
   async handle(request,body={}){
     const {method,url,headers}=request;if(!allowedOperatorRequest({headers},this.port))return out({error:'Loopback operator only; Host/Origin rejected'},403);
     const p=new URL(url).pathname;
