@@ -70,6 +70,7 @@ $env:PORT = "$Port"
 $env:DIT_STORE = 'supabase'
 $env:DIT_DEV_AUTH = '0'
 $env:DIT_JARVIS_SHARED = '1'
+$env:DIT_JARVIS_URL = "http://127.0.0.1:$JarvisPort"
 $env:DIT_LLM_PROVIDER = 'off'
 $env:DIT_START_SCHEDULER = '0'
 Write-Host ""
