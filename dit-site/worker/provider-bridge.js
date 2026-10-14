@@ -61,9 +61,9 @@ export async function runResearch({settings,agentId,prompt,signal,fetchImpl=fetc
  const selected=s.models[agentId];if(s.provider!=='jarvis'&&!selected)throw Error('Choose an installed model for '+agentId);
  const p=boundedText(prompt,3500).trim();if(!p||p.length<8)throw Error('Research prompt must be 8–3500 characters');
  const user=`DEAD INTERNET THEORY RESEARCH ONLY. Do not sign transactions, propose deceptive promotion or claim unverified observations as fact. Identity: ${agentId}. ${BRIEFS[agentId]}\nResearch question: ${p}\nSeparate source facts, hypotheses and uncertainty. Include source links when available.`;
- const abort=timeoutSignal(signal,90000);
+ const abort=timeoutSignal(signal,75000);
  if(s.provider==='jarvis'){
-    const response=await fetchImpl(s.url+'/api/chat',{method:'POST',headers:{'content-type':'application/json',accept:'application/x-ndjson'},body:JSON.stringify({message:user,identity_key:agentId,mode:agentId==='NULL_ENTITY'?'deep':'fast'}),signal:abort});
+    const response=await fetchImpl(s.url+'/api/chat',{method:'POST',headers:{'content-type':'application/json',accept:'application/x-ndjson'},body:JSON.stringify({message:user,identity_key:agentId,mode:'lite'}),signal:abort});
     const result=await readNdjson(response,{signal:abort,onRecord});if(!result.answer)throw Error('JARVIS returned no research answer');return {answer:result.answer,model:result.model,provider:'jarvis',requested_specialists:BRIEFS[agentId],stream_completed:result.done};
  }
  const discovery=await discoverProvider(s,{fetchImpl,signal:abort});if(!discovery.models.includes(selected))throw Error(`Configured model ${selected} is unavailable; refresh models`);
