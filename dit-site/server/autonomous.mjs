@@ -30,7 +30,7 @@ export class AutonomousResearch {
     this.nextAt=Object.fromEntries(IDENTITIES.map(id=>[id,0]));
     this.last=Object.fromEntries(IDENTITIES.map(id=>[id,{status:'waiting'}]));
     this.ticking=false;this.timer=null;this.pausedReason=null;
-    this.startedAt=null;
+    this.startedAt=null;this.lastHeartbeat=0;this.lastCpu=null;
   }
   snapshot(){
     return {enabled:this.enabled,startedAt:this.startedAt,pausedReason:this.pausedReason,
@@ -39,7 +39,27 @@ export class AutonomousResearch {
       active:[...this.operator.running.keys()],
       agents:IDENTITIES.map(id=>({agent_id:id,nextDueAt:this.nextAt[id]?new Date(this.nextAt[id]).toISOString():null,...this.last[id]}))};
   }
+  #cpuPressure(){
+    const snapshot=os.cpus().reduce((t,c)=>({idle:t.idle+c.times.idle,total:t.total+Object.values(c.times).reduce((a,b)=>a+b,0)}),{idle:0,total:0});
+    const prev=this.lastCpu;this.lastCpu=snapshot;
+    if(!prev)return null;
+    const total=snapshot.total-prev.total,idle=snapshot.idle-prev.idle;
+    if(total>0&&(1-idle/total)>0.94)return 'CPU is above 94% busy; research temporarily postponed';
+    return null;
+  }
+  async #heartbeat(now){
+    if(now-this.lastHeartbeat<120_000)return;
+    this.lastHeartbeat=now;
+    try{
+      await this.operator.store.upsert('worker_heartbeats',{
+        worker_id:'dit-autonomous-local',started_at:this.startedAt||new Date(now).toISOString(),last_seen_at:new Date(now).toISOString(),
+        version:'three-agent-concurrent-1',info:{kind:'local_autonomous_research',agent_ids:IDENTITIES,limit:this.operator.maxConcurrent,
+          active:[...this.operator.running.keys()],paused_reason:this.pausedReason||null,model_route:'jarvis',store:this.operator.store.kind}
+      },{onConflict:'worker_id'});
+    }catch(e){this.log('[DIT autonomous heartbeat]',cut(e.message));}
+  }
   async #healthyMemory(){
+    const busy=this.#cpuPressure();if(busy)return busy;
     const free = this.freeRam();
     if(free < this.minRamBytes) return 'Low free system memory; automatic inference postponed';
     // No AMD GPU-temperature control is claimed. Ollama reports loaded model memory.
@@ -71,11 +91,12 @@ export class AutonomousResearch {
     try {
       const now=this.clock();
       const due=IDENTITIES.filter(id=>this.nextAt[id]<=now&&!this.operator.running.has(id));
-      if(!due.length){this.pausedReason=null;return this.snapshot();}
+      if(!due.length){this.pausedReason=null;await this.#heartbeat(now);return this.snapshot();}
       const pressure=await this.#healthyMemory();
       if(pressure){
         this.pausedReason=pressure;
         for(const id of due){this.last[id]={status:'paused_for_resources',detail:pressure};this.nextAt[id]=now+MINUTE;}
+        await this.#heartbeat(now);
         return this.snapshot();
       }
       this.pausedReason=null;
@@ -99,6 +120,7 @@ export class AutonomousResearch {
           this.nextAt[id]=now+2*MINUTE;
         }
       }
+      await this.#heartbeat(now);
       return this.snapshot();
     }finally{this.ticking=false;}
   }
