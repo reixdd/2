@@ -63,8 +63,8 @@ export async function runResearch({settings,agentId,prompt,signal,fetchImpl=fetc
  const user=`DEAD INTERNET THEORY RESEARCH ONLY. Do not sign transactions, propose deceptive promotion or claim unverified observations as fact. Identity: ${agentId}. ${BRIEFS[agentId]}\nResearch question: ${p}\nSeparate source facts, hypotheses and uncertainty. Include source links when available.`;
  const abort=timeoutSignal(signal,75000);
  if(s.provider==='jarvis'){
-    const response=await fetchImpl(s.url+'/api/chat',{method:'POST',headers:{'content-type':'application/json',accept:'application/x-ndjson'},body:JSON.stringify({message:user,identity_key:agentId,mode:'lite'}),signal:abort});
-    const result=await readNdjson(response,{signal:abort,onRecord});if(!result.answer)throw Error('JARVIS returned no research answer');return {answer:result.answer,model:result.model,provider:'jarvis',requested_specialists:BRIEFS[agentId],stream_completed:result.done};
+    const response=await fetchImpl(s.url+'/api/chat',{method:'POST',headers:{'content-type':'application/json',accept:'application/x-ndjson'},body:JSON.stringify({message:user,identity_key:agentId,mode:'lite',...(selected?{model:selected}:{})}),signal:abort});
+    const result=await readNdjson(response,{signal:abort,onRecord});if(!result.answer)throw Error('JARVIS returned no research answer');return {answer:result.answer,model:result.model||selected||null,provider:'jarvis',requested_specialists:BRIEFS[agentId],stream_completed:result.done};
  }
  const discovery=await discoverProvider(s,{fetchImpl,signal:abort});if(!discovery.models.includes(selected))throw Error(`Configured model ${selected} is unavailable; refresh models`);
  let response;
