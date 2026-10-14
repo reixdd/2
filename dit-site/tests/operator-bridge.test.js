@@ -36,7 +36,7 @@ test('JARVIS NDJSON streaming parses state/heartbeat/answer/done and rejects err
 });
 test('JARVIS bridge sends documented API request and stores honest research answer',async()=>{
  const settings={provider:'jarvis',url:'http://127.0.0.1:8768',models:{}};
- const fetchImpl=async(url,init)=>{assert.match(url,/\/api\/chat$/);const b=JSON.parse(init.body);assert.equal(b.identity_key,'NULL_ENTITY');assert.equal(b.mode,'deep');assert.match(b.message,/SCOUT/);return new Response('{"type":"answer","text":"Three publicly observed trends; confidence low."}\n{"type":"done"}\n')};
+ const fetchImpl=async(url,init)=>{assert.match(url,/\/api\/chat$/);const b=JSON.parse(init.body);assert.equal(b.identity_key,'NULL_ENTITY');assert.equal(b.mode,'lite');assert.match(b.message,/SCOUT/);return new Response('{"type":"answer","text":"Three publicly observed trends; confidence low."}\n{"type":"done"}\n')};
  const result=await runResearch({settings,agentId:'NULL_ENTITY',prompt:'Investigate why this pattern appears online',fetchImpl});assert.equal(result.provider,'jarvis');assert.equal(result.answer,'Three publicly observed trends; confidence low.');
 });
 test('loopback operator rejects foreign Host and Origin even when bound locally',async()=>{
@@ -71,5 +71,22 @@ test('operator cancel records cancellation and allows later retry without perman
  assert.equal((await store.select('agent_research_runs'))[0].status,'cancelled');
  const again=await op.handle(request('/operator/api/run','POST'),{agent_id:'GHOST_001',prompt:'Try again after a repaired connection'});assert.equal(again.status,202);
  await op.handle(request('/operator/api/cancel','POST'),{agent_id:'GHOST_001'});
+ fs.rmSync(tmp,{recursive:true,force:true});
+});
+
+test('JARVIS shared mode pins one lightweight provider, serializes all identities, and uses a valid DB research stage',async()=>{
+ const store=new MemoryStore();await bootstrap(store);
+ const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'dit-jarvis-lite-'));
+ let release;const barrier=new Promise(r=>release=r);
+ const fake=async()=>{await barrier;return new Response('{"type":"answer","text":"Cautious sourced research answer."}\\n{"type":"done"}\\n')};
+ const op=new Operator({store,env:{DIT_JARVIS_SHARED:'1'},port:4173,fetchImpl:fake,configFile:path.join(tmp,'operator.json')});
+ assert.equal(op.settings.provider,'jarvis');assert.equal(op.settings.url,'http://127.0.0.1:8768');
+ const save=await op.handle(request('/operator/api/settings','POST'),testSettings);
+ assert.equal(save.status,200);assert.equal(op.settings.provider,'jarvis');
+ const one=await op.handle(request('/operator/api/run','POST'),{agent_id:'GHOST_001',prompt:'Research a public source fact'});assert.equal(one.status,202);
+ const agent=(await store.select('agents',{filters:[['id','eq','GHOST_001']]}))[0];assert.equal(agent.current_stage,'RESEARCH');
+ const two=await op.handle(request('/operator/api/run','POST'),{agent_id:'NULL_ENTITY',prompt:'Research another public source'});assert.equal(two.status,429);
+ release();for(let i=0;i<40&&op.running.size;i++)await wait(10);
+ const rows=await store.select('agent_research_runs');assert.equal(rows.length,1);assert.equal(rows[0].status,'completed');
  fs.rmSync(tmp,{recursive:true,force:true});
 });
