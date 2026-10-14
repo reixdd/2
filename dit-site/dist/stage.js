@@ -27,7 +27,13 @@ if (host) boot();
 function boot() {
   const section = host;
   section.innerHTML = `
-    <div class="dit-stage-frame"><canvas id="dit-stage-canvas" tabindex="-1" aria-hidden="true"></canvas>
+    <div class="dit-stage-frame">
+      <div class="hud-orbit-field" aria-hidden="true">
+        <span class="hud-orbit hud-orbit-left"></span>
+        <span class="hud-orbit hud-orbit-center"></span>
+        <span class="hud-orbit hud-orbit-right"></span>
+        <span class="hud-center-axis"></span>
+      </div><canvas id="dit-stage-canvas" tabindex="-1" aria-hidden="true"></canvas>
       <div class="dit-stage-still" id="dit-stage-still">${AGENTS.map((a,i)=>`<button type="button" class="still-agent still-${i}" data-stage-open="${a.id}" aria-label="Open ${a.id} dossier"><span></span></button>`).join('')}</div>
       <p class="dit-stage-fallback mono" id="dit-stage-fallback" hidden></p></div>
     <div class="dit-stage-labels" id="dit-stage-labels">${AGENTS.map((a,i) => `
