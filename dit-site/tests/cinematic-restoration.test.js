@@ -91,7 +91,7 @@ test('agent visuals use independent blue, violet and green accents and constrain
  assert.match(read('../dist/live-research.css'),/--ghost:#9cd6f0/);
  assert.match(read('../dist/live-research.css'),/--null:#b7a4ce/);
  assert.match(read('../dist/live-research.css'),/--echo:#91d8b5/);
- assert.match(css,/max-width:1600px/);
+ assert.match(css,/max-width:1720px/);
 });
 test('terminal retains backend failure evidence and handles exhausted cycle attempts explicitly',()=>{
  const room=read('../dist/control-room.js');

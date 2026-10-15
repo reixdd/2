@@ -1,3 +1,4 @@
+import {mountTerminalMotion,typeRecordedEvents} from './terminal-motion.js';
 // Live cinematic machine composition. Real state comes only from JARVIS APIs.
 const IDS=['GHOST_001','NULL_ENTITY','ECHO.exe'];
 const ROLES=['THE ARCHIVIST','THE SIGNAL HUNTER','THE VIRAL MACHINE'];
@@ -66,6 +67,7 @@ export function mountControlRoom({openAgent,activateTab}={}){
  cinematic.innerHTML='<div id="dit-stage" class="dit-scene-bg" data-mode="ambient" aria-hidden="true"></div>';
  shell.querySelector('.dit-entity-stage')?.prepend(cinematic.firstElementChild);
  stage.appendChild(shell);
+ mountTerminalMotion(shell);
  stage.addEventListener('click',e=>{const btn=e.target.closest('[data-room-agent]');if(btn){e.preventDefault();openAgent?.(btn.dataset.roomAgent)}});
  const system=el('dit-hud-system');const toggleSystem=()=>{const showing=system.hidden;system.hidden=!showing;
    el('dit-nav-system').setAttribute('aria-expanded',String(showing));el('dit-hud-expand').setAttribute('aria-expanded',String(showing));};
@@ -122,6 +124,7 @@ export function updateControlRoom(world,market,events=[],treasury=null){
  put('dit-room-ticker',recent?'_ LAST RESEARCH EVENT / '+recent.agent_id+' // '+shortEvent(recent).slice(0,116):'_ AWAITING VERIFIED RESEARCH EVENTS / NEVER SIMULATED');
  const stat=el('dit-transmission-ribbon');
  const recentEvents=(Array.isArray(events)?events:[]).filter(e=>e?.title&&IDS.includes(e.agent_id)).slice(0,5);
+ typeRecordedEvents(recentEvents);
  const ribbonKey=recentEvents.map(e=>String(e.id)+'|'+String(e.title)+'|'+String(e.created_at)).join(';');
  if(stat&&stat.dataset.events!==ribbonKey){
   const arrival=!!stat.dataset.events;stat.classList.toggle('dit-arrival',arrival);

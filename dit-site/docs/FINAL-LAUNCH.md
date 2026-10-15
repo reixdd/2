@@ -22,3 +22,7 @@ Market rows now distinguish verified pair creation, token creation, first observ
 Reproduce regression/build checks inside `dit-site`: `npm test`, `npm run build`. Browser acceptance uses `node tests/launch-browser.mjs` against the configured local preview with Chrome installed. Screenshot fixtures are explicitly labeled and are not live market data.
 
 The newer remote branch was integrated, retaining its source-backed metadata/IPFS artwork candidates, CID/path checks and freshness regressions. Combined Chrome acceptance passed with decoded PNG artwork and WebGL enabled.
+
+## Follow-up visual and publisher repair
+
+Black page background, wider/larger original portraits, bounded 560px market scrolling, per-filter counts, restored stepped text reveal, typed recorded-event console and subtle decorative code motion. The running Windows DIT publisher was backed up and restarted with the enriched source. JARVIS, private environment, models and data were preserved. The live adapter then returned 100 observations, 22 verified pair timestamps, trenches/trending/tape categories and OK source responses. A zero NEW count can still be legitimate when no verified pair was created in the last five minutes. The old publisher-migration limitation above is now resolved. The updated layout passed a 13-update desktop/mobile smoke replay with no page errors; the earlier 67-update replay remains the outage test.
