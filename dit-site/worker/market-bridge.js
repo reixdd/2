@@ -25,12 +25,22 @@ function normalize(row,kind,now,freshnessMs){
  const seen=source_observed_at||received_at;
  const age=now-Date.parse(seen);
  const fresh=age>=-60_000&&age<=freshnessMs&&row.live_eligible!==false;
- const rawCreated=num(first(row.creation_timestamp,row.created_timestamp,row.created_at,row.pairCreatedAt,row.launch_at));
- const created_at=rawCreated&&rawCreated>1e9?new Date(rawCreated<1e12?rawCreated*1000:rawCreated).toISOString():null;
+ // Pair launch, token creation, and observation are separate source facts.
+ const validStamp=v=>{const t=stamp(v);return t&&Date.parse(t)<=now+60_000&&Date.parse(t)>Date.parse('2020-01-01')?t:null};
+ const pair_created_at=validStamp(first(row.pair_created_at,row.pairCreatedAt,row.pairCreatedTime,
+   row.pool_created_at,row.poolCreatedAt,row.pair?.created_at,row.pool?.created_at));
+ const token_created_at=validStamp(first(row.token_created_at,row.tokenCreatedAt,row.creation_timestamp,
+   row.created_timestamp,row.created_at,row.launch_at,a.creation_timestamp));
+ const created_at=pair_created_at||token_created_at;
+ const first_seen_at=new Date(now).toISOString();
+ // Resolve candidates independently: an invalid logo must not mask real metadata art.
+ const imageCandidates=[a.logo,a.image_url,a.imageUrl,a.icon,a.logoURI,a.image?.url,
+   row.image_url,row.imageUrl,row.info?.imageUrl,row.info?.image_url,row.baseToken?.logoURI];
+ const image_url=imageCandidates.map(imageUrl).find(Boolean)||null;
  const provider=kind==='radar'?'JARVIS · DexScreener/GeckoTerminal':kind==='tape'?'JARVIS · SENSE / Market Tape':'GMGN via JARVIS';
  return {chain:'sol',address,name:str(first(a.name,a.token_name,row.name),90),symbol:str(first(a.symbol,a.token_symbol,row.symbol),20),
- kind,provider,providers:[provider],observed_at:seen,source_observed_at,received_at,created_at,freshness:fresh?'FRESH':'STALE',
- image_url:imageUrl(first(a.logo,a.image_url,a.imageUrl,a.icon,a.logoURI,a.image?.url,row.image_url,row.info?.imageUrl)),
+ kind,provider,providers:[provider],observed_at:seen,source_observed_at,received_at,created_at,pair_created_at,token_created_at,first_seen_at,freshness:fresh?'FRESH':'STALE',
+ image_url,
  market_cap_usd:num(first(row.market_cap,row.marketcap,row.marketCap)),
  liquidity_usd:num(first(row.liquidity,row.liquidity_usd,row.liquidity?.usd)),
  volume_5m_usd:num(first(row.volume_5m,row.volume?.m5)),
@@ -55,6 +65,9 @@ export function normalizeMarketResponses(responses={}, {now=Date.now(),freshness
       if(old[field]===null&&s[field]!==null)old[field]=s[field];
     }
     if(!old.image_url&&s.image_url)old.image_url=s.image_url;
+    if(!old.pair_created_at&&s.pair_created_at)old.pair_created_at=s.pair_created_at;
+    if(!old.token_created_at&&s.token_created_at)old.token_created_at=s.token_created_at;
+    if(!old.created_at&&s.created_at)old.created_at=s.created_at;
     if(s.source_observed_at&&(!old.source_observed_at||Date.parse(s.source_observed_at)>Date.parse(old.source_observed_at))){
       old.source_observed_at=s.source_observed_at;old.observed_at=s.source_observed_at;
       if(s.kind==='tape')for(const field of ['volume_5m_usd','liquidity_usd','buys_5m','sells_5m','market_cap_usd'])if(s[field]!==null)old[field]=s[field];
@@ -64,7 +77,7 @@ export function normalizeMarketResponses(responses={}, {now=Date.now(),freshness
    else map.set(s.address,s);
   }
  }
- return {observed_at:new Date(now).toISOString(),signals:[...map.values()].filter(s=>s.freshness==='FRESH').slice(0,12),
+ return {observed_at:new Date(now).toISOString(),signals:[...map.values()].filter(s=>s.freshness==='FRESH').slice(0,60),
   source_states:Object.fromEntries(Object.entries(responses).map(([k,v])=>[k,v?.ok?'OK':str(v?.error||'UNAVAILABLE',120)])),research_only:true};
 }
 export async function collectJarvisMarkets({baseUrl='http://127.0.0.1:8768',fetchImpl=fetch,now=Date.now(),signal,tapeOnly=false}={}){
