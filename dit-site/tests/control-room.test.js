@@ -27,7 +27,7 @@ test('home is dynamic with visible New Pairs; radar and activity are separate te
  assert.match(module,/dit-live-evidence-section/);
  assert.match(module,/data-dit-tab="radar"/);
  assert.match(module,/data-dit-tab="activity"/);
- assert.match(script,/setAttribute\('hidden'/);
+ assert.match(script,/\.hidden=selected/);
 });
 test('market priority fields are visible and rendered from API, not fake placeholders',()=>{
  const js=read('../dist/live-research.js');
