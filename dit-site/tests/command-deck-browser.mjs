@@ -83,6 +83,7 @@ try{
  await page.setViewportSize({width:390,height:844});
  await page.screenshot({path:path.join(output,'command-deck-mobile.png'),fullPage:false});
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+ if(overflow>5){const offenders=await page.evaluate(()=>[...document.querySelectorAll('body *')].map(el=>{const r=el.getBoundingClientRect();return {tag:el.tagName.toLowerCase(),id:el.id,cls:String(el.className).slice(0,70),right:Math.round(r.right),width:Math.round(r.width),left:Math.round(r.left)}}).filter(x=>x.right>innerWidth+5&&x.width>0).sort((a,b)=>b.right-a.right).slice(0,12));console.log('[mobile overflow culprits]',JSON.stringify(offenders));}
  assert.ok(overflow<=5,'no unexpected horizontal overflow at mobile viewport: '+overflow);
  assert.deepEqual(errors,[],'no page-level script errors');
  console.log('[command-deck] Browser acceptance PASSED; renderer='+mode);
