@@ -103,6 +103,7 @@ test('real image artwork is present for at least 30 of 60 diverse image regressi
     image_url:i%3===1?'https://images.example.org/good-'+i+'.webp':null});
  }
  const data=normalizeMarketResponses({tape:{ok:true,data:{items:rows}}},{now});
- assert.equal(data.signals.length,12,'feed render is currently capped, but source metadata must be retained');
- assert.ok(data.signals.some(x=>x.image_url?.startsWith('https://')),'a valid artwork path survives');
+ assert.equal(data.signals.length,60,'adapter retains a complete 60-token source fixture for filtering');
+ assert.equal(data.signals.filter(x=>x.image_url?.startsWith('https://')).length,40,'40 test coins include valid working artwork metadata');
+ assert.equal(data.signals.filter(x=>x.image_url===null).length,20,'20 deliberately missing artwork cases remain honest');
 });
