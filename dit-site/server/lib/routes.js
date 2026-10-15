@@ -1,4 +1,5 @@
 import {publicConcepts} from './concepts.js';
+import {readMarketSnapshot} from './market-snapshot.js';
 // Backend routes beyond the original read-only chain verifier. Returns a Response, or null when the path is not ours.
 import { AGENTS, AGENT_IDS } from './agents.js';
 import { createStore } from './store-core.js';
@@ -24,7 +25,7 @@ async function workerStatus(store) {
 
 export async function handleBackendApi(request, env, deps = {}) {
   const url = new URL(request.url); const path = url.pathname; const method = request.method;
-  const mine = path === '/api/config' || path === '/api/health' || path === '/api/vote' || path === '/api/votes' || path === '/api/me/vote' || /^\/api\/(agents|activity|proposals|tokens|treasury|memories|observations|evidence|integrations|results|observatory|concepts)(\/|$)/.test(path);
+  const mine = path === '/api/market' || path === '/api/config' || path === '/api/health' || path === '/api/vote' || path === '/api/votes' || path === '/api/me/vote' || /^\/api\/(agents|activity|proposals|tokens|treasury|memories|observations|evidence|integrations|results|observatory|concepts)(\/|$)/.test(path);
   if (!mine) return null;
   const allowedPost = path === '/api/vote' || path === '/api/integrations/circuit';
   if (method !== 'GET' && !(method === 'POST' && allowedPost)) return json({ error: 'Read-only API. Token signing is never exposed to visitors.' }, 405);
@@ -38,6 +39,10 @@ export async function handleBackendApi(request, env, deps = {}) {
     if (path === '/api/config') return json({ backend: { configured: !!store, kind: store?.kind || null, missingBindings: store ? [] : missing }, auth: authMode, supabase: authMode === 'supabase' ? { url: publicUrl, anonKey } : null, treasuryTargetBps: Number(env.TREASURY_BPS || 2500), simulationOnly: true, release: 'dit-miami-signal-20261015' });
     if (!store) return json({ error: 'backend_not_configured', message: 'The database is not connected. Nothing below is live.' }, 503);
 
+    if(path==='/api/market'){
+      try{return json(await readMarketSnapshot(store))}
+      catch{return json({signals:[],source_states:{},last_checked_at:null,stale:true,status:'SNAPSHOT_STORAGE_UNAVAILABLE',research_only:true},503)}
+    }
     if(path==='/api/concepts'||path.startsWith('/api/concepts/')){
       const id=path==='/api/concepts'?null:decodeURIComponent(path.slice('/api/concepts/'.length));
       const rows=await publicConcepts(store,id);
