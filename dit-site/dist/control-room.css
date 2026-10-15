@@ -4,7 +4,7 @@
   background:radial-gradient(ellipse 62% 52% at 50% 49%,#37152d 0,#100916 47%,#020407 100%)!important;
   filter:none;overflow:hidden;isolation:isolate;
 }
-.stage.dit-functional-stage > :not(#fx):not(.dit-room){display:none!important}
+.stage.dit-functional-stage > :not(#fx):not(.dit-room):not(.dit-scenery):not(#dit-stage){display:none!important}
 .stage.dit-functional-stage #fx{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.28;pointer-events:none}
 .dit-room{position:relative;z-index:9;width:100%;max-width:1800px;min-height:min(760px,98svh);
   margin:auto;padding:24px clamp(20px,3.5vw,62px) 16px;color:#fff;overflow:hidden;
@@ -138,4 +138,52 @@
 @media(prefers-reduced-motion:reduce){
  .dit-room .dit-motion-field,.dit-room .dit-motion-field:before,.dit-room .dit-motion-field:after,
  .dit-room .dit-entity-ring,.dit-room .dit-blink,.dit-room .dit-flow-track i{animation:none!important}
+}
+/* Reuse original DIT atmospheric city behind the functional terminal, NOT a flattened HTML scene. */
+.stage.dit-functional-stage>.dit-scenery,
+.stage.dit-functional-stage>#dit-stage{display:block;position:absolute;inset:0;pointer-events:none}
+.stage.dit-functional-stage>.dit-scenery{z-index:0;overflow:hidden;isolation:isolate}
+.dit-world-canvas{position:absolute;inset:-5%;background:
+  linear-gradient(90deg,rgba(4,5,9,.78),rgba(4,4,9,.27) 50%,rgba(5,3,9,.7)),
+  linear-gradient(0deg,rgba(2,4,8,.95),transparent 38%,rgba(2,4,8,.76)),
+  url('/assets/hero.webp') 58% 42%/cover no-repeat;
+  opacity:.78;filter:saturate(.74) contrast(1.08);
+  animation:dit-city-breathe 25s ease-in-out infinite alternate;
+  will-change:transform}
+.dit-scenery:after{content:"";position:absolute;inset:0;z-index:2;
+  background:radial-gradient(ellipse 76% 65% at 50% 44%,transparent 33%,#030407bd 100%);
+  pointer-events:none}
+.dit-world-bars{position:absolute;bottom:9%;left:13%;right:12%;height:50%;z-index:1;
+  display:flex;align-items:flex-end;gap:clamp(5px,1.4vw,25px);pointer-events:none;
+  opacity:.35;mask-image:linear-gradient(transparent 0%,#0009 28%,#000 100%);
+  transform:translate3d(var(--bars-x,0px),0,0)}
+.dit-world-bars span{display:block;flex:1;min-width:2px;height:var(--bar-h);
+  border-top:1px solid #c4e1f233;background:linear-gradient(0deg,#0b101400,#44647720 45%,#b5ddea27);
+  transform-origin:bottom;animation:dit-world-architecture calc(12s + var(--bar-i)*.4s) ease-in-out infinite alternate;
+  animation-delay:calc(var(--bar-i)*-.7s)}
+@keyframes dit-city-breathe{
+  from{transform:translate3d(calc(var(--world-x,0px) - 12px),var(--world-y,0px),0) scale(1.045)}
+  to{transform:translate3d(calc(var(--world-x,0px) + 12px),var(--world-y,0px),0) scale(1.09)}
+}
+@keyframes dit-world-architecture{from{transform:scaleY(.58);opacity:.4}to{transform:scaleY(1);opacity:1}}
+.stage.dit-functional-stage>#dit-stage{z-index:1;overflow:hidden;width:100%;height:100%;isolation:isolate}
+.dit-scene-bg .dit-stage-frame{position:absolute;inset:0;border:0;background:transparent;width:100%;height:100%;overflow:hidden}
+.dit-scene-bg #dit-stage-canvas{display:block;width:100%;height:100%;pointer-events:none}
+.dit-scene-bg .hud-orbit-field,
+.dit-scene-bg .dit-stage-labels,
+.dit-scene-bg .dit-stage-still,
+.dit-scene-bg .dit-stage-fallback{display:none!important}
+/* Hide the static art only once WebGL has successfully loaded. It is the offline/error fallback. */
+.stage.dit-functional-stage:has(#dit-stage[data-renderer="webgl"]) .dit-entity-art{opacity:0}
+.stage.dit-functional-stage .dit-motion-field{opacity:.26}
+.stage.dit-functional-stage .dit-room{background:transparent}
+@media(max-width:760px){
+  .stage.dit-functional-stage>#dit-stage{display:none}
+  .dit-world-canvas{opacity:.55;will-change:auto}
+  .dit-world-bars{opacity:.18}
+}
+@media(prefers-reduced-motion:reduce){
+  .dit-world-canvas{animation:none;transform:none!important;will-change:auto}
+  .dit-world-bars,.dit-world-bars span{animation:none;transform:none!important}
+  .stage.dit-functional-stage .dit-motion-field{animation:none}
 }
