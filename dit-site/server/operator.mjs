@@ -18,7 +18,7 @@ export class Operator {
     this.maxConcurrent = this.lowLoad ? Math.max(1, Math.min(3, Number(env.DIT_JARVIS_PARALLEL || 3))) : 3;
     const fallback={provider:this.lowLoad?'jarvis':'ollama',url:this.lowLoad?(env.DIT_JARVIS_URL||'http://127.0.0.1:8768'):(env.OLLAMA_URL||'http://127.0.0.1:11434'),models:{GHOST_001:env.DIT_MODEL_GHOST||'',NULL_ENTITY:env.DIT_MODEL_NULL||'','ECHO.exe':env.DIT_MODEL_ECHO||''}};
     let saved={};try{saved=JSON.parse(fs.readFileSync(configFile,'utf8'))}catch{}
-    try{this.settings=validateSettings(this.lowLoad?fallback:{...fallback,...saved})}catch{this.settings=validateSettings(fallback)}
+    try{this.settings=validateSettings(this.lowLoad?{...fallback,models:{...fallback.models,...(saved.models||{})}}:{...fallback,...saved})}catch{this.settings=validateSettings(fallback)}
   }
   publicStatus(){return {settings:this.settings,lowLoad:this.lowLoad,maxConcurrent:this.maxConcurrent,running:[...this.running.keys()],autonomous:this.autonomous?.snapshot()||null,note:'Research only. No wallet signing or launches.'}}
   async handle(request,body={}){
@@ -27,7 +27,7 @@ export class Operator {
     try{
       if(p==='/operator/api/settings'&&method==='GET')return out(this.publicStatus());
       if(p==='/operator/api/settings'&&method==='POST'){
-        const next=validateSettings(this.lowLoad?{...body,provider:'jarvis',url:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',models:this.settings.models}:body);
+        const next=validateSettings(this.lowLoad?{...body,provider:'jarvis',url:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',models:body.models||this.settings.models}:body);
         this.settings=next;await this.onSettings(next);fs.mkdirSync(path.dirname(this.configFile),{recursive:true});fs.writeFileSync(this.configFile,JSON.stringify(next,null,2),{mode:0o600});
         return out(this.publicStatus());
       }
