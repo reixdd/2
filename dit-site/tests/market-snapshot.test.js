@@ -43,3 +43,16 @@ test('unsupported or empty source data stays empty instead of inventing market m
  const snap=sanitizeMarketSnapshot({signals:[{address:'invalid',price:1000}],source_states:{trenches:'OK'}});
  assert.deepEqual(snap.signals,[]);
 });
+
+test('public snapshots preserve provider observation time separately from server receive time',()=>{
+ const upstream=new Date(now-3000).toISOString();
+ const received=new Date(now).toISOString();
+ const snapshot=sanitizeMarketSnapshot({signals:[{
+  address,kind:'tape',symbol:'LIVE',observed_at:upstream,source_observed_at:upstream,received_at:received,
+  volume_5m_usd:710,buys_5m:12,sells_5m:4
+ }]},now);
+ assert.equal(snapshot.signals[0].kind,'tape');
+ assert.equal(snapshot.signals[0].source_observed_at,upstream);
+ assert.equal(snapshot.signals[0].received_at,received);
+ assert.equal(snapshot.signals[0].buys_5m,12);
+});
