@@ -26,7 +26,7 @@ test('archived Three.js renderer supports background-only mode and does not requ
 test('Meme Radar resolves actual observed token artwork by contract address',()=>{
  const address='So11111111111111111111111111111111111111112';
  const c={agent_id:'ECHO.exe',source_refs:[{address}],content:{name:'Example'}};
- const art=conceptArtwork(c,[{address,image_url:'https://images.example.org/actual.webp'}]);
+ const art=conceptArtwork(c,[{address:'OtherMint111111111111111111111111111111111',image_url:'https://images.example.org/wrong.webp'},{address,image_url:'https://images.example.org/actual.webp'}]);
  assert.equal(art.url,'https://images.example.org/actual.webp');
  assert.equal(art.kind,'evidence');
  assert.match(art.label,/NOT CONCEPT ART/);
