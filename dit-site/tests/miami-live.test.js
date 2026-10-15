@@ -35,3 +35,10 @@ test('concepts require recorded source provenance and remain private until human
  await store.update('fictional_concepts',[['id','eq','concept-1']],{status:'published',published_at:new Date().toISOString()});
  r=await handleBackendApi(req('/api/concepts'),{}, {store});assert.equal((await r.json()).concepts.length,1);
 });
+
+test('public config identifies the uploaded MIAMI SIGNAL release for deployment checks',async()=>{
+ const store=await freshStore();
+ const response=await handleBackendApi(req('/api/config'),{}, {store});
+ assert.equal(response.status,200);
+ assert.equal((await response.json()).release,'dit-miami-signal-20261015');
+});
