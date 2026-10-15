@@ -50,7 +50,7 @@ export class Operator {
             (!old.source_observed_at||Date.parse(row.source_observed_at)>=Date.parse(old.source_observed_at)):
             (!old.source_observed_at&&(Date.parse(row.received_at||'')||0)>=(Date.parse(old.received_at||'')||0));
           const joined={...old,providers:[...new Set([...(old.providers||[]),...(row.providers||[])])]};
-          for(const field of ['name','symbol','image_url','created_at','safety','url']){
+          for(const field of ['name','symbol','image_url','created_at','pair_created_at','token_created_at','first_seen_at','safety','url']){
             if(!joined[field]&&row[field])joined[field]=row[field];
           }
           if(newer){
@@ -66,7 +66,7 @@ export class Operator {
         const fresh=[...merged.values()]
           .filter(x=>Number.isFinite(Date.parse(x.observed_at||''))&&
             Date.now()-Date.parse(x.observed_at)<=15*60_000)
-          .sort((a,b)=>Date.parse(b.observed_at)-Date.parse(a.observed_at)).slice(0,12);
+          .sort((a,b)=>Date.parse(b.observed_at)-Date.parse(a.observed_at)).slice(0,60);
         this.marketSnapshot={...current,signals:fresh,source_states,stale:!fresh.length&&!!previous?.signals?.length};
         this.marketAt=Date.now();
         if(this.marketSnapshot.signals.length&&this.store.kind==='supabase'&&
