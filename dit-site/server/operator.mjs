@@ -1,7 +1,7 @@
 // Loopback-only operator API: no signing, no public hosted endpoints.
 import fs from 'node:fs';
 import path from 'node:path';
-import { validateSettings,discoverProvider,runResearch,IDENTITIES } from '../worker/provider-bridge.js';
+import { validateSettings,discoverProvider,verifyModel,runResearch,IDENTITIES } from '../worker/provider-bridge.js';
 import { StoreError } from './lib/store-core.js';
 import { persistCompletedResearch, reviewConcept } from './lib/concepts.js';
 const out=(data,status=200)=>Response.json(data,{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}});
@@ -13,7 +13,7 @@ export function allowedOperatorRequest(req,port){
 }
 export class Operator {
   constructor({store,env,port,fetchImpl=fetch,configFile='.data/operator-settings.json',onSettings=async()=>{}}){
-    this.store=store;this.env=env;this.port=port;this.fetchImpl=fetchImpl;this.configFile=configFile;this.onSettings=onSettings;this.running=new Map();
+    this.store=store;this.env=env;this.port=port;this.fetchImpl=fetchImpl;this.configFile=configFile;this.onSettings=onSettings;this.running=new Map();this.verifying=new Set();
     this.lowLoad = env.DIT_JARVIS_SHARED === '1';
     this.maxConcurrent = this.lowLoad ? Math.max(1, Math.min(3, Number(env.DIT_JARVIS_PARALLEL || 3))) : 3;
     const fallback={provider:this.lowLoad?'jarvis':'ollama',url:this.lowLoad?(env.DIT_JARVIS_URL||'http://127.0.0.1:8768'):(env.OLLAMA_URL||'http://127.0.0.1:11434'),models:{GHOST_001:env.DIT_MODEL_GHOST||'',NULL_ENTITY:env.DIT_MODEL_NULL||'','ECHO.exe':env.DIT_MODEL_ECHO||''}};
@@ -44,6 +44,13 @@ export class Operator {
         return out(await this.autonomous.setSchedule(body));
       }
       if(p==='/operator/api/discover'&&method==='POST')return out(await discoverProvider(validateSettings(body?.settings||this.settings),{fetchImpl:this.fetchImpl}));
+      if(p==='/operator/api/verify'&&method==='POST'){
+        if(!IDENTITIES.includes(body.agent_id))return out({error:'Invalid agent'},400);
+        if(this.running.size+this.verifying.size>=this.maxConcurrent||this.verifying.has(body.agent_id))return out({error:'Inference capacity busy; test later'},429);
+        this.verifying.add(body.agent_id);
+        try{return out(await verifyModel(validateSettings(body.settings||this.settings),body.agent_id,{fetchImpl:this.fetchImpl}));}
+        finally{this.verifying.delete(body.agent_id)}
+      }
       if(p==='/operator/api/run'&&method==='POST'){
         const {agent_id:id,prompt}=body;if(!IDENTITIES.includes(id))return out({error:'Invalid agent'},400);
         if(this.running.has(id))return out({error:'An operator run is already active for this agent'},409);
@@ -71,7 +78,10 @@ export class Operator {
             }
             try {
               const observations=await this.store.select('observations',{filters:[['agent_id','eq',id]],order:['observed_at','desc'],limit:40});
-              await persistCompletedResearch(this.store,{runId:run,agentId:id,answer:r.answer,observations});
+              const trusted=this.autonomous?.marketCache?.market?.signals||[];
+              const permitted=new Set(trusted.map(x=>x.url+'|'+x.observed_at));
+              const marketEvidence=(Array.isArray(body.evidence)?body.evidence:[]).filter(x=>permitted.has(x?.url+'|'+x?.observed_at));
+              await persistCompletedResearch(this.store,{runId:run,agentId:id,answer:r.answer,observations,marketEvidence});
             } catch(persistError) {
               await this.store.insert('activity_events',{agent_id:id,event_type:'research_memory_retry_needed',severity:'warning',title:'Research saved, memory/concept pending',detail:tidy(persistError.message),payload:{run_id:run}}).catch(()=>{});
             }
