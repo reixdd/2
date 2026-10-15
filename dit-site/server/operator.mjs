@@ -57,10 +57,12 @@ export class Operator {
           await this.store.insert('activity_events',{agent_id:id,event_type:'operator_start',title:`${id} received a research brief`,detail:'Local operator request; pending model response.'});}catch(e){this.running.delete(id);throw e}
         // Fire and forget, but retain the AbortController and persist all outcomes.
         const finish=async()=>{
+          let outcome='failed',failure=null;
           try{const r=await runResearch({settings:this.settings,agentId:id,prompt:row.prompt,signal:ac.signal,fetchImpl:this.fetchImpl});
             try {
               await this.store.update('agent_research_runs',[['id','eq',run]],{status:'completed',answer:r.answer,model:r.model||row.model,requested_specialists:r.requested_specialists||null,finished_at:new Date().toISOString(),diagnostics:{stream_completed:r.stream_completed??true}});
               await this.store.insert('activity_events',{agent_id:id,event_type:'operator_complete',title:`${id} completed its research brief`,detail:r.answer.slice(0,240),payload:{run_id:run}});
+              outcome='completed';
             } catch(dbError) {
               const folder=path.join(path.dirname(this.configFile),'research-recovery');
               fs.mkdirSync(folder,{recursive:true});
@@ -73,8 +75,12 @@ export class Operator {
             } catch(persistError) {
               await this.store.insert('activity_events',{agent_id:id,event_type:'research_memory_retry_needed',severity:'warning',title:'Research saved, memory/concept pending',detail:tidy(persistError.message),payload:{run_id:run}}).catch(()=>{});
             }
-          }catch(e){const status=ac.signal.aborted?'cancelled':'failed';await this.store.update('agent_research_runs',[['id','eq',run]],{status,error:tidy(e.message),diagnostics:{kind:e.name||'Error',detail:tidy(e.message)},finished_at:new Date().toISOString()}).catch(()=>{});await this.store.insert('activity_events',{agent_id:id,event_type:'operator_'+status,title:`${id} research ${status}`,detail:tidy(e.message),payload:{run_id:run},severity:status==='failed'?'error':'info'}).catch(()=>{});}
-          finally{await this.store.update('agents',[['id','eq',id]],{state:'IDLE',current_stage:null,last_active_at:new Date().toISOString()}).catch(()=>{});if(this.running.get(id)?.id===run)this.running.delete(id)}
+          }catch(e){const status=ac.signal.aborted?'cancelled':'failed';outcome=status;failure=tidy(e.message);await this.store.update('agent_research_runs',[['id','eq',run]],{status,error:tidy(e.message),diagnostics:{kind:e.name||'Error',detail:tidy(e.message)},finished_at:new Date().toISOString()}).catch(()=>{});await this.store.insert('activity_events',{agent_id:id,event_type:'operator_'+status,title:`${id} research ${status}`,detail:tidy(e.message),payload:{run_id:run},severity:status==='failed'?'error':'info'}).catch(()=>{});}
+          finally{
+            await this.store.update('agents',[['id','eq',id]],{state:'IDLE',current_stage:null,last_active_at:new Date().toISOString()}).catch(()=>{});
+            if(this.running.get(id)?.id===run)this.running.delete(id);
+            await this.autonomous?.onFinished(id,run,{status:outcome,error:failure}).catch(()=>{});
+          }
         };void finish();return out({id:run,status:'running'},202);
       }
       if(p==='/operator/api/cancel'&&method==='POST'){const r=this.running.get(body.agent_id);if(!r)return out({error:'No active run'},404);r.ac.abort(Error('Cancelled by operator'));return out({cancelled:true,id:r.id})}
