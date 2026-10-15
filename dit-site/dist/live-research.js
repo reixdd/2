@@ -1,5 +1,6 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
-(() => {
+(async () => {
+  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js');
   const $ = id => document.getElementById(id);
   const hero=document.getElementById('stage'),controls=document.querySelector('.bottom-bar');
   if(hero&&controls)hero.insertAdjacentElement('afterend',controls); // keep original audio/FX directly below artwork
@@ -9,36 +10,64 @@
   const link=(x,label)=>valid(x)?'<a rel="noopener noreferrer" target="_blank" href="'+esc(valid(x))+'">'+esc(label||x)+' ↗</a>':esc(label||'Source unavailable');
   const api=async path=>{const r=await fetch(path,{cache:'no-store',signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('HTTP '+r.status);return r.json()};
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
-  let world=null,observations=[],runs=[],concepts=[],busy=false,liveMarket=null,marketAvailable=true,marketBusy=false,localDrafts=[];
+  let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketAvailable=true,marketBusy=false,localDrafts=[];
+  let marketStructureKey='',activityStructureKey='',lastActivityTime=0;
   for(const [id,title] of [['dit-live-evidence-section','NEW PAIRS // EVIDENCE'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // APPROVED CONCEPTS']]){
     const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
   }
-  const buzz=x=>Array.isArray(x)?x.slice(0,4).map(y=>'#'+String(y).replace(/^#/,'')).join(' · '):'';
+  // Same HTML reference, new information architecture: MEME RADAR before ACTIVITY.
+  const conceptSection=$('dit-live-concept-section'),activitySection=$('dit-live-transmission-section');
+  if(conceptSection&&activitySection&&conceptSection.parentNode===activitySection.parentNode){
+    activitySection.parentNode.insertBefore(conceptSection,activitySection);
+  }
+  const nav=document.querySelector('.dit-live nav');
+  if(nav){const conceptLink=nav.querySelector('a[href="#dit-live-concept-section"]');
+    const activityLink=nav.querySelector('a[href="#dit-live-transmission-section"]');
+    if(conceptLink&&activityLink)nav.insertBefore(conceptLink,activityLink);}
+    const buzz=x=>Array.isArray(x)?x.slice(0,4).map(y=>'#'+String(y).replace(/^#/,'')).join(' · '):'';
+  const portrait=(id,cls='terminal-avatar')=>agentPortrait(id)?'<img class="'+cls+'" src="'+esc(agentPortrait(id))+'" alt="'+esc(id)+' portrait" loading="lazy">':'';
+  const artTile=(c,cls)=>{const a=conceptArtwork(c,liveMarket?.signals||[]);
+    return '<div class="'+cls+'">'+(a.url?'<img src="'+esc(a.url)+'" alt="'+esc(a.label)+'" loading="lazy" decoding="async">':'<span>_ NO ART</span>')+
+    '<small>'+esc(a.label)+'</small></div>';};
+
   const teaser=x=>String(x||'').split('CONCEPT_JSON')[0].split('```')[0].replace(/\s+/g,' ').trim().slice(0,180);
   const dlg=$('dit-live-dialog');
   const open=(title,html)=>{$('dit-live-modal-title').textContent=title;$('dit-live-modal-body').innerHTML=html;if(!dlg.open)dlg.showModal()};
   $('dit-live-close').onclick=()=>dlg.close();
   const agent=id=>world?.agents?.find(x=>x.id===id);
   async function detail(id){
-    open(id,'<p>Loading independent research memory…</p>');
+    open(id,'<p>_ RETRIEVING VERIFIED AGENT ACTIVITY...</p>');
     try{
       const d=await api('/api/agents/'+encodeURIComponent(id)),a=agent(id);
-      $('dit-live-modal-body').innerHTML='<p>Presence: '+esc(a?.presence||'offline')+'</p><h3>RECENT RESEARCH</h3>'+
-        ((d.research_runs||[]).slice(0,4).map(r=>'<p>'+esc(r.status)+' / '+esc(when(r.finished_at))+'<br>'+esc(teaser(r.answer)||'Details are available in the local operator console.')+'</p>').join('')||'<p>No runs yet.</p>')+
-        '<h3>INDEPENDENT MEMORY</h3>'+((d.memories||[]).slice(0,6).map(m=>'<p>'+esc(m.summary||m.content)+'</p>').join('')||'<p>No memory records yet.</p>');
-    }catch{$('dit-live-modal-body').textContent='Agent research is temporarily unavailable.'}
+      const recent=(d.activity||[]).slice(0,6).map(formatActivity).filter(Boolean);
+      const history=(d.research_runs||[]).filter(r=>r.status==='completed').slice(0,3);
+      $('dit-live-modal-body').innerHTML='<div class="terminal-modal-head">'+portrait(id)+
+        '<div><span class="terminal-prompt">_ '+esc(id)+' / '+esc(a?.presence||'offline')+'</span><p>LAST OBSERVED: '+esc(when(a?.last_run?.finished_at))+'</p></div></div>'+
+        '<h3>_ RECENT DECISIONS &amp; EVENTS</h3>'+
+        (recent.map(ev=>'<p class="terminal-detail-line">_ '+esc(ev.title)+'<small>'+esc(when(ev.at))+' / '+esc(ev.status)+'</small></p>').join('')||'<p>_ No recorded events</p>')+
+        '<h3>_ MEME HOOKS</h3>'+(
+        history.map(r=>'<p class="terminal-detail-line">_ '+esc(researchHook(r.answer)||'Research completed; no validated concise hook')+
+          '<small>'+esc(when(r.finished_at))+'</small></p>').join('')||'<p>_ No completed meme hooks</p>')+
+        '<a class="terminal-action" href="/operator">OPEN PRIVATE OPERATOR / FULL TRACE ↗</a>';
+    }catch{$('dit-live-modal-body').textContent='Agent data is currently unavailable.'}
   }
   async function showConcept(id){
     open('ATTENTION ANATOMY','<p>Loading approved concept…</p>');
     try{
       const c=(await api('/api/concepts/'+encodeURIComponent(id))).concept,x=c.content||{},a=x.attention_anatomy||{};
-      $('dit-live-modal-body').innerHTML='<span class="live-signal">FICTIONAL CONCEPT // NO FINANCIAL ASSET</span><h2>'+esc(x.name)+' / '+esc(x.ticker)+'</h2><p>'+esc(x.narrative)+'</p>'+
-        '<h3>ATTENTION ANATOMY</h3><dl>'+Object.entries({spread:'SPREAD',references:'CULTURAL REFERENCES',evidence:'WHAT THE EVIDENCE PROVES',synthetic_distortion:'ARTIFICIAL AMPLIFICATION',uncertainty:'UNKNOWN FACTORS'}).map(([k,v])=>'<dt>'+v+'</dt><dd>'+esc(a[k]||'Not established')+'</dd>').join('')+'</dl>'+
-        '<p class="live-contrast">'+esc(x.hook||'')+'</p><p>'+esc(buzz(x.buzzwords))+'</p><h3>SOURCES</h3>'+((c.source_refs||[]).map(s=>'<p>'+link(s.url,s.title)+'</p>').join('')||'<p>No listed sources</p>')+
-        '<h3>SOCIAL DRAFT (NOT POSTED)</h3><blockquote>'+esc(x.social_draft)+'</blockquote>';
+      $('dit-live-modal-body').innerHTML='<div class="terminal-modal-head">'+artTile(c,'terminal-concept-art')+
+        '<div><span class="terminal-prompt">_ APPROVED // '+esc(x.ticker)+'</span><h2>'+esc(x.name)+'</h2><p>'+esc(x.hook||x.narrative)+'</p></div></div>'+
+        '<h3>_ CONCEPT // SHORT BRIEF</h3><p>'+esc(compact(x.narrative).slice(0,250))+'</p>'+
+        '<h3>_ EVIDENCE</h3>'+((c.source_refs||[]).slice(0,6).map(s=>'<p>'+link(s.url,s.title)+'</p>').join('')||'<p>_ No verified source attached</p>')+
+        '<h3>_ STATUS</h3><p>Human-reviewed fictional concept. No asset has been launched.</p>'+
+        (x.social_draft?'<h3>_ DRAFT TEXT // NOT POSTED</h3><blockquote>'+esc(x.social_draft)+'</blockquote>':'');
     }catch{$('dit-live-modal-body').textContent='Concept not currently published.'}
   }
-  document.addEventListener('click',e=>{let b=e.target.closest('[data-live-agent],[data-live-concept]');if(b?.dataset.liveAgent)detail(b.dataset.liveAgent);if(b?.dataset.liveConcept)showConcept(b.dataset.liveConcept)});
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-live-agent],[data-live-concept],[data-live-event]');if(b?.dataset.liveAgent)detail(b.dataset.liveAgent);if(b?.dataset.liveConcept)showConcept(b.dataset.liveConcept);
+    if(b?.dataset.liveEvent){const event=events.find(x=>String(x.id)===b.dataset.liveEvent);if(event){
+      const ev=formatActivity(event);open('_ '+ev.agent_id+' / '+ev.status,
+        '<div class="terminal-modal-head">'+portrait(ev.agent_id)+'<div><h2>'+esc(ev.title)+'</h2><p>'+esc(when(ev.at))+'</p></div></div>'+
+        '<h3>_ RECORDED EVENT</h3><p>'+esc(ev.detail||'No additional detail recorded')+'</p><button data-live-agent="'+esc(ev.agent_id)+'">AGENT TIMELINE ↗</button>');}}});
   document.addEventListener('click',e=>{
     const b=e.target.closest('.stage [data-view],.stage [data-vote],.panel [data-modal-vote]');if(!b)return;
     const view=b.dataset.view;
@@ -63,32 +92,70 @@
     const marketRefs=runs.flatMap(r=>(r.source_refs||[]).map(s=>({agent_id:r.agent_id,source_id:'GMGN via JARVIS',observed_at:s.observed_at,title:s.title,url:s.url,evidence:{summary:'Market context cited by the local researcher.'}})));
     const rows=[...observations.filter(o=>/dex|gecko|gmgn|solana/i.test(o.source_id||'')),...marketRefs].filter(o=>!selected||o.agent_id===selected).sort((a,b)=>Date.parse(b.observed_at||0)-Date.parse(a.observed_at||0)).slice(0,12);
     $('dit-live-evidence').innerHTML=rows.length?rows.map(o=>'<article class="live-row"><div><span class="byline">'+esc(o.agent_id)+' / '+esc(o.source_id)+'</span><time>'+when(o.observed_at)+'</time></div><div><h3>'+link(o.url,o.title)+'</h3><p>'+esc(o.evidence?.summary||'Source recorded, claims not independently established.')+'</p></div></article>').join(''):'<p class="live-empty">No recent market observations recorded. General news is hidden.</p>';
-    $('dit-live-transmissions').innerHTML=runs.length?runs.slice(0,10).map(r=>'<article class="live-row"><div><span class="byline">'+esc(r.agent_id)+' / '+esc(r.model||'unknown model')+'</span><time>'+when(r.finished_at||r.started_at)+'</time></div><div><h3>'+esc(r.status==='completed'?'CONCEPT RESEARCH COMPLETE':r.status==='running'?'SCANNING':'RESEARCH '+r.status.toUpperCase())+'</h3><p>'+esc(r.status==='completed'?teaser(r.answer)||'Model response saved.':r.status==='running'?'Waiting for local inference.':'See private operator diagnostics.')+'</p>'+((r.source_refs||[]).slice(0,2).map(s=>'<small>'+link(s.url,s.title)+'</small>').join(''))+'</div></article>').join(''):'<p class="live-empty">No research runs yet.</p>';
+    // Activity comes from persisted activity_events, not from old model answer dumps.
+    const realEvents=events.map(formatActivity).filter(Boolean).slice(0,20);
+    const key=realEvents.map(e=>e.id+'|'+e.status).join(';');
+    if(key!==activityStructureKey){
+      activityStructureKey=key;
+      const lines=realEvents.map((ev,i)=>'<button type="button" class="terminal-event" data-live-event="'+esc(ev.id)+'">'+
+        portrait(ev.agent_id)+
+        '<span class="terminal-event-copy"><small>_ '+esc(ev.agent_id)+' / '+esc(ev.status)+' / '+esc(when(ev.at))+'</small>'+
+        '<strong class="'+(i<3?'terminal-type':'')+'">'+esc(ev.title)+'</strong>'+
+        '<em>VIEW EVENT TRACE ↗</em></span></button>').join('');
+      $('dit-live-transmissions').innerHTML=lines||'<p class="live-empty">_ WAITING FOR RECORDED AGENT EVENTS<span class="terminal-cursor">_</span></p>';
+      // Reuse the real activity feed in the hero's decorative transmission rail.
+      const rail=document.querySelector('.compact-activity');
+      if(rail&&realEvents.length){
+        rail.innerHTML=realEvents.slice(0,5).map(ev=>'<button type="button" class="terminal-rail-event" data-live-event="'+esc(ev.id)+'">'+
+         portrait(ev.agent_id,'terminal-rail-avatar')+'<span><small>_ '+esc(ev.agent_id)+' / '+esc(ev.status)+'</small>'+
+         '<b>'+esc(ev.title)+'</b></span></button>').join('');
+      }
+    }
     renderLiveMarket();
-    const privateCards=localDrafts.filter(c=>c.status==='review').slice(0,12).map(c=>'<article class="live-concept"><div class="live-ticker">'+esc(c.content?.ticker||'?')+'</div><div><span class="byline">PRIVATE DRAFT / '+esc(c.agent_id)+' / REQUIRES APPROVAL</span><h3>'+esc(c.content?.name)+'</h3><p>'+esc(c.content?.hook||c.content?.narrative?.slice(0,130))+'</p><small>'+esc(buzz(c.content?.buzzwords))+'</small><a href="/operator">OPEN PRIVATE REVIEW ↗</a></div></article>').join('');
-    $('dit-live-concepts').innerHTML=privateCards+(concepts.length?concepts.map(c=>'<article class="live-concept"><div class="live-ticker">'+esc(c.content?.ticker)+'</div><div><span class="byline">'+esc(c.agent_id)+'</span><h3>'+esc(c.content?.name)+'</h3><p>'+esc(c.content?.hook||c.content?.narrative?.slice(0,100))+'</p><small>'+esc(buzz(c.content?.buzzwords))+'</small><p>'+esc(c.content?.narrative?.slice(0,160))+'</p><button data-live-concept="'+esc(c.id)+'">VIEW ATTENTION ANATOMY ↗</button></div></article>').join(''):(!privateCards?'<p class="live-empty">No private drafts or approved concepts yet. Models remain in research mode until evidence supports a candidate.</p>':''));
+    const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,12);
+    const present=[...liveDrafts.map(c=>({...c,_private:true})),...concepts.map(c=>({...c,_private:false}))];
+    $('dit-live-concepts').innerHTML=present.length?present.map(c=>{
+      const x=c.content||{},label=c._private?'DRAFT // REQUIRES HUMAN REVIEW':'APPROVED CONCEPT';
+      return '<article class="terminal-concept-card">'+artTile(c,'terminal-concept-image')+
+        '<div class="terminal-concept-copy"><small>_ '+esc(c.agent_id)+' / '+label+'</small>'+
+        '<h3>'+esc(x.name||'Untitled')+' <span>$'+esc(x.ticker||'?')+'</span></h3>'+
+        '<p class="terminal-type">'+esc(compact(x.hook||x.narrative).slice(0,135))+'</p>'+
+        '<small>'+esc(buzz(x.buzzwords))+'</small>'+
+        (c._private?'<a class="terminal-action" href="/operator">OPEN PRIVATE REVIEW ↗</a>':
+        '<button type="button" data-live-concept="'+esc(c.id)+'">OPEN CONCEPT BRIEF ↗</button>')+
+        '</div></article>';
+    }).join(''):'<p class="live-empty">_ NO REVIEWED CONCEPTS YET. MARKET SCANS CONTINUE INDEPENDENTLY<span class="terminal-cursor">_</span></p>';
+
   }
 
   const money=x=>typeof x==='number'&&Number.isFinite(x)?('$'+(x>=1000?(x/1000).toFixed(1)+'k':Math.round(x).toLocaleString())):'—';
-  const marketImage=s=>valid(s.image_url)&&String(s.image_url).startsWith('https:')
-    ?'<img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="'+esc(s.image_url)+'" alt="'+esc((s.name||s.symbol||'Token')+' artwork')+'">'
+  const marketImage=s=>safeArtUrl(s.image_url)
+    ?'<img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="'+esc(safeArtUrl(s.image_url))+'" alt="'+esc((s.name||s.symbol||'Token')+' artwork')+'">'
     :'<div class="market-art-empty" aria-label="No verified artwork">◈ '+esc((s.symbol||'?').slice(0,6))+'</div>';
   function renderLiveMarket(){
     const feed=$('dit-live-evidence');
     if(!feed||!liveMarket?.signals?.length)return;
     const signals=liveMarket.signals.slice(0,12);
-    const ms=x=>{const t=Date.parse(x||'');return Number.isFinite(t)?Math.max(0,Math.floor((Date.now()-t)/1000))+'s ago':'not timestamped'};
-    const cards=signals.map(s=>'<article class="market-card"><div class="market-card-image">'+marketImage(s)+'</div>'+
-      '<div class="market-card-body"><div class="market-card-title"><b>'+esc(s.symbol||'???')+'</b><span>'+esc(s.kind||'PAIR')+'</span></div>'+
-      '<p class="market-card-name">'+esc(s.name||'Unnamed Solana token')+'</p>'+
-      '<div class="market-card-stats"><span>5M VOL<strong>'+money(s.volume_5m_usd)+'</strong></span><span>LIQUIDITY<strong>'+money(s.liquidity_usd)+'</strong></span>'+
-      '<span>BUYS / SELLS<strong>'+esc(s.buys_5m??'—')+' / '+esc(s.sells_5m??'—')+'</strong></span></div>'+
-      '<div class="market-card-foot"><small>'+esc(s.provider||'JARVIS')+' · '+esc(ms(s.observed_at))+'</small>'+
-      '<a href="'+esc(valid(s.url)||'#')+'" target="_blank" rel="noopener noreferrer">VIEW EVIDENCE ↗</a></div>'+
-      '<small class="market-card-disclaimer">Safety: '+esc(s.safety||'UNVERIFIED')+(s.paid_attention?' · PAID ATTENTION':'')+'</small></div></article>').join('');
-    feed.innerHTML='<div class="market-feed-meta"><span>◉ LIVE LOCAL CACHE · DISPLAY 1S · NO EXTRA PROVIDER CALLS</span>'+
-      '<span>JARVIS OBSERVED '+esc(ms(liveMarket.last_checked_at))+(liveMarket.refreshing?' · UPDATING…':'')+'</span></div>'+
-      '<div class="market-grid">'+cards+'</div>';
+    // Do not recreate image elements at 1Hz: GIFs must keep playing.
+    const structure=JSON.stringify(signals.map(s=>[s.address,s.image_url,s.symbol,s.volume_5m_usd,s.liquidity_usd,s.buys_5m,s.sells_5m]));
+    if(structure!==marketStructureKey){
+      marketStructureKey=structure;
+      const cards=signals.map(s=>'<article class="market-card"><div class="market-card-image">'+marketImage(s)+'</div>'+
+        '<div class="market-card-body"><div class="market-card-title"><b>'+esc(s.symbol||'???')+'</b><span>_ '+esc(s.kind||'PAIR')+'</span></div>'+
+        '<p class="market-card-name terminal-type">'+esc(s.name||'Unnamed Solana token')+'</p>'+
+        '<div class="market-card-stats"><span>5M VOL<strong>'+money(s.volume_5m_usd)+'</strong></span><span>LIQUIDITY<strong>'+money(s.liquidity_usd)+'</strong></span>'+
+        '<span>BUYS / SELLS<strong>'+esc(s.buys_5m??'—')+' / '+esc(s.sells_5m??'—')+'</strong></span></div>'+
+        '<div class="market-card-foot"><small>'+esc(s.provider||'JARVIS')+' · <time class="market-age" data-time="'+esc(s.observed_at)+'"></time></small>'+
+        '<a href="'+esc(valid(s.url)||'#')+'" target="_blank" rel="noopener noreferrer">VIEW SOURCE ↗</a></div>'+
+        '<small class="market-card-disclaimer">Safety: '+esc(s.safety||'UNVERIFIED')+(s.paid_attention?' · PAID ATTENTION':'')+'</small></div></article>').join('');
+      feed.innerHTML='<div class="market-feed-meta"><span>_ READ-ONLY JARVIS CACHE / DISPLAY 1S</span>'+
+        '<span>OBSERVED <time id="market-last-observed"></time></span></div>'+
+        '<div class="market-grid">'+cards+'</div>';
+    }
+    const age=x=>{const t=Date.parse(x||'');return Number.isFinite(t)?Math.max(0,Math.floor((Date.now()-t)/1000))+'s ago':'unknown'};
+    feed.querySelectorAll('.market-age').forEach(el=>{el.textContent=age(el.dataset.time)});
+    const updated=feed.querySelector('#market-last-observed');
+    if(updated)updated.textContent=age(liveMarket.last_checked_at)+(liveMarket.refreshing?' / REFRESHING':'');
   }
   async function refreshPrivateDrafts(){
     if(!marketAvailable||document.hidden)return;
@@ -109,6 +176,15 @@
     }catch{/* Local companion not reachable; keep public evidence visible. */}
     finally{marketBusy=false}
   }
+  async function refreshActivity(){
+    if(document.hidden)return;
+    try{
+      const result=await api('/api/activity?limit=60');
+      events=(result.events||[]).filter(x=>formatActivity(x));
+      lastActivityTime=Date.now();
+      render();
+    }catch{/* Read-only activity service may be offline. */}
+  }
   async function refresh(){
     if(busy||document.hidden)return;busy=true;
     try{
@@ -120,6 +196,8 @@
       render();
     }finally{busy=false}
   }
-  refresh();refreshLiveMarket();refreshPrivateDrafts();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);setInterval(refreshPrivateDrafts,15000);
+  refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);setInterval(refreshPrivateDrafts,15000);
+  setInterval(refreshActivity,5000);setInterval(()=>{if(liveMarket)renderLiveMarket()},1000);
+  if(typeof EventSource!=='undefined'){const channel=new EventSource('/api/stream');channel.onmessage=()=>{refreshActivity();refreshPrivateDrafts()};}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();refreshLiveMarket()}});
 })();
