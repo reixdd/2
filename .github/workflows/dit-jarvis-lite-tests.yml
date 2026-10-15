@@ -1,7 +1,7 @@
 name: Verify DIT three-agent JARVIS local runtime
 on:
   push:
-    branches: [dit-3d-assets]
+    branches: [dit-3d-assets, 'fix/dit-cinematic-restoration']
     paths:
       - 'dit-site/server/operator.mjs'
       - 'dit-site/server/local.mjs'
