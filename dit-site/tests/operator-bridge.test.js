@@ -36,7 +36,7 @@ test('JARVIS NDJSON streaming parses state/heartbeat/answer/done and rejects err
 });
 test('JARVIS bridge sends documented API request and stores honest research answer',async()=>{
  const settings={provider:'jarvis',url:'http://127.0.0.1:8768',models:{}};
- const fetchImpl=async(url,init)=>{assert.match(url,/\/api\/chat$/);const b=JSON.parse(init.body);assert.equal(b.identity_key,'NULL_ENTITY');assert.equal(b.mode,'lite');assert.match(b.message,/SCOUT/);return new Response('{"type":"answer","text":"Three publicly observed trends; confidence low."}\n{"type":"done"}\n')};
+ const fetchImpl=async(url,init)=>{assert.match(url,/\/api\/chat$/);const b=JSON.parse(init.body);assert.equal(b.identity_key,'NULL_ENTITY');assert.equal(b.mode,'lite');assert.match(b.message,/New-pair signal hunter/);return new Response('{"type":"answer","text":"Three publicly observed trends; confidence low."}\n{"type":"done"}\n')};
  const result=await runResearch({settings,agentId:'NULL_ENTITY',prompt:'Investigate why this pattern appears online',fetchImpl});assert.equal(result.provider,'jarvis');assert.equal(result.answer,'Three publicly observed trends; confidence low.');
 });
 test('loopback operator rejects foreign Host and Origin even when bound locally',async()=>{
