@@ -45,3 +45,27 @@ test('dashboard does not report a just-refreshed wrapper as live when actual sou
  const status=operator.marketStatus();
  assert.equal(status.stale,true,'fresh HTTP wrapper is not proof of fresh market observations');
 });
+
+test('timestamped tape metrics supersede earlier undated discovery metrics for the same contract',async()=>{
+ const address='So11111111111111111111111111111111111111112';
+ let tapeReady=false;
+ const op=new Operator({store:{},env:{DIT_JARVIS_URL:'http://127.0.0.1:8768'},port:4173,
+  configFile:'/tmp/dit-nonexistent-market-settings.json',
+  fetchImpl:async url=>{
+   if(String(url).includes('trenches'))return Response.json({ok:true,data:{new_creation:[{
+    address,symbol:'PAIR',volume_5m:10,buys_5m:2,sells_5m:1
+   }]}});
+   if(String(url).includes('/api/tape')&&tapeReady)return Response.json({items:[{
+    chain:'sol',contract:address,event_id:'e-updated',observed_at:Date.now()/1000-2,
+    volume_5m:200,buys_5m:30,sells_5m:12
+   }]});
+   return Response.json({items:[]});
+  }});
+ await op.refreshMarket();
+ assert.equal(op.marketStatus().signals[0].volume_5m_usd,10);
+ tapeReady=true;op.marketAt=Date.now()-1500;
+ await op.refreshMarket();
+ assert.equal(op.marketStatus().signals[0].volume_5m_usd,200);
+ assert.equal(op.marketStatus().signals[0].buys_5m,30);
+ assert.equal(op.marketStatus().signals[0].sells_5m,12);
+});
