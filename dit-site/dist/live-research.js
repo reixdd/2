@@ -1,6 +1,8 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (() => {
   const $ = id => document.getElementById(id);
+  const hero=document.getElementById('stage'),controls=document.querySelector('.bottom-bar');
+  if(hero&&controls)hero.insertAdjacentElement('afterend',controls); // keep original audio/FX directly below artwork
   const esc = x => String(x ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const when = x => x && Number.isFinite(Date.parse(x)) ? new Date(x).toLocaleString() : 'No record';
   const valid = x => {try{const u=new URL(x);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null}catch{return null}};
