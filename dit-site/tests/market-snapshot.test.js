@@ -56,3 +56,20 @@ test('public snapshots preserve provider observation time separately from server
  assert.equal(snapshot.signals[0].received_at,received);
  assert.equal(snapshot.signals[0].buys_5m,12);
 });
+
+test('hosted snapshot preserves 40 source artwork URLs, 20 explicit gaps and pair-versus-token launch ages',()=>{
+ const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+ const pair=new Date(now-35_000).toISOString(), token=new Date(now-800_000).toISOString();
+ const data=sanitizeMarketSnapshot({signals:Array.from({length:60},(_,i)=>({
+  address:'123456789ABCDEFGHJKLMNPQRSTUVWXYZ'+alphabet[Math.floor(i/58)]+alphabet[i%58],
+  observed_at:new Date(now-1000).toISOString(),source_observed_at:new Date(now-1000).toISOString(),
+  pair_created_at:pair,token_created_at:token,first_seen_at:new Date(now).toISOString(),
+  image_url:i<40?'https://cdn.example.org/art-'+i+'.png':null
+ }))},now);
+ assert.equal(data.signals.length,60);
+ assert.equal(data.signals.filter(x=>x.image_url).length,40);
+ assert.equal(data.signals.filter(x=>!x.image_url).length,20);
+ assert.equal(data.signals[0].pair_created_at,pair);
+ assert.equal(data.signals[0].token_created_at,token);
+ assert.equal(data.signals[0].first_seen_at,new Date(now).toISOString());
+});
