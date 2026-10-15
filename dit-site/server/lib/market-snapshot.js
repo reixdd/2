@@ -19,12 +19,15 @@ export function sanitizeMarketSnapshot(data, now=Date.now()){
       source_observed_at:Number.isFinite(Date.parse(s.source_observed_at||''))?new Date(s.source_observed_at).toISOString():null,
       received_at:Number.isFinite(Date.parse(s.received_at||''))?new Date(s.received_at).toISOString():null,
       image_url:https(s.image_url),created_at:Number.isFinite(Date.parse(s.created_at||''))?new Date(s.created_at).toISOString():null,
+      pair_created_at:Number.isFinite(Date.parse(s.pair_created_at||''))?new Date(s.pair_created_at).toISOString():null,
+      token_created_at:Number.isFinite(Date.parse(s.token_created_at||''))?new Date(s.token_created_at).toISOString():null,
+      first_seen_at:Number.isFinite(Date.parse(s.first_seen_at||''))?new Date(s.first_seen_at).toISOString():null,
       volume_5m_usd:num(s.volume_5m_usd),liquidity_usd:num(s.liquidity_usd),
       buys_5m:num(s.buys_5m),sells_5m:num(s.sells_5m),market_cap_usd:num(s.market_cap_usd),
       safety:text(s.safety||'UNVERIFIED',40),paid_attention:s.paid_attention===true,
       url:'https://gmgn.ai/sol/token/'+s.address,source_status:'OBSERVED'
     });
-    if(signals.length===12)break;
+    if(signals.length===60)break;
   }
   const source_states={};
   for(const k of ['trenches','trending','radar','tape']){
