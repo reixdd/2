@@ -46,7 +46,7 @@ export async function persistCompletedResearch(store,{runId,agentId,answer,obser
 }
 export async function publicConcepts(store,id=null,before=null){
   const filters=[['status','in',['review','published']]];if(id)filters.push(['id','eq',id]);else if(before&&Number.isFinite(Date.parse(before)))filters.push(['created_at','lt',new Date(before).toISOString()]);
-  return store.select('fictional_concepts',{filters,order:['created_at','desc'],limit:id?1:200});
+  return store.select('fictional_concepts',{filters,order:['created_at','desc'],limit:id?1:201});
 }
 export async function reviewConcept(store,{id,revision,status,content}){
   if(!['review','published','rejected','archived'].includes(status))throw Error('Invalid review status');
