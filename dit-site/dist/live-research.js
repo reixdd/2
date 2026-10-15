@@ -1,8 +1,8 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
-  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js');
-  const {mountControlRoom,updateControlRoom}=await import('./control-room.js');
-  const {MarketFeed}=await import('./market-feed.js');
+  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=launch-final-3');
+  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=launch-final-3');
+  const {MarketFeed}=await import('./market-feed.js?v=launch-final-3');
   const marketFeed=new MarketFeed(document.getElementById('dit-live-evidence'));
   document.getElementById('dit-live-filter').addEventListener('change',()=>renderLiveMarket());
   const $ = id => document.getElementById(id);
@@ -26,14 +26,15 @@
   // WebGL is optional and loads exactly once when the human enables GFX.
   window.addEventListener('dit:gfx',async e=>{
     if(e.detail?.enabled){
-      try{await import('./stage.js')}catch(err){console.warn('[DIT] optional GPU effect unavailable:',err);}
+      try{await import('./stage.js?v=launch-final-3')}catch(err){console.warn('[DIT] optional GPU effect unavailable:',err);}
     }
   });
   activateTab(location.hash==='#dit-live-transmission-section'?'activity':'radar');
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
+  let conceptBefore=null,conceptArchive=[],conceptPaging=false;
   let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[],treasury=null;
   let activityStructureKey='',conceptStructureKey='',lastActivityTime=0;
-  for(const [id,title] of [['dit-live-evidence-section','MARKET OBSERVATIONS'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // APPROVED CONCEPTS']]){
+  for(const [id,title] of [['dit-live-evidence-section','MARKET OBSERVATIONS'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // AGENT IDEAS']]){
     const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
   }
   // Same HTML reference, new information architecture: MEME RADAR before ACTIVITY.
@@ -174,14 +175,14 @@
     }catch{$('dit-live-modal-body').textContent='Agent data is currently unavailable.'}
   }
   async function showConcept(id){
-    open('ATTENTION ANATOMY','<p>Loading approved concept…</p>');
+    open('ATTENTION ANATOMY','<p>Loading agent concept…</p>');
     try{
       const c=(await api('/api/concepts/'+encodeURIComponent(id))).concept,x=c.content||{},a=x.attention_anatomy||{};
       $('dit-live-modal-body').innerHTML='<div class="terminal-modal-head">'+artTile(c,'terminal-concept-art')+
-        '<div><span class="terminal-prompt">_ APPROVED // '+esc(x.ticker)+'</span><h2>'+esc(x.name)+'</h2><p>'+esc(x.hook||x.narrative)+'</p></div></div>'+
+        '<div><span class="terminal-prompt">_ AGENT IDEA // '+esc(x.ticker)+'</span><h2>'+esc(x.name)+'</h2><p>'+esc(x.hook||x.narrative)+'</p></div></div>'+
         '<h3>_ CONCEPT // SHORT BRIEF</h3><p>'+esc(compact(x.narrative).slice(0,250))+'</p>'+
         '<h3>_ EVIDENCE</h3>'+((c.source_refs||[]).slice(0,6).map(s=>'<p>'+link(s.url,s.title)+'</p>').join('')||'<p>_ No verified source attached</p>')+
-        '<h3>_ STATUS</h3><p>Human-reviewed fictional concept. No asset has been launched.</p>'+
+        '<h3>_ STATUS</h3><p>Agent-generated fictional concept. Review status is shown separately; no asset has been launched.</p>'+
         (x.social_draft?'<h3>_ DRAFT TEXT // NOT POSTED</h3><blockquote>'+esc(x.social_draft)+'</blockquote>':'');
     }catch{$('dit-live-modal-body').textContent='Concept not currently published.'}
   }
@@ -244,14 +245,15 @@
       agents:(world?.agents||[]).map(a=>({id:a.id,state:['OBSERVING','THINKING','CREATING'].includes(String(a.presence).toUpperCase())?String(a.presence).toUpperCase():'IDLE'}))
     }}));
     updateControlRoom(world,liveMarket,events,treasury);
+    older.hidden=!conceptBefore;
     const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,8);
-    const present=[...liveDrafts.map(c=>({...c,_private:true})),...concepts.slice(0,8).map(c=>({...c,_private:false}))];
+    const present=[...concepts.map(c=>({...c,_private:false})),...liveDrafts.filter(c=>!concepts.some(p=>p.id===c.id)).map(c=>({...c,_private:true}))];
     const conceptKey=JSON.stringify(present.map(c=>[c.id,c.status,c.updated_at,c.content?.name,c.content?.hook,
       c.content?.image_url,c.source_refs?.map(x=>[x.url,x.address,x.mint]), conceptArtwork(c,liveMarket?.signals||[]).url]));
     if(conceptKey!==conceptStructureKey){
       conceptStructureKey=conceptKey;
       $('dit-live-concepts').innerHTML=present.length?present.map(c=>{
-      const x=c.content||{},label=c._private?'DRAFT // REQUIRES HUMAN REVIEW':'APPROVED CONCEPT';
+      const x=c.content||{},label=c._private?'DRAFT // REQUIRES HUMAN REVIEW':(c.status==='published'?'REVIEWED IDEA':'UNREVIEWED AGENT IDEA');
       return '<article class="terminal-concept-card">'+artTile(c,'terminal-concept-image')+
         '<div class="dit-creator-credit">'+portrait(c.agent_id,'dit-creator-avatar')+'<span>'+esc(c.agent_id)+'</span></div>'+
         '<div class="terminal-concept-copy"><small>_ '+label+'</small>'+
@@ -261,11 +263,13 @@
         (c._private?'<a class="terminal-action" href="/operator">OPEN PRIVATE REVIEW ↗</a>':
         '<button type="button" data-live-concept="'+esc(c.id)+'">OPEN CONCEPT BRIEF ↗</button>')+
         '</div></article>';
-    }).join(''):'<p class="live-empty">_ NO REVIEWED CONCEPTS YET. MARKET SCANS CONTINUE INDEPENDENTLY<span class="terminal-cursor">_</span></p>';
+    }).join(''):'<p class="live-empty">_ AWAITING THE NEXT SOURCED AGENT IDEA. MARKET SCANS CONTINUE<span class="terminal-cursor">_</span></p>';
 
     }
   }
 
+  const older=document.createElement('button');older.type='button';older.textContent='LOAD OLDER AGENT IDEAS';$('dit-live-concepts').after(older);older.hidden=true;
+  older.addEventListener('click',async()=>{if(!conceptBefore||conceptPaging)return;conceptPaging=true;older.disabled=true;try{const page=await api('/api/concepts?before='+encodeURIComponent(conceptBefore));conceptArchive=[...conceptArchive,...(page.concepts||[])];conceptBefore=page.next_before;concepts=[...concepts,...(page.concepts||[]).filter(c=>!concepts.some(n=>n.id===c.id))];render();}catch{older.textContent='RETRY LOADING OLDER IDEAS';}finally{conceptPaging=false;older.disabled=false;}});
   const money=x=>typeof x==='number'&&Number.isFinite(x)?('$'+(x>=1000?(x/1000).toFixed(1)+'k':Math.round(x).toLocaleString())):'—';
   function renderLiveMarket(){marketFeed.render(liveMarket,$('dit-live-filter')?.value||'all');}
   async function refreshPrivateDrafts(){
@@ -317,11 +321,11 @@
       world=out[0].status==='fulfilled'?out[0].value:null;
       if(out[1].status==='fulfilled')observations=out[1].value.observations||[];
       if(out[2].status==='fulfilled')runs=out[2].value.runs||[];
-      if(out[3].status==='fulfilled')concepts=out[3].value.concepts||[];
+      if(out[3].status==='fulfilled'){const latest=out[3].value.concepts||[];if(!conceptArchive.length)conceptBefore=out[3].value.next_before;concepts=[...latest,...conceptArchive.filter(c=>!latest.some(n=>n.id===c.id))];}
       render();
     }finally{busy=false}
   }
-  refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();refreshTreasury();setInterval(refresh,30000);setInterval(refreshLiveMarket,['localhost','127.0.0.1'].includes(location.hostname)?1000:10000);setInterval(refreshPrivateDrafts,15000);setInterval(refreshTreasury,60000);
+  refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();refreshTreasury();setInterval(refresh,10000);setInterval(refreshLiveMarket,['localhost','127.0.0.1'].includes(location.hostname)?1000:10000);setInterval(refreshPrivateDrafts,15000);setInterval(refreshTreasury,60000);
   setInterval(refreshActivity,5000);setInterval(()=>{if(liveMarket&&!document.hidden)renderLiveMarket()},1000);
   if(typeof EventSource!=='undefined'&&['localhost','127.0.0.1'].includes(location.hostname)){const channel=new EventSource('/api/stream');channel.onmessage=()=>{refreshActivity();refreshPrivateDrafts()};}
   document.addEventListener('visibilitychange',()=>{document.body.classList.toggle('dit-page-hidden',document.hidden);if(!document.hidden){refresh();refreshLiveMarket()}});

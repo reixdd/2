@@ -1,4 +1,4 @@
-import {mountTerminalMotion,typeRecordedEvents} from './terminal-motion.js';
+import {mountTerminalMotion,typeRecordedEvents} from './terminal-motion.js?v=launch-final-3';
 // Live cinematic machine composition. Real state comes only from JARVIS APIs.
 const IDS=['GHOST_001','NULL_ENTITY','ECHO.exe'];
 const ROLES=['THE ARCHIVIST','THE SIGNAL HUNTER','THE VIRAL MACHINE'];
@@ -11,9 +11,9 @@ const el=id=>document.getElementById(id);
 export function roomSummary(world,market,events=[]){
  const configured=Array.isArray(world?.agents)?world.agents.length:null;
  const rows=Array.isArray(market?.signals)?market.signals:null;
- return {agents:configured,pairs:rows?rows.length:null,
-   events:Array.isArray(events)?events.filter(x=>x?.agent_id&&x?.title).length:0,
-   status:rows&&rows.length?(market.stale?'DELAYED':rows.some(r=>r.source_observed_at&&Date.now()-Date.parse(r.source_observed_at)<180000)?'LIVE':'SOURCE TIME UNKNOWN'):'AWAITING SOURCE',
+ return {agents:configured,pairs:market?.metrics?.observed_contracts_total??(rows?rows.length:null),
+   events:market?.metrics?.activity_total??(Array.isArray(events)?events.filter(x=>x?.agent_id&&x?.title).length:0),
+   status:rows&&rows.length?(market.stale?'DELAYED':rows.some(r=>(r.source_observed_at||r.provider_response_at)&&Date.now()-Date.parse(r.source_observed_at||r.provider_response_at)<180000)?'LIVE':'SOURCE TIME UNKNOWN'):'AWAITING SOURCE',
    checked:market?.last_checked_at||null};
 }
 export function mountControlRoom({openAgent,activateTab}={}){
@@ -35,8 +35,8 @@ export function mountControlRoom({openAgent,activateTab}={}){
    '<div class="dit-hud-controls"><button type="button" id="dit-appearance" aria-pressed="false">APPEARANCE</button><button type="button" id="dit-gfx-toggle" aria-pressed="false">GFX OFF</button><button type="button" id="dit-hud-expand" aria-expanded="false" aria-controls="dit-hud-system" aria-label="Toggle system diagnostics">＋</button></div></header>'+
    '<div class="dit-room-title"><span>PROTOCOL_001 / JARVIS EVIDENCE ENGINE</span><h1>DEAD INTERNET THEORY<span class="dit-blink">_</span></h1>'+
    '<p>THE INTERNET IS NO LONGER YOURS. THREE MACHINES. ONE OBSERVABLE NETWORK.</p></div>'+
-   '<div class="dit-room-metrics"><div><strong id="dit-room-pairs">—</strong><span>OBSERVED PAIRS</span></div>'+
-   '<div><strong id="dit-room-events">—</strong><span>RECENT EVENTS LOADED</span></div>'+
+   '<div class="dit-room-metrics"><div><strong id="dit-room-pairs">—</strong><span>CONTRACTS OBSERVED</span></div>'+
+   '<div><strong id="dit-room-events">—</strong><span>RECORDED EVENTS</span></div>'+
    '<div><strong id="dit-room-agents">—</strong><span>CONFIGURED AGENTS</span></div>'+
    '<div><strong id="dit-room-freshness">UNAVAILABLE</strong><span>MARKET STATUS</span></div></div>'+
    '<div class="dit-room-stage-wrap"><aside class="dit-ops-rail" id="dit-treasury"><span class="dit-rail-kicker">[ OPERATION TREASURY ]</span>'+
@@ -64,7 +64,7 @@ export function mountControlRoom({openAgent,activateTab}={}){
    Array.from({length:12},(_,i)=>'<span style="--bar-h:'+((17+i*29)%65+18)+'%;--bar-i:'+i+'"></span>').join('')+'</div>';
  stage.appendChild(scenery);
  const cinematic=document.createElement('div');
- cinematic.innerHTML='<div id="dit-stage" class="dit-scene-bg" data-mode="ambient" aria-hidden="true"></div>';
+ cinematic.innerHTML='<div id="dit-stage" class="dit-scene-bg" data-mode="ambient" data-background-only="true" aria-hidden="true"></div>';
  shell.querySelector('.dit-entity-stage')?.prepend(cinematic.firstElementChild);
  stage.appendChild(shell);
  mountTerminalMotion(shell);

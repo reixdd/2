@@ -17,6 +17,7 @@ export function allowedOperatorRequest(req,port){
 export class Operator {
   constructor({store,env,port,fetchImpl=fetch,configFile='.data/operator-settings.json',onSettings=async()=>{}}){
     this.store=store;this.env=env;this.port=port;this.fetchImpl=fetchImpl;this.configFile=configFile;this.onSettings=onSettings;this.running=new Map();this.marketSnapshot=null;this.marketAt=0;this.discoveryAt=0;this.publishAt=0;this.marketInflight=null;this.verifying=new Set();
+    this.marketLedgerPath=path.join(path.dirname(configFile),'market-ledger.json');this.seenContracts=new Set();if(store.kind==='supabase'){try{this.seenContracts=new Set(JSON.parse(fs.readFileSync(this.marketLedgerPath,'utf8')).contracts||[])}catch{}}
     this.lowLoad = env.DIT_JARVIS_SHARED === '1';
     this.maxConcurrent = this.lowLoad ? Math.max(1, Math.min(3, Number(env.DIT_JARVIS_PARALLEL || 3))) : 3;
     const fallback={provider:this.lowLoad?'jarvis':'ollama',url:this.lowLoad?(env.DIT_JARVIS_URL||'http://127.0.0.1:8768'):(env.OLLAMA_URL||'http://127.0.0.1:11434'),models:{GHOST_001:env.DIT_MODEL_GHOST||'',NULL_ENTITY:env.DIT_MODEL_NULL||'','ECHO.exe':env.DIT_MODEL_ECHO||''}};
@@ -47,14 +48,15 @@ export class Operator {
           if(!old){merged.set(row.address,{...row});continue;}
           merged.set(row.address,mergeMarketRows(old,row));
         }
-        const fresh=[...merged.values()].map(row=>({...row,freshness:row.source_observed_at?(Date.now()-Date.parse(row.source_observed_at)<=900000?'FRESH':'STALE'):'UNKNOWN'})).sort((a,b)=>Date.parse(b.observed_at)-Date.parse(a.observed_at)).slice(0,100);
+        const fresh=[...merged.values()].map(row=>({...row,freshness:(row.source_observed_at||row.provider_response_at)?(Date.now()-Date.parse(row.source_observed_at||row.provider_response_at)<=900000?'FRESH':'STALE'):'UNKNOWN'})).sort((a,b)=>Number(!!(b.source_observed_at||b.provider_response_at))-Number(!!(a.source_observed_at||a.provider_response_at))||Date.parse(b.observed_at)-Date.parse(a.observed_at)).slice(0,100);
+        for(const row of current.signals||[])this.seenContracts.add(row.address);
         const unavailable=Object.values(current.source_states||{}).every(x=>x!=='OK');
-        this.marketSnapshot={...current,signals:fresh,source_states,stale:unavailable||!current.signals.length,new_window_ms:Math.max(60000,Math.min(3600000,Number(this.env.DIT_NEW_PAIR_WINDOW_MS)||300000))};
+        this.marketSnapshot={...current,signals:fresh,source_states,metrics:{observed_contracts_total:this.seenContracts.size,activity_total:previous?.metrics?.activity_total??null},stale:unavailable||!current.signals.length,new_window_ms:Math.max(60000,Math.min(3600000,Number(this.env.DIT_NEW_PAIR_WINDOW_MS)||300000))};
         this.marketAt=Date.now();
         if(this.marketSnapshot.signals.length&&this.store.kind==='supabase'&&
           Date.now()-this.publishAt>=20_000){
           this.publishAt=Date.now();
-          try{await persistMarketSnapshot(this.store,this.marketSnapshot);this.lastPublishError=null;}
+          try{try{this.marketSnapshot.metrics.activity_total=await this.store.count?.('activity_events')??this.marketSnapshot.metrics.activity_total}catch{}try{fs.mkdirSync(path.dirname(this.marketLedgerPath),{recursive:true});fs.writeFileSync(this.marketLedgerPath+'.tmp',JSON.stringify({contracts:[...this.seenContracts]}));fs.renameSync(this.marketLedgerPath+'.tmp',this.marketLedgerPath)}catch{};await persistMarketSnapshot(this.store,this.marketSnapshot);this.lastPublishError=null;}
           catch{this.lastPublishError='market_snapshot_sync_unavailable';}
         }
         return this.marketSnapshot;
@@ -72,7 +74,7 @@ export class Operator {
   marketStatus(){
     if(Date.now()-this.marketAt>1000&&!this.marketInflight)this.refreshMarket().catch(()=>{});
     const snapshot=this.marketSnapshot||{signals:[],source_states:{},research_only:true};
-    const upstream=(snapshot.signals||[]).map(x=>Date.parse(x.source_observed_at||'')).filter(Number.isFinite);
+    const upstream=(snapshot.signals||[]).map(x=>Date.parse(x.source_observed_at||x.provider_response_at||'')).filter(Number.isFinite);
     const lastUpstream=upstream.length?Math.max(...upstream):NaN;
     const observedAge=Date.now()-lastUpstream;
     return {...snapshot,stale:!!snapshot.stale||!Number.isFinite(observedAge)||observedAge>180_000,

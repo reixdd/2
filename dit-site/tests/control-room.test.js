@@ -40,3 +40,5 @@ test('moving background and flow use reduced-motion fallback',()=>{
  assert.match(css,/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
  assert.match(read('../dist/live-research.css'),/data-transmitting=true/);
 });
+
+test('cumulative backend counters are not capped to loaded rows',()=>{const s=roomSummary({agents:[]},{signals:[],metrics:{observed_contracts_total:1420,activity_total:905}},[]);assert.equal(s.pairs,1420);assert.equal(s.events,905);});

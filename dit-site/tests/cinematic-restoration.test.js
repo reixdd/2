@@ -8,9 +8,9 @@ test('active terminal mounts the original cinematic WebGL stage without replacin
  const home=read('../dist/index.html');
  const room=read('../dist/control-room.js'),live=(read('../dist/live-research.js')+read('../dist/market-feed.js')),css=read('../dist/control-room.css');
  assert.match(room,/id="dit-stage"/);
- assert.match(live,/import\(['"]\.\/stage\.js['"]\)/);
+ assert.match(live,/import\(['"]\.\/stage\.js(?:\?[^'"]+)?['"]\)/);
  assert.match(css,/hero\.webp/);
- assert.match(css,/\[data-renderer=webgl\]/);
+ assert.match(room,/data-background-only="true"/);
  for(const s of ['dit-live-evidence-section','dit-live-concept-section','dit-live-transmission-section'])assert.ok(home.includes(s));
  for(const s of ['volume_5m_usd','buys_5m','sells_5m','MarketFeed'])assert.ok(live.includes(s));
 });

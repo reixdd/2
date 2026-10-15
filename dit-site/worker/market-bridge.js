@@ -22,7 +22,8 @@ function normalize(row,kind,now,freshnessMs){
  const source_observed_at=upstream||(recordedAge!==null&&recordedAge>=0?new Date(now-recordedAge*1000).toISOString():null);
  // A fetched response is not proof that an undated source emitted a new observation.
  const received_at=new Date(now).toISOString();
- const seen=source_observed_at||received_at;
+ const provider_response_at=stamp(row._provider_response_at);
+ const seen=source_observed_at||provider_response_at||received_at;
  const age=now-Date.parse(seen);
  const fresh=age>=-60_000&&age<=freshnessMs&&row.live_eligible!==false;
  const pair_created_at=stamp(first(row.pair_created_at,row.pairCreatedAt,row.pairCreatedTime,row.pool_created_at,row.poolCreatedAt,row.pair?.created_at,row.pool?.created_at,(['DEX Screener','GeckoTerminal'].includes(row.provider)&&row.pool&&row.provenance?.independent_observation===true)?row.launch_at:null));
@@ -31,7 +32,7 @@ function normalize(row,kind,now,freshnessMs){
  const provider=kind==='radar'?'JARVIS · DexScreener/GeckoTerminal':kind==='tape'?'JARVIS · '+str(row.provider||'SENSE / Market Tape',50):'GMGN via JARVIS';
  const image_candidates=artworkCandidates([a.logo,a.image_url,a.imageUrl,a.icon,a.logoURI,a.image?.url,row.image_url,row.imageUrl,row.info?.imageUrl,row.info?.image_url,a.metadata?.image,row.metadata?.image,row.baseToken?.logo,row.baseToken?.logoURI],provider);
  const result={chain:'sol',address,name:str(first(a.name,a.token_name,row.name),90),symbol:str(first(a.symbol,a.token_symbol,row.symbol),20),
- kind,kinds:[kind],provider,providers:[provider],pair_created_at,token_created_at,pair_time_verified:!!pair_created_at,pair_time_source:pair_created_at?provider:null,first_observed_at:received_at,first_seen_at:received_at,observed_at:seen,source_observed_at,received_at,created_at,freshness:fresh?'FRESH':'STALE',
+ kind,kinds:[kind],provider,providers:[provider],pair_created_at,token_created_at,pair_time_verified:!!pair_created_at,pair_time_source:pair_created_at?provider:null,first_observed_at:received_at,first_seen_at:received_at,observed_at:seen,source_observed_at,provider_response_at,received_at,created_at,freshness:fresh?'FRESH':'STALE',
  image_candidates,image_url:image_candidates[0]?.url||null,
  market_cap_usd:num(first(row.market_cap,row.marketcap,row.marketCap)),
  liquidity_usd:num(first(row.liquidity?.usd,row.liquidity_usd,typeof row.liquidity==='object'?null:row.liquidity)),
@@ -40,7 +41,7 @@ function normalize(row,kind,now,freshnessMs){
  safety:str(first(row.risk,row.security?.status),40)||'UNVERIFIED',
  paid_attention:num(first(row.dexscr_boost_fee,row.boost_amount,row.boosts?.active,0))>0,
  url:'https://gmgn.ai/sol/token/'+address,source_status:source_observed_at?'OBSERVED':'SOURCE_TIME_UNKNOWN'};
- result.metric_sources=Object.fromEntries(['volume_5m_usd','liquidity_usd','buys_5m','sells_5m','market_cap_usd'].filter(k=>result[k]!==null).map(k=>[k,{provider,observed_at:source_observed_at}]));
+ result.metric_sources=Object.fromEntries(['volume_5m_usd','liquidity_usd','buys_5m','sells_5m','market_cap_usd'].filter(k=>result[k]!==null).map(k=>[k,{provider,observed_at:source_observed_at||provider_response_at,basis:source_observed_at?'source':provider_response_at?'fresh_api_response':'unknown'}]));
  return result;
 }
 export function normalizeMarketResponses(responses={}, {now=Date.now(),freshnessMs=15*60_000}={}){
@@ -49,12 +50,13 @@ export function normalizeMarketResponses(responses={}, {now=Date.now(),freshness
   if(!response?.ok||!response?.data)continue;
   const payload=kind==='radar'||kind==='tape'?response.data:response.data.data;
   for(const row of rows(payload,kind)){
-   const s=normalize(row,kind,now,freshnessMs);if(!s)continue;
+   const freshApi=['trenches','trending'].includes(kind)&&response.data.cached===false&&response.data.source==='GMGN official CLI';
+   const s=normalize({...row,_provider_response_at:freshApi?new Date(now).toISOString():null},kind,now,freshnessMs);if(!s)continue;
    const old=map.get(s.address);
    map.set(s.address,mergeMarketRows(old,s));
   }
  }
- return {observed_at:new Date(now).toISOString(),signals:[...map.values()].filter(s=>s.freshness==='FRESH').slice(0,100),
+ return {observed_at:new Date(now).toISOString(),signals:[...map.values()].filter(s=>s.freshness==='FRESH').sort((a,b)=>Number(!!(b.source_observed_at||b.provider_response_at))-Number(!!(a.source_observed_at||a.provider_response_at))).slice(0,100),
   source_states:Object.fromEntries(Object.entries(responses).map(([k,v])=>[k,v?.ok?'OK':str(v?.error||'UNAVAILABLE',120)])),research_only:true};
 }
 export async function collectJarvisMarkets({baseUrl='http://127.0.0.1:8768',fetchImpl=fetch,now=Date.now(),signal,tapeOnly=false}={}){

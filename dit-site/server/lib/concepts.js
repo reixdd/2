@@ -1,5 +1,5 @@
 // Shared browser-safe research and fictional concept persistence helpers.
-// Never publishes real tokens, financial claims, or unreviewed concepts.
+// Displays generated ideas without launching tokens; review status stays explicit.
 const trim=(v,n=4000)=>String(v??'').trim().slice(0,n);
 const URLS=/https?:\/\/[^\s<>"'\])}]+/g;
 export function recordedSources(answer,observations=[]){
@@ -44,9 +44,9 @@ export async function persistCompletedResearch(store,{runId,agentId,answer,obser
   }
   return {source_refs:links,concept_saved:!!concept};
 }
-export async function publicConcepts(store,id=null){
-  const filters=[['status','eq','published']];if(id)filters.push(['id','eq',id]);
-  return store.select('fictional_concepts',{filters,order:['published_at','desc'],limit:id?1:60});
+export async function publicConcepts(store,id=null,before=null){
+  const filters=[['status','in',['review','published']]];if(id)filters.push(['id','eq',id]);else if(before&&Number.isFinite(Date.parse(before)))filters.push(['created_at','lt',new Date(before).toISOString()]);
+  return store.select('fictional_concepts',{filters,order:['created_at','desc'],limit:id?1:200});
 }
 export async function reviewConcept(store,{id,revision,status,content}){
   if(!['review','published','rejected','archived'].includes(status))throw Error('Invalid review status');

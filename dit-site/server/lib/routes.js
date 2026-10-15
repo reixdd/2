@@ -45,9 +45,9 @@ export async function handleBackendApi(request, env, deps = {}) {
     }
     if(path==='/api/concepts'||path.startsWith('/api/concepts/')){
       const id=path==='/api/concepts'?null:decodeURIComponent(path.slice('/api/concepts/'.length));
-      const rows=await publicConcepts(store,id);
+      const rows=await publicConcepts(store,id,url.searchParams.get('before'));
       return id?(rows.length?json({concept:rows[0],fictional:true}):json({error:'Not found'},404)):
-        json({concepts:rows,fictional:true});
+        json({concepts:rows,next_before:rows.length===200?rows.at(-1).created_at:null,fictional:true});
     }
     if(path==='/api/observatory'){
       const [agents,profiles,beats,schedules,runs]=await Promise.all([

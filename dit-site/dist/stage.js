@@ -3,8 +3,8 @@
 // Detailed, transparent 2.5D portraits share a camera and softly animated city backdrop.
 // Prototype GLBs remain in dit-assets for authoring; they are not the production characters.
 // Research activity always comes from the existing API. Idle motion is visual only.
-import { createQualityController, createFrameGuard, opaqueAt } from './stage-quality.js';
-const THREE_URL = './vendor/three.module.js';
+import { createQualityController, createFrameGuard, opaqueAt } from './stage-quality.js?v=launch-final-3';
+const THREE_URL = './vendor/three.module.js?v=launch-final-3';
 const AGENTS = [
   { id: 'GHOST_001', title: 'THE ARCHIVIST', model: 'ghost_001', accent: 0x66baff },
   { id: 'NULL_ENTITY', title: 'THE SIGNAL HUNTER', model: 'null_entity', accent: 0xb18aff },
@@ -217,7 +217,7 @@ async function buildStage(THREE, canvas, live, section, ambient=false) {
     mesh.renderOrder=20;mesh.userData.agent=a.id;group.add(mesh);
     const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:a.accent,transparent:true,opacity:.09,depthWrite:false,blending:THREE.AdditiveBlending}));
     glow.scale.set(3.8,4.8,1);glow.position.set(0,1.9,-.38);group.add(glow);
-    group.position.set((i-1)*3.85,ambient ? -1.8 : -2.17,0);mesh.position.y=3.47*FIG/2-.02;scene.add(group);
+    group.position.set((i-1)*3.85,ambient ? -1.8 : -2.17,0);mesh.position.y=3.47*FIG/2-.02;group.visible=section.dataset.backgroundOnly!=='true';scene.add(group);
     return {id:a.id,group,mesh,glow,uniforms,cur:{energy:.1,glitch:0,dim:1},hover:0,phase:i*1.7,model:null,mixer:null,head:null,labelPosition:new THREE.Vector3(),label:section.querySelector(`[data-stage-agent="${CSS.escape(a.id)}"]`),lastLabelX:null,mask:masks[i],modelFile:a.model,baseX:group.position.x};
   });
   const byId=new Map(items.map(it=>[it.id,it]));

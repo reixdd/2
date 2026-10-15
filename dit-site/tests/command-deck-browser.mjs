@@ -64,7 +64,7 @@ try{
   assert.equal(canvasDisplay,'none','no frozen duplicate shader');
  }else{
   const opacity=await page.locator('.dit-entity-art').first().evaluate(el=>getComputedStyle(el).opacity);
-  assert.equal(Number(opacity),0,'hide duplicated static art only while GPU renderer is active');
+  assert.equal(Number(opacity),1,'native portraits remain grounded while WebGL renders atmosphere only');
  }
  await page.locator('#dit-gfx-toggle').click();
  assert.equal(await page.locator('#dit-gfx-toggle').getAttribute('aria-pressed'),'false');
