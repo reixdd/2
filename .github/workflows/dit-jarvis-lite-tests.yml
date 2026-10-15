@@ -19,6 +19,7 @@ on:
       - 'dit-site/dist/control-room.css'
       - 'dit-site/tests/control-room.test.js'
       - 'dit-site/tests/cinematic-restoration.test.js'
+      - 'dit-site/tests/command-deck-browser.mjs'
       - 'dit-site/dist/live-research.js'
       - 'dit-site/dist/terminal-ui.js'
       - 'dit-site/tests/terminal-ui.test.js'
@@ -65,3 +66,7 @@ jobs:
         run: node --check dist/live-research.js && node --check dist/control-room.js && node --check dist/stage.js && node --check dist/terminal-ui.js && node --check dist/operator-review.js
       - name: Check host worker build
         run: npm run build
+      - name: Chromium command-deck browser acceptance
+        run: |
+          npm ci --ignore-scripts --no-audit
+          CHROMIUM_PATH="$(command -v google-chrome || command -v chromium)" node tests/command-deck-browser.mjs
