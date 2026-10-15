@@ -29,3 +29,19 @@ test('real token imagery is preserved while unsafe URLs are discarded',()=>{
  assert.equal(data.signals.find(x=>x.symbol==='PHOTO')?.image_url,'https://cdn.dexscreener.com/token.png');
  assert.equal(data.signals.find(x=>x.symbol==='BAD')?.image_url,null);
 });
+
+test('JARVIS cross-check fills missing GMGN 5-minute buy/sell and volume metrics by contract',()=>{
+ const address='So11111111111111111111111111111111111111112', now=Date.UTC(2026,9,15);
+ const data=normalizeMarketResponses({
+   trenches:{ok:true,data:{data:{new_creation:[{address,symbol:'MEME',name:'Meme',logo:'https://example.com/token.gif'}]}}},
+   radar:{ok:true,data:{items:[{address,chain:'sol',symbol:'MEME',liquidity:1200,volume_5m:250,buys_5m:19,sells_5m:7,live_eligible:true}]}}
+ },{now});
+ assert.equal(data.signals.length,1);
+ const row=data.signals[0];
+ assert.equal(row.volume_5m_usd,250);
+ assert.equal(row.buys_5m,19);
+ assert.equal(row.sells_5m,7);
+ assert.equal(row.image_url,'https://example.com/token.gif');
+ assert.equal(row.liquidity_usd,1200);
+ assert.equal(row.providers.length,2);
+});
