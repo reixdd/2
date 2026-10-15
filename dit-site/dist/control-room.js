@@ -9,7 +9,7 @@ export function roomSummary(world,market,events=[]){
  const rows=Array.isArray(market?.signals)?market.signals:null;
  return {agents:configured,pairs:rows?rows.length:null,
    events:Array.isArray(events)?events.filter(x=>x?.agent_id&&x?.title).length:0,
-   status:rows&&rows.length?(market.stale?'STALE':'LIVE'):'UNAVAILABLE',
+   status:rows&&rows.length?(market.stale?'LAST VERIFIED':'LIVE'):'AWAITING SOURCE',
    checked:market?.last_checked_at||null};
 }
 export function mountControlRoom({openAgent,activateTab}={}){
@@ -20,21 +20,24 @@ export function mountControlRoom({openAgent,activateTab}={}){
  const cards=IDS.map((id,i)=>
    '<article class="dit-entity" data-id="'+esc(id)+'"><button type="button" class="dit-entity-open" data-room-agent="'+esc(id)+'" aria-label="Open '+esc(id)+' dossier">'+
    '<span class="dit-entity-ring"></span><img class="dit-entity-art" src="'+ART[i]+'" alt="'+esc(id)+' machine portrait" decoding="async"></button>'+
-   '<div class="dit-entity-meta"><small>ENTITY_00'+(i+1)+' / '+ROLES[i]+'</small><div><strong>'+esc(id)+'</strong>'+
+   '<div class="dit-entity-meta dit-room-agent-strip"><small>ENTITY_00'+(i+1)+' / '+ROLES[i]+'</small><div><strong>'+esc(id)+'</strong>'+
    '<em id="dit-room-status-'+i+'">UNKNOWN</em></div><p id="dit-room-recent-'+i+'">_ WAITING FOR VERIFIED EVENTS</p>'+
    '<button type="button" data-room-agent="'+esc(id)+'">OPEN DOSSIER ↗</button></div></article>').join('');
  const shell=document.createElement('section');shell.className='dit-room';shell.setAttribute('aria-label','JARVIS machine control room');
  shell.innerHTML='<div class="dit-motion-field" aria-hidden="true"><i></i><i></i><i></i><span></span></div>'+
    '<header class="dit-room-top"><a href="#stage" class="dit-room-brand">◇ DIT <small>// LIVE MACHINE OBSERVATORY</small></a>'+
-   '<span id="dit-room-protocol">_ AWAITING MARKET OBSERVATIONS</span><a href="/operator">PRIVATE OPERATOR ↗</a></header>'+
+   '<span class="dit-room-live" id="dit-room-protocol">_ AWAITING MARKET OBSERVATIONS</span><a href="/operator">PRIVATE OPERATOR ↗</a></header>'+
    '<div class="dit-room-title"><span>PROTOCOL_001 / JARVIS EVIDENCE ENGINE</span><h1>DEAD INTERNET THEORY<span class="dit-blink">_</span></h1>'+
    '<p>THE INTERNET IS NO LONGER YOURS. THREE MACHINES. ONE OBSERVABLE NETWORK.</p></div>'+
    '<div class="dit-room-metrics"><div><strong id="dit-room-pairs">—</strong><span>PAIRS IN SNAPSHOT</span></div>'+
    '<div><strong id="dit-room-events">—</strong><span>RECENT EVENTS LOADED</span></div>'+
    '<div><strong id="dit-room-agents">—</strong><span>CONFIGURED AGENTS</span></div>'+
    '<div><strong id="dit-room-freshness">UNAVAILABLE</strong><span>MARKET STATUS</span></div></div>'+
+   '<div class="dit-room-stage-wrap"><aside class="dit-ops-rail"><span class="dit-rail-kicker">[ OPERATIONS TERMINAL ]</span><strong class="dit-ops-heading">SOURCE MONITOR</strong><p>LIVE RESEARCH / READ ONLY</p><div><span>STREAM</span><b>JARVIS / SOLANA</b></div><div><span>PROCESS</span><b>OBSERVE → RESEARCH → REVIEW</b></div><div><span>OBSERVATIONS</span><b id="dit-ops-count">AWAITING DATA</b></div><a href="#dit-live-evidence-section">↳ OPEN MARKET FEED</a></aside>'+
    '<div class="dit-entity-stage">'+cards+'</div>'+
-   '<div class="dit-room-bottom"><span>_ OBSERVE → VALIDATE → CLASSIFY → REMEMBER → SHORTLIST → PROPOSE → REVIEW</span>'+
+   '<aside class="dit-status-rail"><span class="dit-rail-kicker">[ AGENT STATES ]</span>'+IDS.map((id,i)=>'<div><strong>'+esc(id)+'</strong><span id="dit-rail-state-'+i+'">UNKNOWN</span></div>').join('')+
+   '<p>Agent states are reported by the connected research worker.</p></aside></div>'+
+   '<div class="dit-room-bottom"><span id="dit-room-ticker">_ OBSERVE → VALIDATE → CLASSIFY → REMEMBER → SHORTLIST → PROPOSE → REVIEW</span>'+
    '<a href="#dit-live-evidence-section">OBSERVE NEW PAIRS ↓</a></div>';
  // Restore the original cinematic layers *behind* the functioning terminal.
  // One WebGL canvas renders all three portraits; real dossiers remain native buttons.
@@ -44,7 +47,7 @@ export function mountControlRoom({openAgent,activateTab}={}){
  stage.appendChild(scenery);
  const cinematic=document.createElement('div');
  cinematic.innerHTML='<div id="dit-stage" class="dit-scene-bg" data-mode="ambient" aria-hidden="true"></div>';
- stage.appendChild(cinematic.firstElementChild);
+ shell.querySelector('.dit-entity-stage')?.prepend(cinematic.firstElementChild);
  stage.appendChild(shell);
  stage.addEventListener('click',e=>{const btn=e.target.closest('[data-room-agent]');if(btn){e.preventDefault();openAgent?.(btn.dataset.roomAgent)}});
  live.classList.add('dit-tab-terminal');
@@ -76,11 +79,14 @@ export function updateControlRoom(world,market,events=[]){
   const agent=world?.agents?.find(a=>a.id===id);
   const latest=events.find(e=>e.agent_id===id&&e.title);
   put('dit-room-status-'+i,(agent?.presence||'UNKNOWN').toUpperCase());
-  put('dit-room-recent-'+i,latest?'_ '+String(latest.title).slice(0,95):'_ NO RECORDED EVENTS');
+  put('dit-room-recent-'+i,latest?'_ '+String(latest.title).slice(0,82):'_ NO RECORDED EVENTS');
+  put('dit-rail-state-'+i,(agent?.presence||'UNKNOWN').toUpperCase());
   const flow=document.querySelectorAll('.dit-flow-agent')[i];
   if(flow){flow.dataset.active=latest?'true':'false';const b=flow.querySelector('b');
    if(b)b.textContent=latest?String(latest.title).slice(0,75):'NO RECORDED SIGNAL';}
  });
  const recent=events.find(e=>e?.title&&IDS.includes(e.agent_id));
  put('dit-flow-status',recent?'_ '+recent.agent_id+' / '+String(recent.title).slice(0,125):'_ WAITING FOR RECORDED EVENTS');
+ put('dit-room-ticker',recent?'_ LAST RESEARCH EVENT / '+recent.agent_id+' // '+String(recent.title).slice(0,116):'_ AWAITING VERIFIED RESEARCH EVENTS / NEVER SIMULATED');
+ put('dit-ops-count',v.pairs===null?'NO MARKET SNAPSHOT':v.pairs+' PAIRS IN SNAPSHOT');
 }
