@@ -45,3 +45,34 @@ test('JARVIS cross-check fills missing GMGN 5-minute buy/sell and volume metrics
  assert.equal(row.liquidity_usd,1200);
  assert.equal(row.providers.length,2);
 });
+
+test('JARVIS tape events populate live pair cards with original observation time and five-minute metrics',()=>{
+ const now=Date.UTC(2026,9,15,18,30,0);
+ const data=normalizeMarketResponses({tape:{ok:true,data:{items:[{
+  event_id:'real-event-01',chain:'sol',contract:address,
+  observed_at:(now-2500)/1000,
+  symbol:'TAPE',name:'Tape token',volume_5m:1275,buys_5m:22,sells_5m:8,
+  market_cap:95000,liquidity:11000
+ }]}}},{now});
+ assert.equal(data.signals.length,1);
+ assert.equal(data.signals[0].address,address);
+ assert.equal(data.signals[0].volume_5m_usd,1275);
+ assert.equal(data.signals[0].buys_5m,22);
+ assert.equal(data.signals[0].sells_5m,8);
+ assert.equal(data.signals[0].source_observed_at,new Date(now-2500).toISOString());
+});
+test('normalization does not invent an upstream observation timestamp for undated results',()=>{
+ const now=Date.UTC(2026,9,15,18,30,0);
+ const data=normalizeMarketResponses({trenches:{ok:true,data:{data:{new_creation:[{address,symbol:'UNKNOWN'}]}}}},{now});
+ assert.equal(data.signals[0].source_observed_at,null);
+ assert.equal(data.signals[0].received_at,new Date(now).toISOString());
+});
+test('one fast tape collection does not invoke upstream GMGN discovery routes',async()=>{
+ const called=[],now=Date.UTC(2026,9,15,18,30,0);
+ await collectJarvisMarkets({now,tapeOnly:true,fetchImpl:async url=>{
+   called.push(url);
+   return Response.json({items:[]});
+ }});
+ assert.equal(called.length,1);
+ assert.match(called[0],/\/api\/tape\?limit=/);
+});
