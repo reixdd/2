@@ -50,7 +50,11 @@ export async function readMarketSnapshot(store,{now=Date.now(),staleAfterMs=180_
     status:'NO_SNAPSHOT',research_only:true};
   const safe=sanitizeMarketSnapshot({signals:row.signals,source_states:row.source_states},now);
   const written=Date.parse(row.updated_at||row.observed_at||'');
-  const stale=!Number.isFinite(written)||now-written>staleAfterMs||now<written-60_000;
+  const times=safe.signals.map(item=>Date.parse(item.source_observed_at||'')).filter(Number.isFinite);
+  const newest=times.length?Math.max(...times):NaN;
+  // A new Supabase write is not proof that its underlying provider observed fresh data.
+  const stale=!Number.isFinite(written)||now-written>staleAfterMs||now<written-60_000||
+    !Number.isFinite(newest)||now-newest>staleAfterMs||newest>now+60_000;
   return {...safe,last_checked_at:Number.isFinite(written)?new Date(written).toISOString():null,
     stale,status:stale?'STALE':'LIVE',research_only:true};
 }
