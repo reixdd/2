@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { validateSettings,discoverProvider,runResearch,IDENTITIES } from '../worker/provider-bridge.js';
 import { StoreError } from './lib/store-core.js';
+import { persistCompletedResearch, reviewConcept } from './lib/concepts.js';
 const out=(data,status=200)=>Response.json(data,{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}});
 const tidy=x=>String(x||'').slice(0,400);
 export function allowedOperatorRequest(req,port){
@@ -31,6 +32,17 @@ export class Operator {
         return out(this.publicStatus());
       }
       if(p==='/operator/api/autonomous'&&method==='GET')return out(this.autonomous?.snapshot()||{enabled:false});
+      if(p==='/operator/api/concepts'&&method==='GET')
+        return out({concepts:await this.store.select('fictional_concepts',{order:['created_at','desc'],limit:100})});
+      if(p==='/operator/api/concepts'&&method==='POST'){
+        const reviewed=await reviewConcept(this.store,body);
+        await this.store.insert('activity_events',{agent_id:reviewed.agent_id,event_type:'fictional_concept_review',title:'Human-reviewed fictional concept',detail:reviewed.status,payload:{concept_id:reviewed.id}});
+        return out(reviewed);
+      }
+      if(p==='/operator/api/schedule'&&method==='POST'){
+        if(!IDENTITIES.includes(body.agent_id)||!this.autonomous)return out({error:'Invalid schedule target'},400);
+        return out(await this.autonomous.setSchedule(body));
+      }
       if(p==='/operator/api/discover'&&method==='POST')return out(await discoverProvider(validateSettings(body?.settings||this.settings),{fetchImpl:this.fetchImpl}));
       if(p==='/operator/api/run'&&method==='POST'){
         const {agent_id:id,prompt}=body;if(!IDENTITIES.includes(id))return out({error:'Invalid agent'},400);
@@ -46,9 +58,22 @@ export class Operator {
         // Fire and forget, but retain the AbortController and persist all outcomes.
         const finish=async()=>{
           try{const r=await runResearch({settings:this.settings,agentId:id,prompt:row.prompt,signal:ac.signal,fetchImpl:this.fetchImpl});
-            await this.store.update('agent_research_runs',[['id','eq',run]],{status:'completed',answer:r.answer,model:r.model||row.model,requested_specialists:r.requested_specialists||null,finished_at:new Date().toISOString()});
-            await this.store.insert('activity_events',{agent_id:id,event_type:'operator_complete',title:`${id} completed its research brief`,detail:r.answer.slice(0,240),payload:{run_id:run}});
-          }catch(e){const status=ac.signal.aborted?'cancelled':'failed';await this.store.update('agent_research_runs',[['id','eq',run]],{status,error:tidy(e.message),finished_at:new Date().toISOString()}).catch(()=>{});await this.store.insert('activity_events',{agent_id:id,event_type:'operator_'+status,title:`${id} research ${status}`,detail:tidy(e.message),payload:{run_id:run},severity:status==='failed'?'error':'info'}).catch(()=>{});}
+            try {
+              await this.store.update('agent_research_runs',[['id','eq',run]],{status:'completed',answer:r.answer,model:r.model||row.model,requested_specialists:r.requested_specialists||null,finished_at:new Date().toISOString(),diagnostics:{stream_completed:r.stream_completed??true}});
+              await this.store.insert('activity_events',{agent_id:id,event_type:'operator_complete',title:`${id} completed its research brief`,detail:r.answer.slice(0,240),payload:{run_id:run}});
+            } catch(dbError) {
+              const folder=path.join(path.dirname(this.configFile),'research-recovery');
+              fs.mkdirSync(folder,{recursive:true});
+              fs.writeFileSync(path.join(folder,run+'.json'),JSON.stringify({run_id:run,agent_id:id,answer:r.answer,model:r.model,finished_at:new Date().toISOString()}),{mode:0o600});
+              throw Error('Database persistence failed; answer backed up locally: '+tidy(dbError.message));
+            }
+            try {
+              const observations=await this.store.select('observations',{filters:[['agent_id','eq',id]],order:['observed_at','desc'],limit:40});
+              await persistCompletedResearch(this.store,{runId:run,agentId:id,answer:r.answer,observations});
+            } catch(persistError) {
+              await this.store.insert('activity_events',{agent_id:id,event_type:'research_memory_retry_needed',severity:'warning',title:'Research saved, memory/concept pending',detail:tidy(persistError.message),payload:{run_id:run}}).catch(()=>{});
+            }
+          }catch(e){const status=ac.signal.aborted?'cancelled':'failed';await this.store.update('agent_research_runs',[['id','eq',run]],{status,error:tidy(e.message),diagnostics:{kind:e.name||'Error',detail:tidy(e.message)},finished_at:new Date().toISOString()}).catch(()=>{});await this.store.insert('activity_events',{agent_id:id,event_type:'operator_'+status,title:`${id} research ${status}`,detail:tidy(e.message),payload:{run_id:run},severity:status==='failed'?'error':'info'}).catch(()=>{});}
           finally{await this.store.update('agents',[['id','eq',id]],{state:'IDLE',current_stage:null,last_active_at:new Date().toISOString()}).catch(()=>{});if(this.running.get(id)?.id===run)this.running.delete(id)}
         };void finish();return out({id:run,status:'running'},202);
       }
