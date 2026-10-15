@@ -144,3 +144,17 @@ test('HD cutouts and the animated city load without expensive WebGL until GFX is
  assert.match(live,/dit:gfx/);
  assert.match(live,/if\(e\.detail\?\.enabled\)/);
 });
+
+test('spectral phosphor is the coherent structural palette without old pink overlays or Echo ring',()=>{
+ const css=read('../dist/control-room.css'),live=read('../dist/live-research.css');
+ for(const hex of ['#030606','#192522','#A4BDB1','#E8FFB7','#6D7771'])
+   assert.match(css,new RegExp(hex,'i'));
+ assert.doesNotMatch(css,/#(?:ec6cff|cb8eff|df87fd|d58be5|e390ff)/i);
+ assert.match(css,/\.dit-entity-ring\{display:none/);
+ assert.match(live,/--dit-mint:\s*#E8FFB7/i);
+});
+test('premium skip-to-market control remains accessible and keyboard-focus visible',()=>{
+ const css=read('../dist/control-room.css'),html=read('../dist/index.html');
+ assert.match(html,/class="dit-skip"/);
+ assert.match(css,/\.dit-skip:focus-visible/);
+});
