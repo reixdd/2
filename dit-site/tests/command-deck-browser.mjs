@@ -72,7 +72,7 @@ try{
  await page.locator('[data-room-agent="GHOST_001"]').first().click();
  assert.equal(await page.locator('#dit-live-dialog').isVisible(),true,'interactive real dossier');
  await page.locator('#dit-live-close').click();
- await page.locator('[data-vote="GHOST_001"]').first().click();
+ await page.locator('.dit-entity[data-id="GHOST_001"] [data-vote]').click();
  await page.locator('#identity-email').waitFor({timeout:5000});
  await page.locator('#dit-live-close').click();
  await page.locator('#dit-nav-transmissions').click();
