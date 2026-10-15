@@ -19,6 +19,8 @@
     const state=$('dit-tab-state');if(state)state.textContent=selected==='radar'?'_ ORIGINAL CONCEPTS / HUMAN REVIEW':'_ VERIFIED OBSERVATIONS / DECISION FLOW';
   }
   mountControlRoom({openAgent:id=>detail(id),activateTab});
+  // The old WebGL stage now occupies a background-only host. A GPU failure must never stop market updates.
+  try{await import('./stage.js')}catch(err){console.warn('[DIT] cinematic fallback:',err)}
   activateTab(location.hash==='#dit-live-transmission-section'?'activity':'radar');
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
   let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[];
@@ -38,8 +40,15 @@
     const buzz=x=>Array.isArray(x)?x.slice(0,4).map(y=>'#'+String(y).replace(/^#/,'')).join(' · '):'';
   const portrait=(id,cls='terminal-avatar')=>agentPortrait(id)?'<img class="'+cls+'" src="'+esc(agentPortrait(id))+'" alt="'+esc(id)+' portrait" loading="lazy">':'';
   const artTile=(c,cls)=>{const a=conceptArtwork(c,liveMarket?.signals||[]);
-    return '<div class="'+cls+'">'+(a.url?'<img src="'+esc(a.url)+'" alt="'+esc(a.label)+'" loading="lazy" decoding="async">':'<span>_ NO ART</span>')+
+    return '<div class="'+cls+'">'+(a.url?'<img src="'+esc(a.url)+'" alt="'+esc(a.label)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span class="terminal-art-fallback" hidden>_ IMAGE UNAVAILABLE</span>':'<span>_ ORIGINAL ART PENDING</span>')+
     '<small>'+esc(a.label)+'</small></div>';};
+  document.addEventListener('error',event=>{
+    const img=event.target;
+    if(!(img instanceof HTMLImageElement)||!img.closest('.terminal-concept-image,.terminal-concept-art'))return;
+    img.hidden=true;
+    const placeholder=img.parentElement?.querySelector('.terminal-art-fallback');
+    if(placeholder)placeholder.hidden=false;
+  },true);
 
   const teaser=x=>String(x||'').split('CONCEPT_JSON')[0].split('```')[0].replace(/\s+/g,' ').trim().slice(0,180);
   const dlg=$('dit-live-dialog');
@@ -137,11 +146,16 @@
       }
     }
     renderLiveMarket();
+    // Animate only verified presence/status provided by the research worker, never simulated work.
+    window.dispatchEvent(new CustomEvent('dit:agents',{detail:{
+      unavailable:!world,workerAlive:!!world?.researcher?.online,
+      agents:(world?.agents||[]).map(a=>({id:a.id,state:['OBSERVING','THINKING','CREATING'].includes(String(a.presence).toUpperCase())?String(a.presence).toUpperCase():'IDLE'}))
+    }}));
     updateControlRoom(world,liveMarket,events);
     const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,8);
     const present=[...liveDrafts.map(c=>({...c,_private:true})),...concepts.slice(0,8).map(c=>({...c,_private:false}))];
     const conceptKey=JSON.stringify(present.map(c=>[c.id,c.status,c.updated_at,c.content?.name,c.content?.hook,
-      c.content?.image_url,c.source_refs?.map(x=>x.url), (liveMarket?.signals||[]).filter(s=>(c.source_refs||[]).some(r=>r.url===s.url)).map(s=>s.image_url)]));
+      c.content?.image_url,c.source_refs?.map(x=>[x.url,x.address,x.mint]), conceptArtwork(c,liveMarket?.signals||[]).url]));
     if(conceptKey!==conceptStructureKey){
       conceptStructureKey=conceptKey;
       $('dit-live-concepts').innerHTML=present.length?present.map(c=>{
@@ -207,6 +221,7 @@
   async function refreshLiveMarket(){
     if(marketBusy||document.hidden)return;
     marketBusy=true;
+    const previousArtwork=JSON.stringify((liveMarket?.signals||[]).map(s=>[s.address,s.image_url]));
     try{
       // Private local operator for fast source access; hosted clients read the
       // sanitized shared snapshot instead of attempting Windows localhost.
@@ -223,6 +238,7 @@
       }else liveMarket=incoming;
       renderLiveMarket();
       updateControlRoom(world,liveMarket,events);
+      if(previousArtwork!==JSON.stringify((liveMarket?.signals||[]).map(s=>[s.address,s.image_url]))&&(localDrafts.length||concepts.length))render();
     }catch{
       if(liveMarket)liveMarket.stale=true;
       renderLiveMarket();
