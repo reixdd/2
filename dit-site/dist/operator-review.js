@@ -28,6 +28,7 @@ function paint(){
   const c=selected.content||{},a=c.attention_anatomy||{};
   const textarea=(name,label,value)=>'<label>'+h(label)+'<textarea name="'+h(name)+'" rows="'+(['name','ticker'].includes(name)?1:3)+'" required>'+h(value||'')+'</textarea></label>';
   $('review-fields').innerHTML=Object.entries(required).map(([k,v])=>textarea(k,v,k==='buzzwords'?(c[k]||[]).join(', '):c[k])).join('')+
+    '<label>Concept image URL (optional, HTTPS only; this is meme artwork, NOT the agent portrait)<input name="image_url" type="url" inputmode="url" placeholder="https://.../meme.png or .gif" value="'+h(c.image_url||'')+'"></label>'+ 
     '<label>Interpretation confidence (0–1)<input name="confidence" type="number" min="0" max="1" step=".01" value="'+h(c.confidence??0.25)+'"></label>'+
     textarea('contradictory_evidence','Counter-evidence (one per line)',(c.contradictory_evidence||[]).join('\n'))+
     '<h3>ATTENTION ANATOMY</h3>'+Object.entries(anatomy).map(([k,v])=>textarea('a_'+k,v,a[k])).join('');
@@ -48,6 +49,9 @@ $('review-form').onsubmit=async ev=>{
   ev.preventDefault();if(!selected)return;
   const data=new FormData(ev.target),content={...selected.content};
   for(const key of Object.keys(required))content[key]=key==='buzzwords'?String(data.get(key)||'').split(',').map(v=>v.trim()).filter(Boolean).slice(0,4):String(data.get(key)||'');
+  const artUrl=String(data.get('image_url')||'').trim();
+  if(artUrl&&!/^https:\/\//i.test(artUrl)){$('review-message').textContent='Meme artwork must be an HTTPS image URL.';return;}
+  content.image_url=artUrl||null;
   content.ticker=content.ticker.toUpperCase().trim();
   content.confidence=Number(data.get('confidence'));
   content.contradictory_evidence=String(data.get('contradictory_evidence')||'').split('\n').map(x=>x.trim()).filter(Boolean);
