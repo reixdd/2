@@ -90,6 +90,53 @@ try{
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
  if(overflow>5){const offenders=await page.evaluate(()=>[...document.querySelectorAll('body *')].map(el=>{const r=el.getBoundingClientRect();return {tag:el.tagName.toLowerCase(),id:el.id,cls:String(el.className).slice(0,70),right:Math.round(r.right),width:Math.round(r.width),left:Math.round(r.left)}}).filter(x=>x.right>innerWidth+5&&x.width>0).sort((a,b)=>b.right-a.right).slice(0,12));console.log('[mobile overflow culprits]',JSON.stringify(offenders));}
  assert.ok(overflow<=5,'no unexpected horizontal overflow at mobile viewport: '+overflow);
+
+ // Populated browser test: an actual decoded PNG, not a text-only metadata assertion.
+ await page.setViewportSize({width:1440,height:900});
+ let marketReplies=0,imageRequests=0;
+ const imageUrl='https://cdn.example.org/market-art.png';
+ const newlyLaunched=new Date(Date.now()-30_000).toISOString();
+ const olderPair=new Date(Date.now()-900_000).toISOString();
+ const addressNew='So11111111111111111111111111111111111111112';
+ const addressOld='11111111111111111111111111111111';
+ await page.route('https://cdn.example.org/market-art.png',async route=>{
+   imageRequests++;
+   await route.fulfill({status:200,contentType:'image/png',
+     body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9ZlGxx8AAAAASUVORK5CYII=','base64')});
+ });
+ await page.route('**/operator/api/market',async route=>{
+   marketReplies++;
+   const seen=new Date(Date.now()-1000).toISOString();
+   const signals=[
+     {address:addressNew,chain:'sol',symbol:'ART',name:'Artwork verified',
+      kind:'trenches',provider:'GMGN via JARVIS',pair_created_at:newlyLaunched,
+      observed_at:seen,source_observed_at:seen,image_url:marketReplies===1?imageUrl:null,
+      volume_5m_usd:1200,buys_5m:15,sells_5m:4,url:'https://gmgn.ai/sol/token/'+addressNew},
+     {address:addressOld,chain:'sol',symbol:'OLD',name:'Older active market',
+      kind:'tape',provider:'JARVIS',pair_created_at:olderPair,
+      observed_at:seen,source_observed_at:seen,image_url:null,
+      volume_5m_usd:250,buys_5m:5,sells_5m:3,url:'https://gmgn.ai/sol/token/'+addressOld}
+   ];
+   await route.fulfill({status:200,contentType:'application/json',
+      body:JSON.stringify({signals,source_states:{tape:'OK',trenches:'OK'},stale:false,
+       last_checked_at:seen,status:'LIVE'})});
+ });
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('.market-card-image img').waitFor({timeout:18000});
+ await page.waitForFunction(()=>document.querySelector('.market-card-image img')?.naturalWidth>0,null,{timeout:10000});
+ assert.equal(await page.locator('.market-card').count(),1,'NEW only shows verified recent pair launches');
+ await page.evaluate(()=>{window.__verifiedArtNode=document.querySelector('.market-card-image img')});
+ await page.waitForTimeout(4200);
+ assert.ok(marketReplies>=3,'several populated market updates reached the browser');
+ assert.equal(await page.evaluate(()=>window.__verifiedArtNode===document.querySelector('.market-card-image img')),true,
+   'decoded image node is preserved across updates that omit metadata');
+ assert.equal(imageRequests,1,'successfully loaded artwork is not re-downloaded at each poll');
+ await page.locator('#dit-live-filter').selectOption('all');
+ assert.equal(await page.locator('.market-card').count(),2,'ALL shows older observed tokens alongside real new pairs');
+ await page.locator('#dit-live-filter').selectOption('new');
+ assert.equal(await page.locator('.market-card').count(),1,'old actively traded token is not newly created');
+ await page.screenshot({path:path.join(output,'populated-market-with-artwork.png'),fullPage:false});
+
  assert.deepEqual(errors,[],'no page-level script errors');
  console.log('[command-deck] Browser acceptance PASSED; renderer='+mode);
 }finally{
