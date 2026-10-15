@@ -68,22 +68,7 @@
     $('dit-live-concepts').innerHTML=concepts.length?concepts.map(c=>'<article class="live-concept"><div class="live-ticker">'+esc(c.content?.ticker)+'</div><div><span class="byline">'+esc(c.agent_id)+'</span><h3>'+esc(c.content?.name)+'</h3><p>'+esc(c.content?.hook||c.content?.narrative?.slice(0,100))+'</p><small>'+esc(buzz(c.content?.buzzwords))+'</small><p>'+esc(c.content?.narrative?.slice(0,160))+'</p><button data-live-concept="'+esc(c.id)+'">VIEW ATTENTION ANATOMY ↗</button></div></article>').join(''):'<p class="live-empty">No human-reviewed fictional concepts are published yet.</p>';
   }
 
-  const money=x=>typeof x==='number'&&Number.isFinite(x)?'
-  async function refresh(){
-    if(busy||document.hidden)return;busy=true;
-    try{
-      const out=await Promise.allSettled([api('/api/observatory'),api('/api/observations?limit=60'),api('/api/results?limit=40'),api('/api/concepts')]);
-      world=out[0].status==='fulfilled'?out[0].value:null;
-      if(out[1].status==='fulfilled')observations=out[1].value.observations||[];
-      if(out[2].status==='fulfilled')runs=out[2].value.runs||[];
-      if(out[3].status==='fulfilled')concepts=out[3].value.concepts||[];
-      render();
-    }finally{busy=false}
-  }
-  refresh();refreshLiveMarket();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();refreshLiveMarket()}});
-})();
-+(x>=1000?(x/1000).toFixed(1)+'k':Math.round(x).toLocaleString()):'—';
+  const money=x=>typeof x==='number'&&Number.isFinite(x)?('$'+(x>=1000?(x/1000).toFixed(1)+'k':Math.round(x).toLocaleString())):'—';
   const marketImage=s=>valid(s.image_url)&&String(s.image_url).startsWith('https:')
     ?'<img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="'+esc(s.image_url)+'" alt="'+esc((s.name||s.symbol||'Token')+' artwork')+'">'
     :'<div class="market-art-empty" aria-label="No verified artwork">◈ '+esc((s.symbol||'?').slice(0,6))+'</div>';
@@ -113,11 +98,9 @@
       if(!r.ok)return;
       liveMarket=await r.json();
       renderLiveMarket();
-    }catch{/* Local companion not reachable. Keep public evidence visible. */}
+    }catch{/* Local companion not reachable; keep public evidence visible. */}
     finally{marketBusy=false}
   }
-
-  $('dit-live-filter').onchange=render;
   async function refresh(){
     if(busy||document.hidden)return;busy=true;
     try{
@@ -129,5 +112,6 @@
       render();
     }finally{busy=false}
   }
-  refresh();setInterval(refresh,30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+  refresh();refreshLiveMarket();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();refreshLiveMarket()}});
 })();
