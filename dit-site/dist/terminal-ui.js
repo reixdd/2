@@ -16,7 +16,7 @@ export function conceptArtwork(concept, signals=[]){
  const refs=Array.isArray(concept?.source_refs)?concept.source_refs:[];
  const match=signals.find(s=>s.image_url&&refs.some(r=>r.url===s.url));
  if(match){const url=safeArtUrl(match.image_url);if(url)return {url,label:'SOURCE IMAGE · NOT CONCEPT ART',kind:'evidence'}}
- return {url:agentPortrait(concept?.agent_id),label:'AGENT PORTRAIT · CONCEPT ART PENDING',kind:'agent'};
+ return {url:null,label:'ORIGINAL CONCEPT ART PENDING',kind:'missing'};
 }
 export function formatActivity(event){
  if(!AGENTS.includes(event?.agent_id))return null;
