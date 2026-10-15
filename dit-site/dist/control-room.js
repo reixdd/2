@@ -36,6 +36,15 @@ export function mountControlRoom({openAgent,activateTab}={}){
    '<div class="dit-entity-stage">'+cards+'</div>'+
    '<div class="dit-room-bottom"><span>_ OBSERVE → VALIDATE → CLASSIFY → REMEMBER → SHORTLIST → PROPOSE → REVIEW</span>'+
    '<a href="#dit-live-evidence-section">OBSERVE NEW PAIRS ↓</a></div>';
+ // Restore the original cinematic layers *behind* the functioning terminal.
+ // One WebGL canvas renders all three portraits; real dossiers remain native buttons.
+ const scenery=document.createElement('div');scenery.className='dit-scenery';scenery.setAttribute('aria-hidden','true');
+ scenery.innerHTML='<div class="dit-world-canvas"></div><div class="dit-world-bars">'+
+   Array.from({length:28},(_,i)=>'<span style="--bar-h:'+((17+i*29)%65+18)+'%;--bar-i:'+i+'"></span>').join('')+'</div>';
+ stage.appendChild(scenery);
+ const cinematic=document.createElement('div');
+ cinematic.innerHTML='<div id="dit-stage" class="dit-scene-bg" data-mode="ambient" aria-hidden="true"></div>';
+ stage.appendChild(cinematic.firstElementChild);
  stage.appendChild(shell);
  stage.addEventListener('click',e=>{const btn=e.target.closest('[data-room-agent]');if(btn){e.preventDefault();openAgent?.(btn.dataset.roomAgent)}});
  live.classList.add('dit-tab-terminal');
