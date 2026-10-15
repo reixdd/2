@@ -15,48 +15,77 @@ export function allowedOperatorRequest(req,port){
 }
 export class Operator {
   constructor({store,env,port,fetchImpl=fetch,configFile='.data/operator-settings.json',onSettings=async()=>{}}){
-    this.store=store;this.env=env;this.port=port;this.fetchImpl=fetchImpl;this.configFile=configFile;this.onSettings=onSettings;this.running=new Map();this.marketSnapshot=null;this.marketAt=0;this.marketInflight=null;this.verifying=new Set();
+    this.store=store;this.env=env;this.port=port;this.fetchImpl=fetchImpl;this.configFile=configFile;this.onSettings=onSettings;this.running=new Map();this.marketSnapshot=null;this.marketAt=0;this.discoveryAt=0;this.publishAt=0;this.marketInflight=null;this.verifying=new Set();
     this.lowLoad = env.DIT_JARVIS_SHARED === '1';
     this.maxConcurrent = this.lowLoad ? Math.max(1, Math.min(3, Number(env.DIT_JARVIS_PARALLEL || 3))) : 3;
     const fallback={provider:this.lowLoad?'jarvis':'ollama',url:this.lowLoad?(env.DIT_JARVIS_URL||'http://127.0.0.1:8768'):(env.OLLAMA_URL||'http://127.0.0.1:11434'),models:{GHOST_001:env.DIT_MODEL_GHOST||'',NULL_ENTITY:env.DIT_MODEL_NULL||'','ECHO.exe':env.DIT_MODEL_ECHO||''}};
     let saved={};try{saved=JSON.parse(fs.readFileSync(configFile,'utf8'))}catch{}
     try{this.settings=validateSettings(this.lowLoad?{...fallback,models:{...fallback.models,...(saved.models||{})}}:{...fallback,...saved})}catch{this.settings=validateSettings(fallback)}
   }
-  // The dashboard updates each second from cache. Providers are queried only
-  // once per TTL with one shared in-flight read. No extra market scheduler.
+  // One server-side market pipeline; discovery cached for 20s, tape refreshed
+  // at most once each second. Browsers never contact GMGN themselves.
   async refreshMarket(){
-    if(this.marketSnapshot&&Date.now()-this.marketAt<20_000)return this.marketSnapshot;
+    const now=Date.now();
+    if(this.marketSnapshot&&now-this.marketAt<1000)return this.marketSnapshot;
     if(this.marketInflight)return this.marketInflight;
     this.marketInflight=(async()=>{
+      const full=!this.discoveryAt||now-this.discoveryAt>=20_000;
+      if(full)this.discoveryAt=now;
       try{
-        const current=await collectJarvisMarkets({baseUrl:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',fetchImpl:this.fetchImpl});
-        // Never erase previous observations because a source temporarily returns zero.
-        if(current.signals.length)this.marketSnapshot=current;
-        else if(this.marketSnapshot?.signals?.length)this.marketSnapshot={
-          ...this.marketSnapshot,source_states:current.source_states,stale:true
-        };
-        else this.marketSnapshot=current;
-        this.marketAt=Date.now();
-        if(current.signals.length&&this.store.kind==='supabase'){
-          try{await persistMarketSnapshot(this.store,current)}catch(e){
-            // The local scanner remains usable before the SQL migration is applied.
-            this.lastPublishError='market_snapshot_sync_unavailable';
+        const current=await collectJarvisMarkets({
+          baseUrl:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',
+          fetchImpl:this.fetchImpl,tapeOnly:!full
+        });
+        const previous=this.marketSnapshot;
+        const source_states={...(previous?.source_states||{}),...(current.source_states||{})};
+        // Cross-refresh union retains discovery imagery and pair creation,
+        // while real tape observations update current volume/transactions.
+        const merged=new Map((previous?.signals||[]).map(x=>[x.address,{...x}]));
+        for(const row of current.signals||[]){
+          const old=merged.get(row.address);
+          if(!old){merged.set(row.address,{...row});continue;}
+          const newer=(Date.parse(row.source_observed_at||row.observed_at||'')||
+            0)>=(Date.parse(old.source_observed_at||old.observed_at||'')||0);
+          const joined={...old,providers:[...new Set([...(old.providers||[]),...(row.providers||[])])]};
+          for(const field of ['name','symbol','image_url','created_at','safety','url']){
+            if(!joined[field]&&row[field])joined[field]=row[field];
           }
+          if(newer){
+            for(const field of ['volume_5m_usd','liquidity_usd','buys_5m','sells_5m','market_cap_usd']){
+              if(row[field]!==null&&row[field]!==undefined)joined[field]=row[field];
+            }
+            joined.observed_at=row.observed_at;
+            joined.source_observed_at=row.source_observed_at||joined.source_observed_at||null;
+            joined.received_at=row.received_at||joined.received_at;
+          }
+          merged.set(row.address,joined);
+        }
+        const fresh=[...merged.values()]
+          .filter(x=>Number.isFinite(Date.parse(x.observed_at||''))&&
+            Date.now()-Date.parse(x.observed_at)<=15*60_000)
+          .sort((a,b)=>Date.parse(b.observed_at)-Date.parse(a.observed_at)).slice(0,12);
+        this.marketSnapshot={...current,signals:fresh,source_states,stale:!fresh.length&&!!previous?.signals?.length};
+        this.marketAt=Date.now();
+        if(this.marketSnapshot.signals.length&&this.store.kind==='supabase'&&
+          Date.now()-this.publishAt>=20_000){
+          this.publishAt=Date.now();
+          try{await persistMarketSnapshot(this.store,this.marketSnapshot);}
+          catch{this.lastPublishError='market_snapshot_sync_unavailable';}
         }
         return this.marketSnapshot;
       }catch(e){
         this.marketAt=Date.now();
         if(this.marketSnapshot?.signals?.length){
-          this.marketSnapshot={...this.marketSnapshot,stale:true};
+          this.marketSnapshot={...this.marketSnapshot,stale:true,source_error:String(e.message||'market unavailable').slice(0,120)};
           return this.marketSnapshot;
         }
         throw e;
       }
-    })().finally(()=>{this.marketInflight=null});
+    })().finally(()=>{this.marketInflight=null;});
     return this.marketInflight;
   }
   marketStatus(){
-    if(Date.now()-this.marketAt>20_000&&!this.marketInflight)this.refreshMarket().catch(()=>{});
+    if(Date.now()-this.marketAt>1000&&!this.marketInflight)this.refreshMarket().catch(()=>{});
     const snapshot=this.marketSnapshot||{signals:[],source_states:{},research_only:true};
     const observedAge=Date.now()-Date.parse(snapshot.observed_at||'');
     return {...snapshot,stale:!!snapshot.stale||!Number.isFinite(observedAge)||observedAge>180_000,
