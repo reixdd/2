@@ -221,3 +221,10 @@ body{background:#030506;color:var(--dit-fg)}
 @media(prefers-reduced-motion:reduce){
   .dit-live .terminal-type,.dit-live .terminal-cursor,.dit-live .terminal-ghost-lines span{animation:none!important}
 }
+
+/* Remote meme artwork can fail independently of its source metadata; keep the card informative. */
+.dit-live .terminal-concept-image img[hidden],.dit-live .terminal-concept-art img[hidden],
+.dit-live .terminal-art-fallback[hidden]{display:none!important}
+.dit-live .terminal-art-fallback{display:grid;place-items:center;aspect-ratio:1 / 1;
+  border:1px dashed #ffffff6a;background:#080b0c;color:#bbc5c7;
+  text-align:center;font:700 11px/1.4 Consolas,monospace;padding:10px}
