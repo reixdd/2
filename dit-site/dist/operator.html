@@ -2,7 +2,20 @@
 <body><header><a href="/" aria-label="Back to observatory">← DIT OBSERVATORY</a><span>LOCAL CONTROL // LOOPBACK ONLY</span></header>
 <main><h1>OPERATOR<span>_</span></h1><p>Configure existing local AI services. Research only; no wallet signing or automatic mainnet launches.</p>
 <section class="autonomy"><div class="overline">00 / AUTONOMOUS ENTITIES</div><div id="autonomous-overview" role="status">CHECKING LOCAL SCHEDULER...</div><p class="note">Three independent research schedules feed Supabase. Inference shares the existing JARVIS/Ollama installation and yields under resource pressure.</p></section>
+<section class="autonomy" aria-labelledby="dit-schedule-head">
+ <div class="overline">00B / AGENT AUTONOMY</div><h2 id="dit-schedule-head">INDEPENDENT RESEARCH SCHEDULES</h2>
+ <p>Three identities research without using the manual Run button. Change each interval or pause one identity without stopping the others.</p>
+ <div id="schedule-controls" aria-live="polite">Loading saved schedules…</div><p id="schedule-message" role="status"></p>
+ </section>
+ <section class="concept-review" aria-labelledby="dit-review-head"><div class="overline">00C / HUMAN REVIEW</div>
+ <h2 id="dit-review-head">FICTIONAL CONCEPT ARCHIVE</h2>
+ <p>Review sourced creative drafts before a concept page appears publicly. Approval never launches an asset or posts to social media.</p>
+ <label>RESEARCH CONCEPT<select id="review-select"><option value="">Loading review queue…</option></select></label>
+ <form id="review-form" hidden><div id="review-fields"></div><p id="review-sources"></p>
+ <div class="bar"><button type="submit" name="decision" value="review">SAVE EDITS</button><button type="submit" name="decision" value="published">APPROVE CONCEPT PAGE</button>
+ <button class="quiet" type="submit" name="decision" value="rejected">REJECT</button><button class="quiet" type="submit" name="decision" value="archived">ARCHIVE</button></div></form>
+ <p id="review-message" role="status"></p></section>
 <section class="setup"><div class="overline">01 / MODEL NETWORK</div><div class="row"><label>PROVIDER<select id="provider"><option value="ollama">OLLAMA</option><option value="openai-local">OPENAI-COMPATIBLE LOCAL</option><option value="jarvis">JARVIS RESEARCH BRIDGE</option></select></label><label>SERVICE URL<input id="service-url" type="url" placeholder="http://127.0.0.1:11434"></label></div><div class="bar"><button id="discover">TEST & DISCOVER MODELS</button><span id="discovery" role="status">NOT CONNECTED</span></div>
 <div class="agent-grid" id="agent-settings"></div><button id="save">SAVE LOCAL CONFIGURATION</button><p class="note">Only non-secret settings are saved. Service keys stay in environment variables. JARVIS chooses its own specialists; its research output is not a token launch. If the local companion shares a Supabase database with your public website, submitted briefs and saved results may be visible publicly. Do not enter personal or confidential information.</p></section>
 <section class="runs"><div class="overline">02 / RESEARCH RUN</div><label>QUESTION / RESEARCH BRIEF<textarea id="prompt" rows="4" maxlength="3500">Analyze current public internet culture and describe a genuinely original narrative supported by source evidence, including uncertainty and counterevidence. Do not recommend buying tokens.</textarea></label><div class="bar"><button id="run">RUN SELECTED AGENT</button><button class="quiet" id="cancel">CANCEL ACTIVE RUN</button><span id="run-status" role="status">IDLE</span></div><h2>RECENT RESULTS</h2><div id="results" aria-live="polite"></div></section>
-</main><script type="module" src="operator.js"></script></body></html>
+</main><script type="module" src="operator.js"></script><script type="module" src="/operator-review.js"></script></body></html>
