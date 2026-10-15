@@ -18,7 +18,7 @@ test('active terminal mounts the original cinematic WebGL stage without replacin
 test('archived Three.js renderer supports background-only mode and does not require old dossier labels',()=>{
  const stage=read('../dist/stage.js');
  assert.match(stage,/const ambient\s*=\s*host\.dataset\.mode\s*===\s*['"]ambient['"]/);
- assert.match(stage,/note\?\.textContent/);
+ assert.match(stage,/(?:note\?\.textContent|if\(note\)\s*note\.textContent)/);
  assert.match(stage,/it\.label\?\.style/);
  assert.match(stage,/createQualityController/);
 });
