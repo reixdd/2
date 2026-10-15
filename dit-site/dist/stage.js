@@ -3,7 +3,7 @@
 // Detailed, transparent 2.5D portraits share a camera and softly animated city backdrop.
 // Prototype GLBs remain in dit-assets for authoring; they are not the production characters.
 // Research activity always comes from the existing API. Idle motion is visual only.
-import { createQualityController, opaqueAt } from './stage-quality.js';
+import { createQualityController, createFrameGuard, opaqueAt } from './stage-quality.js';
 const THREE_URL = './vendor/three.module.js';
 const AGENTS = [
   { id: 'GHOST_001', title: 'THE ARCHIVIST', model: 'ghost_001', accent: 0x66baff },
@@ -150,7 +150,7 @@ function boot() {
 
 async function buildStage(THREE, canvas, live, section, ambient=false) {
   const small = matchMedia('(max-width: 760px)').matches;
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !small, alpha: true, powerPreference: 'high-performance' });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: ambient ? false : !small, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x030405, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -169,7 +169,7 @@ async function buildStage(THREE, canvas, live, section, ambient=false) {
   })();
 
   // ---- particles ------------------------------------------------------------------------------
-  const N = small ? 64 : 130; const pos = new Float32Array(N * 3); const vel = new Float32Array(N);
+  const N = ambient ? 36 : small ? 64 : 130; const pos = new Float32Array(N * 3); const vel = new Float32Array(N);
   for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - .5) * 26; pos[i * 3 + 1] = Math.random() * 8 - 2; pos[i * 3 + 2] = (Math.random() - .5) * 14 - 1; vel[i] = .1 + Math.random() * .4; }
   const pGeo = new THREE.BufferGeometry(); pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const pMat = new THREE.PointsMaterial({ color: 0xb7bec2, size: small ? .05 : .04, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -209,7 +209,7 @@ async function buildStage(THREE, canvas, live, section, ambient=false) {
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`;
-  const FIG=ambient ? .65 : 1.17; // The embedded room aligns shader portraits with the native agent cards.
+  const FIG=ambient ? 1.12 : 1.17; // The embedded room aligns shader portraits with the native agent cards.
   const items=AGENTS.map((a,i)=>{
     const group=new THREE.Group();
     const uniforms={map:{value:textures[i]},mouse:{value:new THREE.Vector2()},time:{value:0},energy:{value:.1},glitch:{value:0},dim:{value:1},hover:{value:0},accent:{value:new THREE.Color(a.accent)}};
@@ -217,7 +217,7 @@ async function buildStage(THREE, canvas, live, section, ambient=false) {
     mesh.renderOrder=20;mesh.userData.agent=a.id;group.add(mesh);
     const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:a.accent,transparent:true,opacity:.09,depthWrite:false,blending:THREE.AdditiveBlending}));
     glow.scale.set(3.8,4.8,1);glow.position.set(0,1.9,-.38);group.add(glow);
-    group.position.set((i-1)*3.85,ambient ? -1.35 : -2.17,0);mesh.position.y=3.47*FIG/2-.02;scene.add(group);
+    group.position.set((i-1)*3.85,ambient ? -1.8 : -2.17,0);mesh.position.y=3.47*FIG/2-.02;scene.add(group);
     return {id:a.id,group,mesh,glow,uniforms,cur:{energy:.1,glitch:0,dim:1},hover:0,phase:i*1.7,model:null,mixer:null,head:null,labelPosition:new THREE.Vector3(),label:section.querySelector(`[data-stage-agent="${CSS.escape(a.id)}"]`),lastLabelX:null,mask:masks[i],modelFile:a.model,baseX:group.position.x};
   });
   const byId=new Map(items.map(it=>[it.id,it]));
@@ -235,7 +235,7 @@ async function buildStage(THREE, canvas, live, section, ambient=false) {
     const a = Math.max(.35, aspect || 2);
     const minGap = a < 1.3 ? 3.6 : 3.9; // keep all three silhouettes within the portrait viewport
     const z = Math.min(34, Math.max(7.65, (2 * minGap + 4.0) / (2 * HALF_TAN * a)));
-    const W = 2 * HALF_TAN * z * a, spacing = ambient ? .25 * W : Math.min(6.2, Math.max(minGap, .24 * W));
+    const W = 2 * HALF_TAN * z * a, spacing = ambient ? (W / 3) : Math.min(6.2, Math.max(minGap, .24 * W));
     return { z, W, spacing };
   };
   const baseZ = () => layoutFor(camera.aspect).z;
@@ -286,10 +286,11 @@ async function buildStage(THREE, canvas, live, section, ambient=false) {
 
   // ---- sizing / loop --------------------------------------------------------------------------
   const quality = createQualityController(devicePixelRatio, small);
+  const guard = createFrameGuard(120,3);
   let lastFrame = 0, disposed = false, lost = false, needsResize = true;
   function resize() {
     const w = canvas.clientWidth || 800, h = canvas.clientHeight || 420;
-    renderer.setPixelRatio(quality.dpr); renderer.setSize(w, h, false);
+    renderer.setPixelRatio(ambient ? Math.min(1,quality.dpr) : quality.dpr); renderer.setSize(w, h, false);
     camera.aspect = w / h; camera.updateProjectionMatrix();
     applyLayout();
     if (!zoom) { camTarget = {x:0,y:BASE_Y,z:baseZ()}; Object.assign(cam,camTarget); }
@@ -337,7 +338,14 @@ async function buildStage(THREE, canvas, live, section, ambient=false) {
     raf = 0; pending = false;
     if (!visible || document.hidden || disposed || lost) { lastFrame=0; return; }
     if (needsResize) { resize(); needsResize=false; }
-    if(lastFrame && !reduced && quality.sample(now-lastFrame)){renderer.setPixelRatio(quality.dpr); renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);}
+    if(lastFrame && ambient && guard.sample(now-lastFrame)){
+      section.dataset.performance = 'slow';
+      section.dataset.renderer = 'fallback';
+      section.dataset.motion = 'css-environment';
+      canvas.hidden = true;
+      return;
+    }
+    if(lastFrame && !reduced && quality.sample(now-lastFrame)){renderer.setPixelRatio(ambient?Math.min(1,quality.dpr):quality.dpr); renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);}
     if(lastFrame) section.dataset.frameMs=(now-lastFrame).toFixed(1);
     section.dataset.pixelRatio=quality.dpr; lastFrame=now;
     const dt = Math.min(.05, clock.getDelta()); update(dt, clock.elapsedTime); render();
