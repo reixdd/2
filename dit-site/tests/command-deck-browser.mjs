@@ -47,28 +47,31 @@ try{
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base,{waitUntil:'domcontentloaded'});
  await page.locator('.dit-room').waitFor({timeout:25000});
- await page.locator('#dit-stage[data-renderer]').waitFor({timeout:30000});
- assert.equal(await page.locator('.dit-entity').count(),3,'three real character controls');
+ assert.equal(await page.locator('.dit-entity').count(),3,'three original HD character controls');
  assert.equal(await page.locator('#dit-room-pairs').count(),1);
  assert.equal(await page.locator('#dit-treasury-target').count(),1);
+ assert.equal(await page.locator('#dit-gfx-toggle').getAttribute('aria-pressed'),'false','HD art is the default');
+ assert.equal(await page.locator('#dit-stage-canvas').count(),0,'no expensive canvas initialized by default');
+ await page.locator('#dit-gfx-toggle').click();
+ assert.equal(await page.locator('#dit-gfx-toggle').getAttribute('aria-pressed'),'true');
+ await page.locator('#dit-stage[data-renderer]').waitFor({timeout:30000});
  const mode=await page.locator('#dit-stage').getAttribute('data-renderer');
- assert.ok(['webgl','fallback'].includes(mode),'renderer reports GPU or fallback');
+ assert.ok(['webgl','fallback'].includes(mode),'optional renderer reports GPU or fallback');
  if(mode==='fallback'){
   const canvasDisplay=await page.locator('#dit-stage-canvas').evaluate(el=>getComputedStyle(el).display);
-  assert.equal(canvasDisplay,'none','no frozen duplicate WebGL frame behind HD portraits');
+  assert.equal(canvasDisplay,'none','no frozen duplicate shader');
  }else{
   const opacity=await page.locator('.dit-entity-art').first().evaluate(el=>getComputedStyle(el).opacity);
-  assert.equal(Number(opacity),0,'hide duplicate static art during successful GPU rendering');
+  assert.equal(Number(opacity),0,'hide duplicated static art only while GPU renderer is active');
  }
+ await page.locator('#dit-gfx-toggle').click();
+ assert.equal(await page.locator('#dit-gfx-toggle').getAttribute('aria-pressed'),'false');
  await page.locator('#dit-nav-system').click();
  assert.equal(await page.locator('#dit-hud-system').isVisible(),true);
  await page.keyboard.press('Escape');
  assert.equal(await page.locator('#dit-hud-system').isVisible(),false);
  await page.locator('#dit-appearance').click();
  assert.equal(await page.locator('#dit-appearance').getAttribute('aria-pressed'),'true');
- await page.locator('#dit-gfx-toggle').click();
- assert.equal(await page.locator('#dit-gfx-toggle').getAttribute('aria-pressed'),'false');
- await page.locator('#dit-gfx-toggle').click();
  await page.locator('[data-room-agent="GHOST_001"]').first().click();
  assert.equal(await page.locator('#dit-live-dialog').isVisible(),true,'interactive real dossier');
  await page.locator('#dit-live-close').click();
