@@ -19,7 +19,7 @@ export function mountControlRoom({openAgent,activateTab}={}){
  const stage=el('stage'),live=el('dit-live');
  if(!stage||!live||stage.querySelector('.dit-room'))return;
  // Main HTML already loads the control-room stylesheet; avoid duplicate downloads/reflows.
- stage.classList.add('dit-functional-stage');
+ stage.classList.add('dit-functional-stage','dit-gfx-off');
  const cards=IDS.map((id,i)=>
    '<article class="dit-entity" style="--agent-accent:'+COLORS[i]+'" data-id="'+esc(id)+'"><button type="button" class="dit-entity-open" data-room-agent="'+esc(id)+'" aria-label="Open '+esc(id)+' dossier">'+
    '<span class="dit-entity-ring"></span><img class="dit-entity-art" src="'+ART[i]+'" alt="'+esc(id)+' machine portrait" decoding="async"></button>'+
@@ -31,7 +31,7 @@ export function mountControlRoom({openAgent,activateTab}={}){
    '<header class="dit-room-top"><a href="#stage" class="dit-room-brand">◇ DIT <small>// PROTOCOL_001 TRACKING</small></a>'+
    '<nav class="dit-hud-nav" aria-label="Machine terminal navigation"><button id="dit-nav-network" type="button">01 / NETWORK</button><button id="dit-nav-transmissions" type="button">02 / TRANSMISSIONS</button><button id="dit-nav-system" type="button" aria-controls="dit-hud-system" aria-expanded="false">03 / SYSTEM</button></nav>'+
    '<span class="dit-room-live" id="dit-room-protocol">_ AWAITING MARKET OBSERVATIONS</span>'+
-   '<div class="dit-hud-controls"><button type="button" id="dit-appearance" aria-pressed="false">APPEARANCE</button><button type="button" id="dit-gfx-toggle" aria-pressed="true">GFX ON</button><button type="button" id="dit-hud-expand" aria-expanded="false" aria-controls="dit-hud-system" aria-label="Toggle system diagnostics">＋</button></div></header>'+
+   '<div class="dit-hud-controls"><button type="button" id="dit-appearance" aria-pressed="false">APPEARANCE</button><button type="button" id="dit-gfx-toggle" aria-pressed="false">GFX OFF</button><button type="button" id="dit-hud-expand" aria-expanded="false" aria-controls="dit-hud-system" aria-label="Toggle system diagnostics">＋</button></div></header>'+
    '<div class="dit-room-title"><span>PROTOCOL_001 / JARVIS EVIDENCE ENGINE</span><h1>DEAD INTERNET THEORY<span class="dit-blink">_</span></h1>'+
    '<p>THE INTERNET IS NO LONGER YOURS. THREE MACHINES. ONE OBSERVABLE NETWORK.</p></div>'+
    '<div class="dit-room-metrics"><div><strong id="dit-room-pairs">—</strong><span>OBSERVED PAIRS</span></div>'+
