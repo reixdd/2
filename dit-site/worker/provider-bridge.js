@@ -54,6 +54,7 @@ export async function readNdjson(response,{signal,onRecord}={}){
     }
     if(tail.trim()){try{const r=JSON.parse(tail);onRecord?.(r);if(r.type==='answer')answer=boundedText(r.answer||r.text||answer);if(r.type==='done')finished=true}catch{}}
   } finally {try{await reader.cancel()}catch{}}
+  if(!finished)throw Error('JARVIS stream ended before done; check JARVIS request logs for the matching failure');
   return {answer:boundedText(answer),done:finished,model:actualModel,events:records};
 }
 export async function runResearch({settings,agentId,prompt,signal,fetchImpl=fetch,onRecord}){
@@ -61,10 +62,10 @@ export async function runResearch({settings,agentId,prompt,signal,fetchImpl=fetc
  const selected=s.models[agentId];if(s.provider!=='jarvis'&&!selected)throw Error('Choose an installed model for '+agentId);
  const p=boundedText(prompt,3500).trim();if(!p||p.length<8)throw Error('Research prompt must be 8–3500 characters');
  const user=`DEAD INTERNET THEORY RESEARCH ONLY. Do not sign transactions, propose deceptive promotion or claim unverified observations as fact. Identity: ${agentId}. ${BRIEFS[agentId]}\nResearch question: ${p}\nSeparate source facts, hypotheses and uncertainty. Include source links when available.`;
- const abort=timeoutSignal(signal,75000);
+ const abort=timeoutSignal(signal,s.provider==='jarvis'?660000:75000);
  if(s.provider==='jarvis'){
     const response=await fetchImpl(s.url+'/api/chat',{method:'POST',headers:{'content-type':'application/json',accept:'application/x-ndjson'},body:JSON.stringify({message:user,identity_key:agentId,mode:'lite',...(selected?{model:selected}:{})}),signal:abort});
-    const result=await readNdjson(response,{signal:abort,onRecord});if(!result.answer)throw Error('JARVIS returned no research answer');return {answer:result.answer,model:result.model||selected||null,provider:'jarvis',requested_specialists:BRIEFS[agentId],stream_completed:result.done};
+    const result=await readNdjson(response,{signal:abort,onRecord});if(!result.answer)throw Error('JARVIS returned no research answer after completed stream');return {answer:result.answer,model:result.model||selected||null,provider:'jarvis',requested_specialists:BRIEFS[agentId],stream_completed:result.done};
  }
  const discovery=await discoverProvider(s,{fetchImpl,signal:abort});if(!discovery.models.includes(selected))throw Error(`Configured model ${selected} is unavailable; refresh models`);
  let response;
