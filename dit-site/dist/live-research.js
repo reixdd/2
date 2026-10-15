@@ -51,15 +51,17 @@
     if(view==='treasury')return open('RESEARCH ACCOUNTING','<p>No simulated fees or unverified financial balances are presented as real.</p>');
   },true);
   function render(){
-    $('dit-live-status').textContent=world?.researcher?.online?'LOCAL JARVIS CONNECTED // '+(world.researcher.active||[]).length+' ACTIVE':'LOCAL RESEARCH OFFLINE OR STALE';
+    const completedRecently=runs.some(r=>r.status==='completed'&&r.finished_at&&Date.now()-Date.parse(r.finished_at)<20*60_000);
+    $('dit-live-status').textContent=world?.researcher?.online?(completedRecently?'LOCAL JARVIS RESEARCH VERIFIED':'JARVIS REACHABLE / INFERENCE UNVERIFIED'):'LOCAL RESEARCH OFFLINE OR STALE';
     $('dit-live-metrics').textContent='CULTURAL COLLECTOR '+(world?.collector?.online?'ONLINE':'OFFLINE')+' / LAST HEARTBEAT '+when(world?.researcher?.last_seen_at);
-    if($('health'))$('health').textContent=world?.researcher?.online?'ONLINE':'OFFLINE';
+    if($('health'))$('health').textContent=world?.researcher?.online?'JARVIS REACHABLE':'OFFLINE';
     $('dit-live-network').innerHTML=world?ids.map(id=>{
       const a=agent(id),r=a?.last_run||{},presence=a?.presence||'offline';
       return '<article class="live-agent"><span class="agent-name">'+esc(id)+'</span><span class="live-state" data-state="'+esc(presence)+'">'+esc(presence)+'</span><small>LAST RUN '+esc(r.status||'none')+' / '+when(r.finished_at||r.started_at)+'</small><small>NEXT DUE '+(world.researcher.online?when(a?.next_due_at):'Local server offline')+'</small><button data-live-agent="'+esc(id)+'">VIEW DOSSIER ↗</button></article>';
     }).join(''):'<p class="live-empty">Unable to verify local agent status.</p>';
     const selected=$('dit-live-filter')?.value||'';
-    const rows=observations.filter(o=>(!selected||o.agent_id===selected)&&/dex|gecko|gmgn|solana/i.test(o.source_id||'')).slice(0,12);
+    const marketRefs=runs.flatMap(r=>(r.source_refs||[]).map(s=>({agent_id:r.agent_id,source_id:'GMGN via JARVIS',observed_at:s.observed_at,title:s.title,url:s.url,evidence:{summary:'Market context cited by the local researcher.'}})));
+    const rows=[...observations.filter(o=>/dex|gecko|gmgn|solana/i.test(o.source_id||'')),...marketRefs].filter(o=>!selected||o.agent_id===selected).sort((a,b)=>Date.parse(b.observed_at||0)-Date.parse(a.observed_at||0)).slice(0,12);
     $('dit-live-evidence').innerHTML=rows.length?rows.map(o=>'<article class="live-row"><div><span class="byline">'+esc(o.agent_id)+' / '+esc(o.source_id)+'</span><time>'+when(o.observed_at)+'</time></div><div><h3>'+link(o.url,o.title)+'</h3><p>'+esc(o.evidence?.summary||'Source recorded, claims not independently established.')+'</p></div></article>').join(''):'<p class="live-empty">No recent market observations recorded. General news is hidden.</p>';
     $('dit-live-transmissions').innerHTML=runs.length?runs.slice(0,10).map(r=>'<article class="live-row"><div><span class="byline">'+esc(r.agent_id)+' / '+esc(r.model||'unknown model')+'</span><time>'+when(r.finished_at||r.started_at)+'</time></div><div><h3>'+esc(r.status==='completed'?'CONCEPT RESEARCH COMPLETE':r.status==='running'?'SCANNING':'RESEARCH '+r.status.toUpperCase())+'</h3><p>'+esc(r.status==='completed'?teaser(r.answer)||'Model response saved.':r.status==='running'?'Waiting for local inference.':'See private operator diagnostics.')+'</p>'+((r.source_refs||[]).slice(0,2).map(s=>'<small>'+link(s.url,s.title)+'</small>').join(''))+'</div></article>').join(''):'<p class="live-empty">No research runs yet.</p>';
     $('dit-live-concepts').innerHTML=concepts.length?concepts.map(c=>'<article class="live-concept"><div class="live-ticker">'+esc(c.content?.ticker)+'</div><div><span class="byline">'+esc(c.agent_id)+'</span><h3>'+esc(c.content?.name)+'</h3><p>'+esc(c.content?.hook||c.content?.narrative?.slice(0,100))+'</p><small>'+esc(buzz(c.content?.buzzwords))+'</small><p>'+esc(c.content?.narrative?.slice(0,160))+'</p><button data-live-concept="'+esc(c.id)+'">VIEW ATTENTION ANATOMY ↗</button></div></article>').join(''):'<p class="live-empty">No human-reviewed fictional concepts are published yet.</p>';
