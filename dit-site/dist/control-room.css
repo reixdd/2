@@ -11,3 +11,23 @@
 @media(max-width:1000px){.dit-room-top{flex-wrap:wrap}.dit-hud-nav{order:3;margin:0;width:100%}.dit-hud-controls{margin-left:auto}.dit-room-metrics{justify-content:flex-start;margin:15px 0}.dit-room-metrics>div{min-width:0;flex:1;padding:0 12px}.dit-room-metrics strong{font-size:21px}.dit-room-stage-wrap{grid-template-columns:1fr;gap:16px}.dit-ops-rail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:center}.dit-ops-rail>.dit-rail-kicker{grid-column:1/-1}.dit-ops-heading{margin:0}.dit-ops-rail>p{margin:0}.dit-entity-open,.dit-scene-bg{height:300px}.dit-entity-stage{gap:12px}#dit-transmission-ribbon{grid-template-columns:repeat(3,minmax(0,1fr))}#dit-transmission-ribbon>button:nth-child(n+4){display:none}.dit-room-bottom{align-items:start}}
 @media(max-width:700px){.stage.dit-functional-stage{margin:0 8px}.dit-room{padding:18px 14px}.dit-room:before{inset:65px 5px 8px}.dit-room-brand small{display:none}.dit-hud-controls{gap:4px}.dit-hud-controls button{font-size:10px;padding:7px}.dit-hud-nav{justify-content:space-between}.dit-hud-nav button{font-size:10px;padding:6px 0}.dit-room-title h1{font-size:31px}.dit-room-metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px}.dit-ops-rail{grid-template-columns:1fr 1fr;padding:14px}.dit-entity-stage{display:flex;flex-direction:column;gap:20px}.dit-entity{display:grid;grid-template-columns:40% minmax(0,1fr);width:100%;align-items:center}.dit-entity-open{height:215px}.dit-entity-meta{padding:12px;min-height:0}.dit-entity-meta strong{font-size:19px}.dit-entity-meta small{font-size:9px}.dit-entity-actions{flex-wrap:wrap}.dit-entity-actions button{font-size:10px}.dit-room-bottom{flex-direction:column;gap:8px}#dit-transmission-ribbon{grid-template-columns:1fr}#dit-transmission-ribbon>button{display:flex!important;border:0;border-top:1px solid var(--rule);padding:14px 0}.dit-scene-bg{display:none}.dit-entity-art{opacity:1!important}}
 @media(prefers-reduced-motion:reduce){.dit-world-canvas,.dit-scenery:after{animation:none}}
+
+/* Final physical HUD detailing: one continuous frame, never another effect layer. */
+.stage.dit-functional-stage{box-shadow:0 0 0 1px #A4BDB12b,0 0 34px #E8FFB710}
+.dit-room-top{position:relative}
+.dit-room-top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;pointer-events:none;background:linear-gradient(90deg,#E8FFB7aa,#A4BDB130 26%,transparent 66%,#E8FFB78c)}
+.dit-entity-meta::after{content:"";position:absolute;right:0;bottom:0;width:36px;height:36px;border-right:1px solid var(--agent-accent);border-bottom:1px solid var(--agent-accent);clip-path:polygon(100% 0,100% 100%,0 100%);opacity:.68;pointer-events:none}
+.dit-ops-rail{position:relative}
+.dit-ops-rail::before{content:"";position:absolute;top:0;left:0;width:64%;height:1px;background:linear-gradient(90deg,var(--phosphor),transparent);pointer-events:none}
+.dit-transmission-ribbon{position:relative}
+.dit-transmission-ribbon::before{content:"";position:absolute;top:0;left:0;width:92px;height:1px;background:linear-gradient(90deg,var(--phosphor),transparent)}
+#dit-transmission-ribbon>button{position:relative;transition:background-color .24s,border-color .24s}
+#dit-transmission-ribbon>button.dit-active-trace{border-left-color:var(--agent-accent);background:linear-gradient(90deg,#E8FFB70c,transparent)}
+#dit-transmission-ribbon>button.dit-active-trace::after{content:"▌";position:absolute;right:6px;top:5px;color:var(--phosphor);animation:dit-telemetry-caret 1.1s steps(1,end) infinite}
+.dit-room-metrics strong{position:relative;width:max-content}
+.dit-room-metrics strong::after{content:"_";color:var(--phosphor);font-size:.55em;vertical-align:12%;animation:dit-telemetry-caret 1.1s steps(1,end) infinite}
+#dit-room-ticker::after{content:" ▌";color:var(--phosphor);animation:dit-telemetry-caret .95s steps(1,end) infinite}
+.dit-type-in{animation:dit-record-reveal .6s steps(22,end) both}
+@keyframes dit-record-reveal{from{clip-path:inset(0 100% 0 0);opacity:.55}to{clip-path:inset(0 0 0 0);opacity:1}}
+@keyframes dit-telemetry-caret{0%,55%{opacity:1}56%,100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.dit-type-in,#dit-room-ticker::after,.dit-room-metrics strong::after,#dit-transmission-ribbon>button.dit-active-trace::after{animation:none}}

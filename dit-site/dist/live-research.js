@@ -1,11 +1,11 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
-  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=launch-final-3');
-  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=launch-final-3');
-  const {MarketFeed}=await import('./market-feed.js?v=launch-final-3');
-  const {featuredAgentIdeas}=await import('./concept-feature.js?v=launch-final-4');
+  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=launch-final-6');
+  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=launch-final-6');
+  const {MarketFeed}=await import('./market-feed.js?v=launch-final-6');
+  const {featuredAgentIdeas}=await import('./concept-feature.js?v=launch-final-6');
   const {conceptStudyArtwork}=await import('./concept-art.js?v=launch-final-4');
-  const {linkedCoinXEvidence}=await import('./coin-twitter.js?v=launch-final-5');
+  const {linkedCoinXEvidence}=await import('./coin-twitter.js?v=launch-final-6');
   const marketFeed=new MarketFeed(document.getElementById('dit-live-evidence'));
   document.getElementById('dit-live-filter').addEventListener('change',()=>renderLiveMarket());
   const $ = id => document.getElementById(id);

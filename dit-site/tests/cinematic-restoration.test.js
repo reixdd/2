@@ -158,3 +158,19 @@ test('premium skip-to-market control remains accessible and keyboard-focus visib
  assert.match(html,/class="dit-skip"/);
  assert.match(css,/\.dit-skip:focus(?:-visible)?/);
 });
+
+test('updated HUD has motion tied to recorded events, accessible reduced-motion and edge detailing',()=>{
+ const room=read('../dist/control-room.js'),css=read('../dist/control-room.css');
+ assert.match(room,/tickerEvents=recentEvents/);
+ assert.match(room,/tickerCurrent/);
+ assert.match(room,/dit-type-in/);
+ assert.match(css,/dit-record-reveal/);
+ assert.match(css,/prefers-reduced-motion:reduce/);
+ assert.match(css,/\.dit-room-top::after/);
+});
+test('Radar uses real source imagery and degrades to vector only on image failure',()=>{
+ const live=read('../dist/live-research.js');
+ assert.match(live,/conceptArtwork\(c,liveMarket\?\.signals/);
+ assert.match(live,/data-fallback-study/);
+ assert.match(live,/VECTOR STUDY \/ ORIGINAL IMAGE UNAVAILABLE/);
+});

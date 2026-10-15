@@ -20,8 +20,17 @@ export function coinXFromMetadata(row){
     ...(Array.isArray(meta.links)?meta.links:[])];
   for(const l of links){
    if(!l||typeof l!=='object'||!/^(twitter|x)$/i.test(String(l.type||l.platform||l.label||'')))continue;
-   const url=canonicalCoinXUrl(l.url||l.link||l.href);
-   if(url)return url;
+   const direct=canonicalCoinXUrl(l.url||l.link||l.href);
+   if(direct)return direct;
+   // DexScreener info.socials may provide {platform:'twitter',handle:'@name'}.
+   // Only accept a handle explicitly labeled as a source-provided X social.
+   const handle=String(l.handle||'').trim().replace(/^@/,'');
+   if(/^[A-Za-z0-9_]{1,15}$/.test(handle)){
+     const url=canonicalCoinXUrl('https://x.com/'+handle);
+     if(url)return url;
+   }
+   const linked=canonicalCoinXUrl(l.handle);
+   if(linked)return linked;
   }
   for(const key of ['twitter_url','twitterUrl','x_url','xUrl','twitter']){
    const url=canonicalCoinXUrl(meta[key]);if(url)return url;

@@ -11,7 +11,8 @@ export const safeArtUrl=value=>{
 export const compact=x=>String(x??'').replace(/[\r\n\t ]+/g,' ').replace(/[#*`]/g,'').trim();
 export function conceptArtwork(concept, signals=[]){
  const body=concept?.content||{};
- const original=safeArtUrl(body.image_url||body.artwork_url);
+ const original=safeArtUrl(body.image_url)||safeArtUrl(body.artwork_url)||
+  safeArtUrl(body.original_artwork_url)||safeArtUrl(concept?.artwork_url);
  if(original)return {url:original,label:'CONCEPT ART',kind:'concept'};
  const refs=Array.isArray(concept?.source_refs)?concept.source_refs:[];
  // Match source provenance by a real URL or contract identity, never by missing URLs

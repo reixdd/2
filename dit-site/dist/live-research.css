@@ -23,3 +23,9 @@
 @media(prefers-reduced-motion:reduce){.dit-live:before{animation:none}}
 
 @media(max-width:1199px) and (min-width:701px){#dit-live-concepts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Source-backed X links sit beside token trace links, never replace them. */
+.market-card-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px 10px}
+.market-card-foot .market-x-link{color:var(--phosphor);text-decoration:underline;text-underline-offset:3px}
+.market-card-foot .market-x-link[hidden]{display:none!important}
+.terminal-concept-image img,.terminal-concept-art img{image-rendering:auto}

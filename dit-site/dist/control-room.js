@@ -1,4 +1,4 @@
-import {mountTerminalMotion,typeRecordedEvents} from './terminal-motion.js?v=launch-final-5';
+import {mountTerminalMotion,typeRecordedEvents} from './terminal-motion.js?v=launch-final-6';
 // Live cinematic machine composition. Real state comes only from JARVIS APIs.
 const IDS=['GHOST_001','NULL_ENTITY','ECHO.exe'];
 const ROLES=['THE ARCHIVIST','THE SIGNAL HUNTER','THE VIRAL MACHINE'];

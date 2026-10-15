@@ -1,4 +1,5 @@
 import {artworkCandidates,matchesMarketFilter} from './market-data.js?v=launch-final-3';
+import {canonicalCoinXUrl} from './coin-twitter.js?v=launch-final-5';
 
 const cash=v=>typeof v==='number'&&Number.isFinite(v)?'$'+v.toLocaleString(undefined,{maximumFractionDigits:2}):'—';
 
@@ -8,7 +9,7 @@ export class MarketFeed {
 
  constructor(root){this.root=root;this.cards=new Map();root.innerHTML='<div class="market-feed-meta"><span>Source observations / no launch inferred</span><span class="market-health" role="status"></span></div><div class="market-source-warning" hidden></div><div class="market-grid" tabindex="0" role="region" aria-label="Scrollable market observations"></div><div class="market-feed-count"></div>';this.grid=root.querySelector('.market-grid');}
 
- create(row){const card=document.createElement('article');card.className='market-card';card.dataset.contract=row.address;card.innerHTML='<div class="market-card-image"><img hidden decoding="async" referrerpolicy="no-referrer"><span class="market-image-error">ARTWORK PENDING</span></div><div class="market-card-body"><div class="market-card-title"><b></b><span></span></div><p class="market-card-name"></p><div class="market-card-stats"><span>5M VOLUME<strong data-stat="vol"></strong></span><span>LIQUIDITY<strong data-stat="liq"></strong></span><span>BUYS / SELLS<strong data-stat="txns"></strong></span><span>MARKET CAP<strong data-stat="mc"></strong></span><span>PAIR AGE<strong data-stat="age"></strong></span></div><div class="market-card-foot"><small class="market-age"></small><a target="_blank" rel="noopener noreferrer">TRACE SOURCE ↗</a></div><details><summary>Provenance &amp; timestamps</summary><dl class="market-provenance"></dl></details><small class="market-card-disclaimer"></small></div>';
+ create(row){const card=document.createElement('article');card.className='market-card';card.dataset.contract=row.address;card.innerHTML='<div class="market-card-image"><img hidden decoding="async" referrerpolicy="no-referrer"><span class="market-image-error">ARTWORK PENDING</span></div><div class="market-card-body"><div class="market-card-title"><b></b><span></span></div><p class="market-card-name"></p><div class="market-card-stats"><span>5M VOLUME<strong data-stat="vol"></strong></span><span>LIQUIDITY<strong data-stat="liq"></strong></span><span>BUYS / SELLS<strong data-stat="txns"></strong></span><span>MARKET CAP<strong data-stat="mc"></strong></span><span>PAIR AGE<strong data-stat="age"></strong></span></div><div class="market-card-foot"><small class="market-age"></small><a class="market-trace-link" target="_blank" rel="noopener noreferrer">TRACE SOURCE ↗</a><a class="market-x-link" target="_blank" rel="noopener noreferrer" hidden>X / TWITTER ↗</a></div><details><summary>Provenance &amp; timestamps</summary><dl class="market-provenance"></dl></details><small class="market-card-disclaimer"></small></div>';
 
  const state={card,img:card.querySelector('img'),candidates:[],failed:new Map(),loaded:null,pending:false};state.img.addEventListener('error',()=>{if(state.img.src)state.failed.set(state.img.src,Date.now());state.loaded=null;state.img.hidden=true;this.loadArt(state);});this.cards.set(row.address,state);return state;}
 
@@ -43,7 +44,9 @@ export class MarketFeed {
 
  put('.market-age',(row.provider||'JARVIS')+' · '+(row.source_observed_at?age(row.source_observed_at,now)+' ago':row.provider_response_at?'API response '+age(row.provider_response_at,now)+' ago':'Source time unknown'));
 
- put('.market-card-disclaimer','Safety: '+(row.safety||'UNVERIFIED')+(row.paid_attention?' · Paid attention reported':''));const a=card.querySelector('a');a.href='https://gmgn.ai/sol/token/'+encodeURIComponent(row.address);
+ put('.market-card-disclaimer','Safety: '+(row.safety||'UNVERIFIED')+(row.paid_attention?' · Paid attention reported':''));const a=card.querySelector('.market-trace-link');a.href='https://gmgn.ai/sol/token/'+encodeURIComponent(row.address);
+ const x=card.querySelector('.market-x-link'),twitter=canonicalCoinXUrl(row.twitter_url);
+ x.hidden=!twitter;if(twitter)x.href=twitter;else x.removeAttribute('href');
 
  const entries=[['Contract',row.address],['Pair created',row.pair_time_verified?row.pair_created_at:'Unverified'],['Token created',row.token_created_at],['First observed',row.first_observed_at],['Source observed',row.source_observed_at],['Fresh API response',row.provider_response_at],['Server received',row.received_at],['Sources',sources]];const key=JSON.stringify(entries);if(card.dataset.provenance!==key){card.dataset.provenance=key;const dl=card.querySelector('dl');dl.replaceChildren();for(const [label,value] of entries){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=value||'Unknown';dl.append(dt,dd);}}
 

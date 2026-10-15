@@ -132,7 +132,7 @@ try{
      {address:addressNew,chain:'sol',symbol:'ART',name:'Artwork verified',
       kind:'trenches',provider:'GMGN via JARVIS',pair_created_at:newlyLaunched,pair_time_verified:true,
       observed_at:seen,source_observed_at:seen,image_url:marketReplies===1?imageUrl:null,
-      volume_5m_usd:1200,buys_5m:15,sells_5m:4,url:'https://gmgn.ai/sol/token/'+addressNew},
+      volume_5m_usd:1200,buys_5m:15,sells_5m:4,twitter_url:'https://x.com/OriginalCoin',url:'https://gmgn.ai/sol/token/'+addressNew},
      {address:addressOld,chain:'sol',symbol:'OLD',name:'Older active market',
       kind:'tape',provider:'JARVIS',pair_created_at:olderPair,pair_time_verified:true,
       observed_at:seen,source_observed_at:seen,image_url:null,
@@ -147,6 +147,8 @@ try{
  await page.locator('.market-card-image img').waitFor({timeout:18000});
  await page.waitForFunction(()=>document.querySelector('.market-card-image img')?.naturalWidth>0,null,{timeout:10000});
  assert.equal(await page.locator('.market-card').count(),1,'NEW only shows verified recent pair launches');
+ assert.equal(await page.locator('.market-x-link[href="https://x.com/OriginalCoin"]').count(),1,
+   'observed token X link is source-provided and clickable');
  await page.evaluate(()=>{window.__verifiedArtNode=document.querySelector('.market-card-image img')});
  await page.waitForTimeout(4200);
  assert.ok(marketReplies>=3,'several populated market updates reached the browser');
@@ -165,7 +167,8 @@ try{
    ...['GHOST_001','NULL_ENTITY','ECHO.exe'].map((agent_id,i)=>({
     id:'featured-'+i,agent_id,status:'review',created_at:new Date(Date.now()-i*1000).toISOString(),
     content:{name:['GHOST01','VOIDPAY','DEADNET'][i],ticker:['GSTM','VPAY','DNET'][i],
-     artwork_brief:['glowing hooded ghost','void bank account','broken internet signal'][i],hook:'Agent research concept'}
+     artwork_brief:['glowing hooded ghost','void bank account','broken internet signal'][i],
+     ...(i===0?{image_url:imageUrl}:{}),hook:'Agent research concept'}
    })),
    {id:'older',agent_id:'GHOST_001',status:'review',created_at:new Date(Date.now()-20000).toISOString(),
     content:{name:'ARCHIVED GHOST',ticker:'OLD'}}
@@ -186,8 +189,10 @@ try{
  assert.equal(await page.locator('.terminal-concept-card').count(),3,'one featured recorded idea per research agent');
  await page.waitForFunction(()=>[...document.querySelectorAll('.terminal-concept-image img')].length===3&&
   [...document.querySelectorAll('.terminal-concept-image img')].every(img=>img.complete&&img.naturalWidth>0),null,{timeout:12000});
- assert.equal(await page.locator('.terminal-concept-image img[src^="data:image/svg+xml"]').count(),3,
-  'illustrated concept studies render as decoded images');
+ assert.equal(await page.locator('.terminal-concept-image img[src^="data:image/svg+xml"]').count(),2,
+  'two concepts without real artwork display decoded vector fallbacks');
+ assert.equal(await page.locator('.terminal-concept-image img[src^="https://cdn.example.org/market-art.png"]').count(),1,
+  'the provided original art displays ahead of a synthetic vector study');
  await page.locator('#dit-live-concept-section').scrollIntoViewIfNeeded();
  await page.screenshot({path:path.join(output,'curated-agent-radar.png'),fullPage:false});
  await page.getByText('BROWSE IDEA ARCHIVE',{exact:true}).click();
