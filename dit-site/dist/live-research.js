@@ -101,7 +101,7 @@
     }).join(''):'<p class="live-empty">Unable to verify local agent status.</p>';
     const selected=$('dit-live-filter')?.value||'';
     const marketRefs=runs.flatMap(r=>(r.source_refs||[]).map(s=>({agent_id:r.agent_id,source_id:'GMGN via JARVIS',observed_at:s.observed_at,title:s.title,url:s.url,evidence:{summary:'Market context cited by the local researcher.'}})));
-    const rows=[...observations.filter(o=>/dex|gecko|gmgn|solana/i.test(o.source_id||'')),...marketRefs].filter(o=>!selected||o.agent_id===selected).sort((a,b)=>Date.parse(b.observed_at||0)-Date.parse(a.observed_at||0)).slice(0,12);
+    const rows=[...observations.filter(o=>/dex|gecko|gmgn|solana/i.test(o.source_id||'')),...marketRefs].sort((a,b)=>Date.parse(b.observed_at||0)-Date.parse(a.observed_at||0)).slice(0,12);
     if(!liveMarket?.signals?.length)$('dit-live-evidence').innerHTML=rows.length?rows.map(o=>'<article class="live-row"><div><span class="byline">'+esc(o.agent_id)+' / '+esc(o.source_id)+'</span><time>'+when(o.observed_at)+'</time></div><div><h3>'+link(o.url,o.title)+'</h3><p>'+esc(o.evidence?.summary||'Source recorded, claims not independently established.')+'</p></div></article>').join(''):'<p class="live-empty">No recent market observations recorded. General news is hidden.</p>';
     // Activity comes from persisted activity_events, not from old model answer dumps.
     const realEvents=events.map(formatActivity).filter(Boolean).slice(0,20);
@@ -167,7 +167,8 @@
   function renderLiveMarket(){
     const feed=$('dit-live-evidence');
     if(!feed||!liveMarket?.signals?.length)return;
-    const signals=liveMarket.signals.slice(0,12);
+    const stream=$('dit-live-filter')?.value||'';
+    const signals=liveMarket.signals.filter(s=>!stream||s.kind===stream).slice(0,12);
     // Do not recreate image elements at 1Hz: GIFs must keep playing.
     const structure=JSON.stringify(signals.map(s=>[s.address,s.image_url,s.symbol,s.kind]));
     if(structure!==marketStructureKey){
