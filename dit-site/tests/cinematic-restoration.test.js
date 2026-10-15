@@ -134,5 +134,5 @@ test('transmissions are a compact telemetry ribbon and obsolete gold CSS patch i
  assert.match(css,/\.dit-transmission-ribbon/);
  assert.match(css,/\.dit-transmission-ribbon\s+time/);
  assert.match(js,/document\.createElement\('time'\)/);
- assert.match(js,/data-live-event/);
+ assert.match(js,/button\.dataset\.liveEvent/);
 });
