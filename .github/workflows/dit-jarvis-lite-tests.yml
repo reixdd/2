@@ -11,6 +11,9 @@ on:
       - 'dit-site/server/lib/store-core.js'
       - 'dit-site/dist/index.html'
       - 'dit-site/dist/live-research.js'
+      - 'dit-site/dist/terminal-ui.js'
+      - 'dit-site/tests/terminal-ui.test.js'
+      - 'dit-site/tests/terminal-format.test.js'
       - 'dit-site/dist/live-research.css'
       - 'dit-site/dist/operator.html'
       - 'dit-site/dist/operator-review.js'
@@ -50,6 +53,6 @@ jobs:
       - name: Run existing source regression tests
         run: npm test
       - name: Check live browser module
-        run: node --check dist/live-research.js && node --check dist/operator-review.js
+        run: node --check dist/live-research.js && node --check dist/terminal-ui.js && node --check dist/operator-review.js
       - name: Check host worker build
         run: npm run build
