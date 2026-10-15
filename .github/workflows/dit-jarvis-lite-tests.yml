@@ -16,6 +16,7 @@ on:
       - 'dit-site/dist/control-room.js'
       - 'dit-site/dist/control-room.css'
       - 'dit-site/tests/control-room.test.js'
+      - 'dit-site/tests/cinematic-restoration.test.js'
       - 'dit-site/dist/live-research.js'
       - 'dit-site/dist/terminal-ui.js'
       - 'dit-site/tests/terminal-ui.test.js'
