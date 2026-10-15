@@ -151,7 +151,17 @@ try{
   ],next_before:null
  }}));
  await page.reload({waitUntil:'domcontentloaded'});
- await page.locator('.terminal-concept-card').first().waitFor({timeout:15000});
+ await page.locator('[data-dit-tab="radar"]').click();
+ try{await page.locator('.terminal-concept-card').first().waitFor({timeout:10000});}
+ catch(error){
+  console.log('[RADAR acceptance diagnostics]',JSON.stringify(await page.evaluate(()=>({
+   location:location.href,tab:document.querySelector('#dit-live-concept-section')?.hidden,
+   cardCount:document.querySelectorAll('.terminal-concept-card').length,
+   html:document.querySelector('#dit-live-concepts')?.innerHTML.slice(0,350)
+  }))));
+  console.log('[RADAR page errors]',JSON.stringify(errors));
+  throw error;
+ }
  assert.equal(await page.locator('.terminal-concept-card').count(),3,'one featured recorded idea per research agent');
  await page.waitForFunction(()=>[...document.querySelectorAll('.terminal-concept-image img')].length===3&&
   [...document.querySelectorAll('.terminal-concept-image img')].every(img=>img.complete&&img.naturalWidth>0),null,{timeout:12000});
