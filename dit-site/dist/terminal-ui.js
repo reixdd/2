@@ -8,7 +8,7 @@ export const safeArtUrl=value=>{
  try { const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password?u.href:null }
  catch {return null}
 };
-export const compact=x=>String(x??'').replace(/[\r\n\t ]+/g,' ').replace(/[#*_`]/g,'').trim();
+export const compact=x=>String(x??'').replace(/[\r\n\t ]+/g,' ').replace(/[#*`]/g,'').trim();
 export function conceptArtwork(concept, signals=[]){
  const body=concept?.content||{};
  const original=safeArtUrl(body.image_url||body.artwork_url);
