@@ -84,7 +84,10 @@ async function research() {
   const activeRows = await db("research_sources?enabled=eq.true&select=id");
   const active = new Set((activeRows || []).map(x => x.id));
   const results = [];
-  if (active.has("hackernews")) {
+  // Legacy technology headlines are opt-in only. DIT now gets its meme research
+  // from the existing local read-only JARVIS market pipeline instead.
+  const generalNewsEnabled = Deno.env.get("DIT_GENERAL_NEWS_ENABLED") === "1";
+  if (generalNewsEnabled && active.has("hackernews")) {
     try {
       const ids = (await getJson("https://hacker-news.firebaseio.com/v0/topstories.json")).slice(0, 8);
       const items = (await Promise.all(ids.slice(0, 4).map(id =>
@@ -105,7 +108,7 @@ async function research() {
       await status("hackernews", err).catch(() => {});
     }
   }
-  if (active.has("wikipedia_trending")) {
+  if (generalNewsEnabled && active.has("wikipedia_trending")) {
     try {
       const date = new Date(Date.now() - 36 * 3600 * 1000);
       const yyyy = date.getUTCFullYear();
