@@ -9,7 +9,7 @@
   const link=(x,label)=>valid(x)?'<a rel="noopener noreferrer" target="_blank" href="'+esc(valid(x))+'">'+esc(label||x)+' ↗</a>':esc(label||'Source unavailable');
   const api=async path=>{const r=await fetch(path,{cache:'no-store',signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('HTTP '+r.status);return r.json()};
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
-  let world=null,observations=[],runs=[],concepts=[],busy=false;
+  let world=null,observations=[],runs=[],concepts=[],busy=false,liveMarket=null,marketAvailable=true,marketBusy=false;
   for(const [id,title] of [['dit-live-evidence-section','NEW PAIRS // EVIDENCE'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // APPROVED CONCEPTS']]){
     const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
   }
@@ -64,8 +64,59 @@
     const rows=[...observations.filter(o=>/dex|gecko|gmgn|solana/i.test(o.source_id||'')),...marketRefs].filter(o=>!selected||o.agent_id===selected).sort((a,b)=>Date.parse(b.observed_at||0)-Date.parse(a.observed_at||0)).slice(0,12);
     $('dit-live-evidence').innerHTML=rows.length?rows.map(o=>'<article class="live-row"><div><span class="byline">'+esc(o.agent_id)+' / '+esc(o.source_id)+'</span><time>'+when(o.observed_at)+'</time></div><div><h3>'+link(o.url,o.title)+'</h3><p>'+esc(o.evidence?.summary||'Source recorded, claims not independently established.')+'</p></div></article>').join(''):'<p class="live-empty">No recent market observations recorded. General news is hidden.</p>';
     $('dit-live-transmissions').innerHTML=runs.length?runs.slice(0,10).map(r=>'<article class="live-row"><div><span class="byline">'+esc(r.agent_id)+' / '+esc(r.model||'unknown model')+'</span><time>'+when(r.finished_at||r.started_at)+'</time></div><div><h3>'+esc(r.status==='completed'?'CONCEPT RESEARCH COMPLETE':r.status==='running'?'SCANNING':'RESEARCH '+r.status.toUpperCase())+'</h3><p>'+esc(r.status==='completed'?teaser(r.answer)||'Model response saved.':r.status==='running'?'Waiting for local inference.':'See private operator diagnostics.')+'</p>'+((r.source_refs||[]).slice(0,2).map(s=>'<small>'+link(s.url,s.title)+'</small>').join(''))+'</div></article>').join(''):'<p class="live-empty">No research runs yet.</p>';
+    renderLiveMarket();
     $('dit-live-concepts').innerHTML=concepts.length?concepts.map(c=>'<article class="live-concept"><div class="live-ticker">'+esc(c.content?.ticker)+'</div><div><span class="byline">'+esc(c.agent_id)+'</span><h3>'+esc(c.content?.name)+'</h3><p>'+esc(c.content?.hook||c.content?.narrative?.slice(0,100))+'</p><small>'+esc(buzz(c.content?.buzzwords))+'</small><p>'+esc(c.content?.narrative?.slice(0,160))+'</p><button data-live-concept="'+esc(c.id)+'">VIEW ATTENTION ANATOMY ↗</button></div></article>').join(''):'<p class="live-empty">No human-reviewed fictional concepts are published yet.</p>';
   }
+
+  const money=x=>typeof x==='number'&&Number.isFinite(x)?'
+  async function refresh(){
+    if(busy||document.hidden)return;busy=true;
+    try{
+      const out=await Promise.allSettled([api('/api/observatory'),api('/api/observations?limit=60'),api('/api/results?limit=40'),api('/api/concepts')]);
+      world=out[0].status==='fulfilled'?out[0].value:null;
+      if(out[1].status==='fulfilled')observations=out[1].value.observations||[];
+      if(out[2].status==='fulfilled')runs=out[2].value.runs||[];
+      if(out[3].status==='fulfilled')concepts=out[3].value.concepts||[];
+      render();
+    }finally{busy=false}
+  }
+  refresh();refreshLiveMarket();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();refreshLiveMarket()}});
+})();
++(x>=1000?(x/1000).toFixed(1)+'k':Math.round(x).toLocaleString()):'—';
+  const marketImage=s=>valid(s.image_url)&&String(s.image_url).startsWith('https:')
+    ?'<img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="'+esc(s.image_url)+'" alt="'+esc((s.name||s.symbol||'Token')+' artwork')+'">'
+    :'<div class="market-art-empty" aria-label="No verified artwork">◈ '+esc((s.symbol||'?').slice(0,6))+'</div>';
+  function renderLiveMarket(){
+    const feed=$('dit-live-evidence');
+    if(!feed||!liveMarket?.signals?.length)return;
+    const signals=liveMarket.signals.slice(0,12);
+    const ms=x=>{const t=Date.parse(x||'');return Number.isFinite(t)?Math.max(0,Math.floor((Date.now()-t)/1000))+'s ago':'not timestamped'};
+    const cards=signals.map(s=>'<article class="market-card"><div class="market-card-image">'+marketImage(s)+'</div>'+
+      '<div class="market-card-body"><div class="market-card-title"><b>'+esc(s.symbol||'???')+'</b><span>'+esc(s.kind||'PAIR')+'</span></div>'+
+      '<p class="market-card-name">'+esc(s.name||'Unnamed Solana token')+'</p>'+
+      '<div class="market-card-stats"><span>5M VOL<strong>'+money(s.volume_5m_usd)+'</strong></span><span>LIQUIDITY<strong>'+money(s.liquidity_usd)+'</strong></span>'+
+      '<span>BUYS / SELLS<strong>'+esc(s.buys_5m??'—')+' / '+esc(s.sells_5m??'—')+'</strong></span></div>'+
+      '<div class="market-card-foot"><small>'+esc(s.provider||'JARVIS')+' · '+esc(ms(s.observed_at))+'</small>'+
+      '<a href="'+esc(valid(s.url)||'#')+'" target="_blank" rel="noopener noreferrer">VIEW EVIDENCE ↗</a></div>'+
+      '<small class="market-card-disclaimer">Safety: '+esc(s.safety||'UNVERIFIED')+(s.paid_attention?' · PAID ATTENTION':'')+'</small></div></article>').join('');
+    feed.innerHTML='<div class="market-feed-meta"><span>◉ LIVE LOCAL CACHE · DISPLAY 1S · NO EXTRA PROVIDER CALLS</span>'+
+      '<span>JARVIS OBSERVED '+esc(ms(liveMarket.last_checked_at))+(liveMarket.refreshing?' · UPDATING…':'')+'</span></div>'+
+      '<div class="market-grid">'+cards+'</div>';
+  }
+  async function refreshLiveMarket(){
+    if(!marketAvailable||marketBusy||document.hidden)return;
+    marketBusy=true;
+    try{
+      const r=await fetch('/operator/api/market',{cache:'no-store',signal:AbortSignal.timeout(2500)});
+      if(r.status===403||r.status===404){marketAvailable=false;return;}
+      if(!r.ok)return;
+      liveMarket=await r.json();
+      renderLiveMarket();
+    }catch{/* Local companion not reachable. Keep public evidence visible. */}
+    finally{marketBusy=false}
+  }
+
   $('dit-live-filter').onchange=render;
   async function refresh(){
     if(busy||document.hidden)return;busy=true;
