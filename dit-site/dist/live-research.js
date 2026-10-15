@@ -55,6 +55,77 @@
   const open=(title,html)=>{$('dit-live-modal-title').textContent=title;$('dit-live-modal-body').innerHTML=html;if(!dlg.open)dlg.showModal()};
   $('dit-live-close').onclick=()=>dlg.close();
   const agent=id=>world?.agents?.find(x=>x.id===id);
+
+  // Authenticated social votes. No simulated vote count or anonymous production identity.
+  let voteToken='';
+  try{
+    voteToken=sessionStorage.getItem('dit:vote-session')||'';
+    const hash=new URLSearchParams(location.hash.startsWith('#')?location.hash.slice(1):'');
+    if(hash.get('access_token')&&hash.get('token_type')?.toLowerCase()==='bearer'){
+      voteToken=hash.get('access_token');
+      sessionStorage.setItem('dit:vote-session',voteToken);
+      history.replaceState(null,'',location.pathname+location.search);
+    }
+  }catch{/* Session storage can be disabled; sign-in will still show a clear error. */}
+  async function identifyForVote(){
+    let config;
+    try{config=await api('/api/config')}catch{config=null}
+    const mode=config?.auth||'none';
+    if(mode!=='dev'&&mode!=='supabase'){
+      return open('VOTING NOT CONFIGURED','<p>Verified identity is not available in this runtime. Nothing has been submitted.</p>');
+    }
+    open('HUMAN OBSERVER / VOTING IDENTITY',
+      '<p>One current favorite per account. Votes are social, not financial.</p>'+
+      '<form id="dit-vote-identity"><label for="identity-email">EMAIL / VERIFIED IDENTITY</label>'+
+      '<input type="email" id="identity-email" name="email" required autocomplete="email" placeholder="you@example.com">'+
+      '<button type="submit">'+(mode==='dev'?'USE LOCAL TEST IDENTITY':'SEND EMAIL SIGN-IN LINK')+' ↗</button></form>'+
+      '<p id="identity-status" role="status">'+(mode==='dev'?'LOCAL TEST MODE: votes are not verified for public use.':'Email confirmation is required to cast a public vote.')+'</p>');
+    $('dit-vote-identity')?.addEventListener('submit',async e=>{
+      e.preventDefault();
+      const email=String($('identity-email')?.value||'').trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        $('identity-status').textContent='Enter a valid email address.';return;
+      }
+      if(mode==='dev'){
+        voteToken='dev:'+email;
+        try{sessionStorage.setItem('dit:vote-session',voteToken)}catch{}
+        $('identity-status').textContent='LOCAL TEST IDENTITY READY. CLOSE THIS PANEL AND VOTE AGAIN.';
+        return;
+      }
+      const url=config?.supabase?.url,key=config?.supabase?.anonKey;
+      if(!url||!key){$('identity-status').textContent='Authentication service unavailable.';return;}
+      try{
+        const redirect=location.origin+location.pathname;
+        const result=await fetch(url.replace(/\/+$/,'')+'/auth/v1/otp?redirect_to='+encodeURIComponent(redirect),{
+          method:'POST',headers:{apikey:key,'content-type':'application/json'},body:JSON.stringify({email,create_user:true}),
+          signal:AbortSignal.timeout(10000)
+        });
+        if(!result.ok)throw Error('Sign-in link request was not accepted');
+        $('identity-status').textContent='Check your email for the sign-in link. No vote has been recorded yet.';
+      }catch(err){$('identity-status').textContent='Unable to request sign-in: '+String(err.message||'Unavailable');}
+    },{once:true});
+  }
+  window.addEventListener('dit:vote-identity',identifyForVote);
+  async function voteFor(id){
+    if(!ids.includes(id))return;
+    if(!voteToken){window.dispatchEvent(new Event('dit:vote-identity'));return;}
+    try{
+      const res=await fetch('/api/vote',{
+        method:'POST',
+        headers:{authorization:'Bearer '+voteToken,'content-type':'application/json'},
+        body:JSON.stringify({agent_id:id}),signal:AbortSignal.timeout(12000)
+      });
+      const d=await res.json();
+      if(!res.ok){
+        if(res.status===401||res.status===403){voteToken='';try{sessionStorage.removeItem('dit:vote-session')}catch{}}
+        throw Error(d.error||'Server did not record the vote');
+      }
+      open('VOTE RECORDED / '+id,
+        '<p>Server-confirmed favorite: '+esc(id)+'. You can switch later.</p>'+
+        '<p>Recorded social votes: '+esc(String(d.votes?.total??'UNAVAILABLE'))+'</p>');
+    }catch(err){open('VOTE NOT RECORDED','<p>'+esc(String(err.message||'Vote unavailable'))+'</p>');}
+  }
+
   // Treasury values are shown only when the existing ledger API returns valid data.
   const lamportsSol=n=>Number.isFinite(Number(n))&&Number(n)>=0?(Number(n)/1e9).toLocaleString(undefined,{maximumFractionDigits:6})+' SOL':'—';
   async function refreshTreasury(){
@@ -112,7 +183,7 @@
     const view=b.dataset.view;
     if(!b.dataset.vote&&!b.dataset.modalVote&&!['ghost','null','echo','network','transmissions','treasury'].includes(view))return;
     e.preventDefault();e.stopImmediatePropagation();
-    if(b.dataset.vote||b.dataset.modalVote)return open('ACCOUNT REQUIRED','<p>Voting requires a verified signed-in account; no sample votes are counted.</p>');
+    if(b.dataset.vote||b.dataset.modalVote)return voteFor(b.dataset.vote||b.dataset.modalVote);
     if(view==='ghost')return detail(ids[0]);if(view==='null')return detail(ids[1]);if(view==='echo')return detail(ids[2]);
     if(view==='network')return $('dit-live-network')?.scrollIntoView({behavior:'smooth'});
     if(view==='transmissions')return $('dit-live-transmissions')?.scrollIntoView({behavior:'smooth'});
