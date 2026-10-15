@@ -70,3 +70,34 @@ test('the visible market UI never calls delayed source observations stale or pas
  assert.match(room,/LAST VERIFIED/);
  for(const field of ['volume_5m_usd','buys_5m','sells_5m','marketStructureKey'])assert.match(research,new RegExp(field));
 });
+
+test('performance fallback removes the GPU canvas instead of leaving a duplicate portrait',()=>{
+ const css=read('../dist/control-room.css');
+ const stage=read('../dist/stage.js');
+ assert.match(css,/#dit-stage-canvas\[hidden\]\s*\{\s*display:none!important/);
+ assert.match(stage,/canvas\.hidden\s*=\s*true/);
+});
+test('reference-style HUD has real actions, verified accounting and a live event ribbon',()=>{
+ const room=read('../dist/control-room.js');
+ const live=read('../dist/live-research.js');
+ for(const k of ['dit-nav-network','dit-nav-transmissions','dit-nav-system','dit-appearance','dit-gfx-toggle','dit-hud-expand','dit-treasury','dit-transmission-ribbon'])assert.match(room,new RegExp(k));
+ assert.match(live,/\/api\/treasury/);
+ assert.match(room,/data-room-agent/);
+ assert.match(room,/updateControlRoom/);
+ assert.match(room,/dit-hud-system/);
+});
+test('agent visuals use independent blue, violet and green accents and constrained width',()=>{
+ const css=read('../dist/control-room.css');
+ assert.match(css,/#6bbdff/);
+ assert.match(css,/#ce86ff/);
+ assert.match(css,/#86edb4/);
+ assert.match(css,/max-width:\s*min\(90vw,1720px\)/);
+});
+test('terminal retains backend failure evidence and handles exhausted cycle attempts explicitly',()=>{
+ const room=read('../dist/control-room.js');
+ assert.match(room,/job_dead/);
+ assert.match(room,/failure/);
+ assert.match(room,/OPEN OPERATOR/);
+ const sch=read('../worker/scheduler.js');
+ assert.match(sch,/maxAttempts/);
+});
