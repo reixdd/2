@@ -5,12 +5,13 @@ import {handleBackendApi} from '../server/lib/routes.js';
 import {extractConcept,recordedSources} from '../server/lib/concepts.js';
 import {freshStore,req} from './helpers.js';
 const file=p=>readFileSync(new URL(p,import.meta.url),'utf8');
-test('homepage uses the exact interactive MIAMI SIGNAL stage and real evidence surfaces',()=>{
- const html=file('../dist/index.html'),js=file('../dist/live-research.js');
- for(const token of ['DIT // TERMINAL DECAY','id="stage"','id="fx"','data-view="ghost"','data-view="null"','data-view="echo"','id="dit-live-network"','id="dit-live-evidence"','id="dit-live-concepts"','live-research.js','live-research.css'])assert.ok(html.includes(token),token);
- assert.match(html,/data:image\/png;base64,/);
- assert.ok(js.includes('/api/observatory'));assert.ok(js.includes('/api/concepts'));
- assert.ok(js.includes('/api/observations'));assert.ok(js.includes('/api/results'));
+test('homepage uses data-driven cinematic composition, preserves assets, and removes simulated baked HTML',()=>{
+ const html=file('../dist/index.html'),js=file('../dist/live-research.js'),room=file('../dist/control-room.js');
+ for(const token of ['id="stage"','id="fx"','id="dit-live-evidence"','id="dit-live-concepts"','id="dit-live-transmissions"','live-research.js','control-room.css'])assert.ok(html.includes(token),token);
+ assert.doesNotMatch(html,/data:image\/png;base64,/);
+ assert.doesNotMatch(html,/packet_loss=03\.7|VOTES REGISTERED|CURRENT POOL/);
+ assert.match(room,/dit-room-metrics/);
+ assert.match(js,/mountControlRoom/);assert.match(js,/api\/observatory/);
  assert.ok(file('../dist/legacy-v7.html').includes('dit-stage'));
 });
 test('archived cloud evidence does not falsely claim local JARVIS is online',async()=>{
