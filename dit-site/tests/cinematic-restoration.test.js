@@ -111,3 +111,18 @@ test('reference VOTE controls use authenticated backend vote endpoint, not a dea
  assert.match(live,/authorization:\s*['"]Bearer ['"]/);
  assert.match(live,/identity-email/);
 });
+
+test('New Pairs never substitutes general cultural research observations for token cards',()=>{
+ const live=read('../dist/live-research.js');
+ assert.doesNotMatch(live,/\$\('dit-live-evidence'\)\.innerHTML=rows\.length/);
+ assert.match(live,/MARKET SOURCE UNAVAILABLE/);
+ assert.match(live,/source_states/);
+ assert.match(live,/source_observed_at/);
+});
+test('front page actual token cards have missing-image and pair-age states',()=>{
+ const live=read('../dist/live-research.js');
+ assert.match(live,/market-card-image/);
+ assert.match(live,/market-image-error/);
+ assert.match(live,/data-stat="mc"/);
+ assert.match(live,/data-stat="age"/);
+});
