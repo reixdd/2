@@ -19,8 +19,13 @@
     const state=$('dit-tab-state');if(state)state.textContent=selected==='radar'?'_ ORIGINAL CONCEPTS / HUMAN REVIEW':'_ VERIFIED OBSERVATIONS / DECISION FLOW';
   }
   mountControlRoom({openAgent:id=>detail(id),activateTab});
-  // The old WebGL stage now occupies a background-only host. A GPU failure must never stop market updates.
-  try{await import('./stage.js')}catch(err){console.warn('[DIT] cinematic fallback:',err)}
+  // HD portraits and the composited city run without WebGL by default.
+  // WebGL is optional and loads exactly once when the human enables GFX.
+  window.addEventListener('dit:gfx',async e=>{
+    if(e.detail?.enabled){
+      try{await import('./stage.js')}catch(err){console.warn('[DIT] optional GPU effect unavailable:',err);}
+    }
+  });
   activateTab(location.hash==='#dit-live-transmission-section'?'activity':'radar');
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
   let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[],treasury=null;
