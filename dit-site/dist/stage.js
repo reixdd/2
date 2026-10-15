@@ -26,6 +26,7 @@ if (host) boot();
 
 function boot() {
   const section = host;
+  const ambient = host.dataset.mode === 'ambient';
   section.innerHTML = `
     <div class="dit-stage-frame">
       <div class="hud-orbit-field" aria-hidden="true">
@@ -83,7 +84,7 @@ function boot() {
       const plate = section.querySelector(`[data-stage-agent="${CSS.escape(a.id)}"]`);
       if (plate) { plate.dataset.machineState = live.workerAlive ? (s || 'IDLE') : 'STANDBY'; plate.dataset.workerOnline = String(live.workerAlive); }
     }
-    note.textContent = live.unavailable ? 'BACKEND UNAVAILABLE' : !live.received ? 'AWAITING BACKEND' : live.workerAlive ? 'STATES FROM LIVE WORKER' : 'WORKER OFFLINE — AGENTS DIMMED';
+    if(note) note.textContent = live.unavailable ? 'BACKEND UNAVAILABLE' : !live.received ? 'AWAITING BACKEND' : live.workerAlive ? 'STATES FROM LIVE WORKER' : 'WORKER OFFLINE — AGENTS DIMMED';
   };
   window.addEventListener('dit:messages', e => {
     for (const [id, title] of Object.entries(e.detail || {})) {
@@ -126,18 +127,19 @@ function boot() {
   const start = async () => {
     if (started) return; started = true;
     try {
-      note.textContent = 'ESTABLISHING OBSERVATORY…';
+      if(note) note.textContent = 'ESTABLISHING OBSERVATORY…';
       const THREE = await import(THREE_URL);
       const probe = document.createElement('canvas');
       if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) throw Error('WebGL is not available in this browser');
-      stage = await buildStage(THREE, canvas, live, section);
+      if(ambient && matchMedia('(max-width:760px)').matches) throw Error('Mobile uses original portrait fallback');
+      stage = await buildStage(THREE, canvas, live, section, ambient);
       section.querySelector("#dit-stage-still").hidden = true;
       paintLabels();
       section.dataset.renderer = 'webgl';
     } catch (err) {
       fallback.hidden = false;
       fallback.textContent = `3D STAGE UNAVAILABLE (${err.message}). THE PORTRAIT FALLBACK AND AGENT PROFILES REMAIN AVAILABLE.`;
-      canvas.hidden = true; section.dataset.renderer='fallback';note.textContent = '3D UNAVAILABLE';
+      canvas.hidden = true; section.dataset.renderer='fallback';if(note) note.textContent = '3D UNAVAILABLE';
     }
   };
   if ('IntersectionObserver' in window) {
@@ -146,7 +148,7 @@ function boot() {
   } else start();
 }
 
-async function buildStage(THREE, canvas, live, section) {
+async function buildStage(THREE, canvas, live, section, ambient=false) {
   const small = matchMedia('(max-width: 760px)').matches;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !small, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x030405, 0);
@@ -176,7 +178,7 @@ async function buildStage(THREE, canvas, live, section) {
   // ---- agents ---------------------------------------------------------------------------------
   // Three separate transparent cutouts retain the supplied detail, with subtle shared-camera motion.
   const textures = await Promise.all(AGENTS.map(a=>new Promise((resolve,reject)=>new THREE.TextureLoader().load(`assets/cutouts/${a.model}.png`,resolve,undefined,()=>reject(Error('Character cutout missing: '+a.model))))));
-  const masks = textures.map(t=>{const c=document.createElement('canvas');c.width=t.image.width;c.height=t.image.height;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(t.image,0,0);const rgba=g.getImageData(0,0,c.width,c.height).data;const data=new Uint8Array(c.width*c.height);for(let i=0;i<data.length;i++){data[i]=rgba[i*4+3];}return {width:c.width,height:c.height,data};});
+  const masks = ambient ? [null,null,null] : textures.map(t=>{const c=document.createElement('canvas');c.width=t.image.width;c.height=t.image.height;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(t.image,0,0);const rgba=g.getImageData(0,0,c.width,c.height).data;const data=new Uint8Array(c.width*c.height);for(let i=0;i<data.length;i++){data[i]=rgba[i*4+3];}return {width:c.width,height:c.height,data};});
   for(const t of textures){t.colorSpace=THREE.SRGBColorSpace;t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy())}
   const vert='varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}';
   const frag=`
@@ -207,7 +209,7 @@ async function buildStage(THREE, canvas, live, section) {
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`;
-  const FIG=1.17; // Larger, character-first 2.5D composition with no base pedestal
+  const FIG=ambient ? .65 : 1.17; // The embedded room aligns shader portraits with the native agent cards.
   const items=AGENTS.map((a,i)=>{
     const group=new THREE.Group();
     const uniforms={map:{value:textures[i]},mouse:{value:new THREE.Vector2()},time:{value:0},energy:{value:.1},glitch:{value:0},dim:{value:1},hover:{value:0},accent:{value:new THREE.Color(a.accent)}};
@@ -215,7 +217,7 @@ async function buildStage(THREE, canvas, live, section) {
     mesh.renderOrder=20;mesh.userData.agent=a.id;group.add(mesh);
     const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:a.accent,transparent:true,opacity:.09,depthWrite:false,blending:THREE.AdditiveBlending}));
     glow.scale.set(3.8,4.8,1);glow.position.set(0,1.9,-.38);group.add(glow);
-    group.position.set((i-1)*3.85,-2.17,0);mesh.position.y=3.47*FIG/2-.02;scene.add(group);
+    group.position.set((i-1)*3.85,ambient ? -1.35 : -2.17,0);mesh.position.y=3.47*FIG/2-.02;scene.add(group);
     return {id:a.id,group,mesh,glow,uniforms,cur:{energy:.1,glitch:0,dim:1},hover:0,phase:i*1.7,model:null,mixer:null,head:null,labelPosition:new THREE.Vector3(),label:section.querySelector(`[data-stage-agent="${CSS.escape(a.id)}"]`),lastLabelX:null,mask:masks[i],modelFile:a.model,baseX:group.position.x};
   });
   const byId=new Map(items.map(it=>[it.id,it]));
@@ -233,7 +235,7 @@ async function buildStage(THREE, canvas, live, section) {
     const a = Math.max(.35, aspect || 2);
     const minGap = a < 1.3 ? 3.6 : 3.9; // keep all three silhouettes within the portrait viewport
     const z = Math.min(34, Math.max(7.65, (2 * minGap + 4.0) / (2 * HALF_TAN * a)));
-    const W = 2 * HALF_TAN * z * a, spacing = Math.min(6.2, Math.max(minGap, .24 * W));
+    const W = 2 * HALF_TAN * z * a, spacing = ambient ? .25 * W : Math.min(6.2, Math.max(minGap, .24 * W));
     return { z, W, spacing };
   };
   const baseZ = () => layoutFor(camera.aspect).z;
@@ -255,6 +257,23 @@ async function buildStage(THREE, canvas, live, section) {
   });
   canvas.addEventListener('pointerleave', () => { pointer.in = false; focusId = null; section.dataset.focusAgent = ''; if(!quality.lowPower)requestRender(); });
   canvas.addEventListener('click', e => { const id = pick(e); if (id) { section.querySelector(`[data-stage-open="${CSS.escape(id)}"]`)?.click(); } });
+
+  // The ambient WebGL canvas never captures input: the existing dossier buttons stay clickable.
+  // Feed their actual pointer position to the original lighting, camera and focus shader.
+  if(ambient){
+    const trackPointer=e=>{
+      const r=canvas.getBoundingClientRect();
+      if(!r.width||!r.height)return;
+      pointer.x=((e.clientX-r.left)/r.width)*2-1;
+      pointer.y=1-((e.clientY-r.top)/r.height)*2;
+      pointer.in=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
+      const button=e.target.closest?.('[data-room-agent]');
+      focusId=button?.dataset.roomAgent||null;
+      if(!quality.lowPower)requestRender();
+    };
+    window.addEventListener('pointermove',trackPointer,{passive:true});
+    window.addEventListener('pagehide',()=>window.removeEventListener('pointermove',trackPointer),{once:true});
+  }
 
   function zoomTo(id, done) {
     const it = byId.get(id); if (!it) return done?.();
@@ -311,7 +330,7 @@ async function buildStage(THREE, canvas, live, section) {
     const ck = Math.min(1, dt * 2.5); cam.x = lerp(cam.x, camTarget.x, ck); cam.y = lerp(cam.y, camTarget.y, ck); cam.z = lerp(cam.z, camTarget.z, ck);
     camera.position.set(cam.x + (pointer.in && !still ? pointer.x * .35 : 0), cam.y + (pointer.in && !still ? pointer.y * .20 : 0), cam.z);
     camera.lookAt(cam.x * .9, -.32, 0);
-    items.forEach(it=>{const v=it.labelPosition.set(it.baseX,-2.5,0).project(camera);const x=(v.x+1)*50;if(it.lastLabelX===null||Math.abs(x-it.lastLabelX)>.035){it.label.style.setProperty("--label-x",`${x}%`);it.lastLabelX=x;}});
+    items.forEach(it=>{const v=it.labelPosition.set(it.baseX,-2.5,0).project(camera);const x=(v.x+1)*50;if(it.lastLabelX===null||Math.abs(x-it.lastLabelX)>.035){it.label?.style.setProperty("--label-x",`${x}%`);it.lastLabelX=x;}});
   }
   function render() { renderer.render(scene, camera); }
   function frame(now) {
@@ -335,7 +354,8 @@ async function buildStage(THREE, canvas, live, section) {
   canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); lost=true;cancelAnimationFrame(raf);raf=0;pending=false;canvas.hidden=true;section.querySelector('#dit-stage-still').hidden=false;section.dataset.renderer='fallback'; });
   canvas.addEventListener('webglcontextrestored', ()=>{lost=false;canvas.hidden=false;section.querySelector('#dit-stage-still').hidden=true;section.dataset.renderer='webgl';resume();});
   window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;clearTimeout(zoom);cancelAnimationFrame(raf);resizeObserver.disconnect();visibilityObserver.disconnect();document.removeEventListener('visibilitychange',resume);window.removeEventListener('dit:motion',resume);const resources=new Set();scene.traverse(o=>{if(o.geometry)resources.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])resources.add(m);});resources.forEach(r=>r.dispose());textures.forEach(t=>t.dispose());glowTex.dispose();renderer.dispose();},{once:true});
-  document.getElementById('dit-stage-note').textContent = 'OBSERVATORY / 2.5D DEPTH';
+  const labelNote=document.getElementById('dit-stage-note');
+  if(labelNote) labelNote.textContent = 'OBSERVATORY / 2.5D DEPTH';
   requestRender();
   return { requestRender, zoomTo, zoomOut, setFocus };
 }
