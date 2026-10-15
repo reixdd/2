@@ -14,8 +14,17 @@ export function conceptArtwork(concept, signals=[]){
  const original=safeArtUrl(body.image_url||body.artwork_url);
  if(original)return {url:original,label:'CONCEPT ART',kind:'concept'};
  const refs=Array.isArray(concept?.source_refs)?concept.source_refs:[];
- const match=signals.find(s=>s.image_url&&refs.some(r=>r.url===s.url));
- if(match){const url=safeArtUrl(match.image_url);if(url)return {url,label:'SOURCE IMAGE · NOT CONCEPT ART',kind:'evidence'}}
+ // Match source provenance by a real URL or contract identity, never by missing URLs
+ // (undefined === undefined previously picked an unrelated token's picture).
+ const matching=signals.find(s=>safeArtUrl(s?.image_url)&&refs.some(r=>{
+   if(typeof r?.url==='string'&&r.url&&typeof s.url==='string'&&s.url===r.url)return true;
+   const address=typeof s?.address==='string'&&s.address?s.address:(typeof s?.mint==='string'?s.mint:null);
+   if(!address)return false;
+   if([r?.address,r?.mint,r?.contract_address].some(value=>value===address))return true;
+   if(typeof r?.url!=='string'||!r.url)return false;
+   try { return new URL(r.url).pathname.split('/').includes(address); } catch { return false; }
+ }));
+ if(matching)return {url:safeArtUrl(matching.image_url),label:'SOURCE IMAGE · NOT CONCEPT ART',kind:'evidence'};
  return {url:null,label:'ORIGINAL CONCEPT ART PENDING',kind:'missing'};
 }
 export function formatActivity(event){
