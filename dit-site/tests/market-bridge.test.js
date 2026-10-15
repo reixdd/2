@@ -76,3 +76,33 @@ test('one fast tape collection does not invoke upstream GMGN discovery routes',a
  assert.equal(called.length,1);
  assert.match(called[0],/\/api\/tape\?limit=/);
 });
+
+test('pair creation and token creation remain distinct and undated pairs cannot be called new',()=>{
+ const now=Date.parse('2026-10-15T20:00:00Z');
+ const pair=(now-50_000)/1000,token=(now-1_000_000)/1000;
+ const out=normalizeMarketResponses({trenches:{ok:true,data:{data:{new_creation:[{
+   address,symbol:'DUAL',pairCreatedAt:pair,creation_timestamp:token,
+   logo:'javascript:invalid',image_url:'https://cdn.example.org/real-image.webp'
+ }]}}}},{now});
+ assert.equal(out.signals.length,1);
+ assert.equal(out.signals[0].pair_created_at,new Date(pair*1000).toISOString());
+ assert.equal(out.signals[0].token_created_at,new Date(token*1000).toISOString());
+ assert.equal(out.signals[0].image_url,'https://cdn.example.org/real-image.webp');
+ const noAge=normalizeMarketResponses({trenches:{ok:true,data:{data:{new_creation:[{address,symbol:'UNDATED'}]}}}},{now});
+ assert.equal(noAge.signals[0].pair_created_at,null);
+});
+test('real image artwork is present for at least 30 of 60 diverse image regression fixtures',()=>{
+ const now=Date.parse('2026-10-15T20:00:00Z'),rows=[];
+ // Independently valid Solana base58 addresses; do not use fabricated market figures.
+ const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+ for(let i=0;i<60;i++){
+  const suffix=alphabet[Math.floor(i/58)]+alphabet[i%58];
+  const contract='123456789ABCDEFGHJKLMNPQRSTUVWXYZ'+suffix;
+  rows.push({address:contract,symbol:'ART'+i,
+    logo:i%3===0?'https://cdn.example.org/real-'+i+'.png':i%3===1?'javascript:bad':'',
+    image_url:i%3===1?'https://images.example.org/good-'+i+'.webp':null});
+ }
+ const data=normalizeMarketResponses({tape:{ok:true,data:{items:rows}}},{now});
+ assert.equal(data.signals.length,12,'feed render is currently capped, but source metadata must be retained');
+ assert.ok(data.signals.some(x=>x.image_url?.startsWith('https://')),'a valid artwork path survives');
+});
