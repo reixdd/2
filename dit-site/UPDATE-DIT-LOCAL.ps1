@@ -41,6 +41,7 @@ $manifest = @(
   @{repo='2'; scope='dit'; path='dit-site/server/lib/concepts.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/server/lib/agents.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/server/lib/store-core.js'; branch='dit-3d-assets'},
+  @{repo='2'; scope='dit'; path='dit-site/server/lib/market-snapshot.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/worker/provider-bridge.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/worker/market-bridge.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/Start-DIT-With-JARVIS.ps1'; branch='dit-3d-assets'}
