@@ -38,3 +38,35 @@ test('Meme Radar keeps an honest broken-image fallback without substituting agen
  assert.match(live,/addEventListener\(['"]error['"]/);
  assert.equal(conceptArtwork({agent_id:'GHOST_001',source_refs:[],content:{}},[]).url,null);
 });
+
+
+test('concept-reference command deck keeps real state in a compact left rail and centered agent stage',()=>{
+ const room=read('../dist/control-room.js');
+ const css=read('../dist/control-room.css');
+ assert.match(room,/dit-ops-rail/);
+ assert.match(room,/dit-room-live/);
+ assert.match(room,/dit-room-agent-strip/);
+ assert.match(css,/\.dit-entity-stage\s*>\s*#dit-stage/);
+ assert.match(css,/\.dit-room\s*\{/);
+});
+test('laggy WebGL automatically yields to the anchored HD portrait fallback',async()=>{
+ const {createFrameGuard}=await import('../dist/stage-quality.js');
+ const guard=createFrameGuard(120,3);
+ assert.equal(guard.sample(40),false);
+ assert.equal(guard.sample(962),false);
+ assert.equal(guard.sample(700),false);
+ assert.equal(guard.sample(600),true);
+ const stage=read('../dist/stage.js');
+ assert.match(stage,/guard\.sample\(/);
+ assert.match(stage,/dataset\.performance\s*=\s*'slow'/);
+ assert.match(stage,/ambient\s*\?\s*false\s*:\s*!small/);
+});
+test('the visible market UI never calls delayed source observations stale or passes them off as live',()=>{
+ const room=read('../dist/control-room.js');
+ const research=read('../dist/live-research.js');
+ assert.doesNotMatch(room,/'STALE'/);
+ assert.doesNotMatch(research,/STALE —/);
+ assert.match(research,/LAST VERIFIED/);
+ assert.match(room,/LAST VERIFIED/);
+ for(const field of ['volume_5m_usd','buys_5m','sells_5m','marketStructureKey'])assert.match(research,new RegExp(field));
+});
