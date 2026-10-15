@@ -66,6 +66,11 @@ const server=http.createServer(async(req,res)=>{try{const url=new URL(req.url,`h
  res.setHeader('Content-Type',types[path.extname(full)]||'application/octet-stream');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Cache-Control','no-cache');fs.createReadStream(full).pipe(res);
 }catch(e){res.writeHead(500,{'content-type':'application/json'});res.end(JSON.stringify({error:'Server error',detail:env.NODE_ENV==='development'?e.message:undefined}));}});
 server.listen(port,'127.0.0.1',()=>{console.log(`DIT local companion: http://127.0.0.1:${port}/operator · ${store.kind} store · ${env.DIT_DEV_AUTH==='1'?'TEST-ONLY identity':'Supabase Auth'}`);autonomous.start();});
+// Update public read-only snapshots even with the browser closed; reuse the existing JARVIS cache.
+const marketSyncTimer=shared&&env.DIT_JARVIS_SHARED==='1'
+ ?setInterval(()=>operator.refreshMarket().catch(()=>{}),20_000):null;
+if(marketSyncTimer)operator.refreshMarket().catch(()=>{});
+
 let timer=null;localLlm=createLlm(env); await localLlm.discover();console.log("[llm]",JSON.stringify(localLlm.status));
 if (!localLlm.configured && localLlm.status?.provider === 'ollama') {
  console.log('[llm] Ollama is not reachable. Start Ollama or choose JARVIS in http://127.0.0.1:'+port+'/operator. Research without an LLM will skip concept generation.');
@@ -81,6 +86,7 @@ async function shutdown() {
  if (closing) return;
  closing = true;
  if (timer) clearInterval(timer);
+ if (marketSyncTimer) clearInterval(marketSyncTimer);
  autonomous.stop();
  try { await store.flush?.(); }
  catch (error) {
