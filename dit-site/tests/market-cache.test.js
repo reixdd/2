@@ -105,3 +105,11 @@ test('60 market refresh cycles preserve 40 real source-artwork URLs and verified
    assert.equal(token.first_seen_at,initial[token.address].first_seen_at);
  }
 });
+
+test('an undated GMGN response is never marked as a verified live source solely because it was fetched now',()=>{
+ const op=new Operator({store:{},env:{},port:4173,configFile:'/tmp/dit-nonexistent-market-settings.json'});
+ op.marketAt=Date.now();
+ op.marketSnapshot={signals:[{address:'So11111111111111111111111111111111111111112',
+   observed_at:new Date().toISOString(),source_observed_at:null}]};
+ assert.equal(op.marketStatus().stale,true);
+});
