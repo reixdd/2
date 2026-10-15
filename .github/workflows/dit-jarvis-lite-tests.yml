@@ -16,6 +16,8 @@ on:
       - 'dit-site/dist/operator-review.js'
       - 'dit-site/dist/operator.css'
       - 'dit-site/tests/autonomous-research.test.js'
+      - 'dit-site/tests/miami-live.test.js'
+      - 'dit-site/tests/legacy-archive.test.js'
       - 'dit-site/Start-DIT-With-JARVIS.ps1'
       - 'dit-site/worker/provider-bridge.js'
       - 'dit-site/tests/operator-bridge.test.js'
@@ -38,5 +40,7 @@ jobs:
         run: node --test tests/operator-bridge.test.js
       - name: Run existing source regression tests
         run: npm test
+      - name: Check live browser module
+        run: node --check dist/live-research.js && node --check dist/operator-review.js
       - name: Check host worker build
         run: npm run build
