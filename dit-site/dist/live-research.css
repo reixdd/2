@@ -74,3 +74,10 @@ body{background:#030506;color:var(--dit-fg)}
 @media(min-width:751px){.stage .a1{left:21%}.stage .a2{left:41%}.stage .a3{left:64%}}
 @media(max-width:1200px){.dit-live .market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.dit-live .market-grid{grid-template-columns:1fr}.dit-live .market-card{grid-template-columns:104px minmax(0,1fr)}.dit-live .market-card-stats span{font-size:8px}}
+
+/* Compact transmissions use the unused right-hand column instead of an endless stack. */
+.dit-live #dit-live-transmissions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}
+.dit-live #dit-live-transmissions .live-row{grid-template-columns:135px minmax(0,1fr);gap:12px;padding:17px 5px}
+.dit-live #dit-live-transmissions .live-row h3{font-size:15px}
+.dit-live #dit-live-transmissions .live-row p{font-size:12px;line-height:1.55}
+@media(max-width:950px){.dit-live #dit-live-transmissions{grid-template-columns:1fr}}
