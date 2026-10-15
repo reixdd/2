@@ -17,6 +17,7 @@ on:
       - 'dit-site/dist/operator.css'
       - 'dit-site/tests/autonomous-research.test.js'
       - 'dit-site/tests/miami-live.test.js'
+      - 'dit-site/tests/visual-backend-regression.test.js'
       - 'dit-site/tests/legacy-archive.test.js'
       - 'dit-site/Start-DIT-With-JARVIS.ps1'
       - 'dit-site/worker/provider-bridge.js'
