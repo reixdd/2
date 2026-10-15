@@ -29,7 +29,10 @@ export function conceptArtwork(concept, signals=[]){
 }
 export function formatActivity(event){
  if(!AGENTS.includes(event?.agent_id))return null;
- const title=compact(event.title||String(event.event_type||'').replace(/_/g,' '));
+ const original=compact(event.title||String(event.event_type||'').replace(/_/g,' '));
+ // A dead job exhausted *that job's* retries; it does not mean future research
+ // cycles are permanently disabled. Keep the real error in detail + job status.
+ const title=event.event_type==='job_dead'?'JOB RETRY LIMIT REACHED — OPEN OPERATOR':original;
  if(!title)return null;
  return {id:String(event.id??event.created_at??title),agent_id:event.agent_id,
    title:title.slice(0,118),status:compact(event.event_type).slice(0,45),
