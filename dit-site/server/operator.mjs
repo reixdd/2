@@ -4,6 +4,7 @@ import path from 'node:path';
 import { validateSettings,discoverProvider,verifyModel,runResearch,IDENTITIES } from '../worker/provider-bridge.js';
 import { StoreError } from './lib/store-core.js';
 import { collectJarvisMarkets } from '../worker/market-bridge.js';
+import { persistMarketSnapshot } from './lib/market-snapshot.js';
 import { persistCompletedResearch, reviewConcept } from './lib/concepts.js';
 const out=(data,status=200)=>Response.json(data,{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}});
 const tidy=x=>String(x||'').slice(0,400);
@@ -26,15 +27,40 @@ export class Operator {
   async refreshMarket(){
     if(this.marketSnapshot&&Date.now()-this.marketAt<20_000)return this.marketSnapshot;
     if(this.marketInflight)return this.marketInflight;
-    this.marketInflight=collectJarvisMarkets({baseUrl:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',fetchImpl:this.fetchImpl})
-      .then(snapshot=>{this.marketSnapshot=snapshot;this.marketAt=Date.now();return snapshot})
-      .finally(()=>{this.marketInflight=null});
+    this.marketInflight=(async()=>{
+      try{
+        const current=await collectJarvisMarkets({baseUrl:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',fetchImpl:this.fetchImpl});
+        // Never erase previous observations because a source temporarily returns zero.
+        if(current.signals.length)this.marketSnapshot=current;
+        else if(this.marketSnapshot?.signals?.length)this.marketSnapshot={
+          ...this.marketSnapshot,source_states:current.source_states,stale:true
+        };
+        else this.marketSnapshot=current;
+        this.marketAt=Date.now();
+        if(current.signals.length&&this.store.kind==='supabase'){
+          try{await persistMarketSnapshot(this.store,current)}catch(e){
+            // The local scanner remains usable before the SQL migration is applied.
+            this.lastPublishError='market_snapshot_sync_unavailable';
+          }
+        }
+        return this.marketSnapshot;
+      }catch(e){
+        this.marketAt=Date.now();
+        if(this.marketSnapshot?.signals?.length){
+          this.marketSnapshot={...this.marketSnapshot,stale:true};
+          return this.marketSnapshot;
+        }
+        throw e;
+      }
+    })().finally(()=>{this.marketInflight=null});
     return this.marketInflight;
   }
   marketStatus(){
     if(Date.now()-this.marketAt>20_000&&!this.marketInflight)this.refreshMarket().catch(()=>{});
-    return {...(this.marketSnapshot||{signals:[],source_states:{},research_only:true}),refreshing:!!this.marketInflight,
-      last_checked_at:this.marketAt?new Date(this.marketAt).toISOString():null,ui_refresh_ms:1000};
+    const snapshot=this.marketSnapshot||{signals:[],source_states:{},research_only:true};
+    const observedAge=Date.now()-Date.parse(snapshot.observed_at||'');
+    return {...snapshot,stale:!!snapshot.stale||!Number.isFinite(observedAge)||observedAge>180_000,
+      refreshing:!!this.marketInflight,last_checked_at:this.marketAt?new Date(this.marketAt).toISOString():null,ui_refresh_ms:1000};
   }
   publicStatus(){return {settings:this.settings,lowLoad:this.lowLoad,maxConcurrent:this.maxConcurrent,running:[...this.running.keys()],autonomous:this.autonomous?.snapshot()||null,note:'Research only. No wallet signing or launches.'}}
   async handle(request,body={}){
