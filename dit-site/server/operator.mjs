@@ -44,8 +44,11 @@ export class Operator {
         for(const row of current.signals||[]){
           const old=merged.get(row.address);
           if(!old){merged.set(row.address,{...row});continue;}
-          const newer=(Date.parse(row.source_observed_at||row.observed_at||'')||
-            0)>=(Date.parse(old.source_observed_at||old.observed_at||'')||0);
+          // Source time outranks fetch time; an undated discovery cache must not
+          // override real newer tape transactions or five-minute metrics.
+          const newer=row.source_observed_at?
+            (!old.source_observed_at||Date.parse(row.source_observed_at)>=Date.parse(old.source_observed_at)):
+            (!old.source_observed_at&&(Date.parse(row.received_at||'')||0)>=(Date.parse(old.received_at||'')||0));
           const joined={...old,providers:[...new Set([...(old.providers||[]),...(row.providers||[])])]};
           for(const field of ['name','symbol','image_url','created_at','safety','url']){
             if(!joined[field]&&row[field])joined[field]=row[field];
