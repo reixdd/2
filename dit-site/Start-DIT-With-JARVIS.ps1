@@ -37,7 +37,9 @@ if (-not (Get-JarvisHealth)) {
   }
   Write-Host 'Starting the EXISTING JARVIS core, with automatic background agent jobs disabled for this session.'
   # Existing model/team APIs still handle intentional operator research on demand.
+  # Disable unsolicited jobs, not manual lite-mode chat.
   $env:JARVIS_AGENTS_ENABLED = '0'
+  $env:PYTHONPATH = (Join-Path $JarvisRoot 'src') + [IO.Path]::PathSeparator + $env:PYTHONPATH
   $env:JARVIS_HOST = '127.0.0.1'
   $env:JARVIS_PORT = "$JarvisPort"
   $env:JARVIS_DATA_DIR = Join-Path $JarvisRoot 'data'
@@ -52,6 +54,14 @@ if (-not (Get-JarvisHealth)) {
 # Refuse to call an outdated JARVIS API that lacks bounded "lite" mode.
 $openapi = Invoke-RestMethod -Uri "http://127.0.0.1:$JarvisPort/openapi.json" -TimeoutSec 5
 $healthInfo = Invoke-RestMethod -Uri "http://127.0.0.1:$JarvisPort/health" -TimeoutSec 5
+# /health can pass even while the model/team API imports an obsolete class.
+try {
+  $catalog = Invoke-RestMethod -Uri "http://127.0.0.1:$JarvisPort/api/models" -TimeoutSec 5
+  $team = Invoke-RestMethod -Uri "http://127.0.0.1:$JarvisPort/api/agents" -TimeoutSec 5
+  if($null -eq $catalog.selected){ throw 'Model catalog has no selection() contract' }
+} catch {
+  throw 'JARVIS model/team API incompatible (possible stale LocalInference). Stop JARVIS, run UPDATE-JARVIS-DIT.cmd, then restart. Original: ' + $_.Exception.Message
+}
 if($healthInfo.dit_stream_protocol -ne 2){
   throw 'The existing JARVIS is still running older chat streaming code. Stop JARVIS, run UPDATE-JARVIS-DIT.cmd in this DIT folder, and restart this launcher.'
 }
