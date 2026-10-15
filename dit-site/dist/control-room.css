@@ -448,3 +448,7 @@
  .stage.dit-functional-stage .dit-scenery::before,.dit-entity-ring{animation:none!important}
  #dit-transmission-ribbon *{transition:none!important}
 }
+
+/* Mobile: the live terminal's 100%-width plus padding formerly added 28px. */
+.dit-live.dit-tab-terminal{box-sizing:border-box;max-width:100%;width:100%;min-width:0;overflow-x:clip}
+@media(max-width:760px){.dit-live.dit-tab-terminal{padding-inline:14px}}
