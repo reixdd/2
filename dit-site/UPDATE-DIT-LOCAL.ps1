@@ -22,6 +22,8 @@ foreach ($port in @(8768,4173)) {
 $manifest = @(
   @{repo='1'; scope='jarvis'; path='src/jarvis/app.py'; branch='main'},
   @{repo='1'; scope='jarvis'; path='src/jarvis/agent_team.py'; branch='main'},
+  @{repo='1'; scope='jarvis'; path='src/jarvis/ollama.py'; branch='main'},
+  @{repo='1'; scope='jarvis'; path='src/jarvis/runtime.py'; branch='main'},
   @{repo='1'; scope='jarvis'; path='src/jarvis/web/index.html'; branch='main'},
   @{repo='1'; scope='jarvis'; path='src/jarvis/web/app.js'; branch='main'},
   @{repo='1'; scope='jarvis'; path='src/jarvis/web/styles.css'; branch='main'},
@@ -30,14 +32,17 @@ $manifest = @(
   @{repo='2'; scope='dit'; path='dit-site/dist/live-research.css'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/operator.html'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/operator.js'; branch='dit-3d-assets'},
+  @{repo='2'; scope='dit'; path='dit-site/dist/operator-review.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/operator.css'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/server/autonomous.mjs'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/server/operator.mjs'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/server/local.mjs'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/server/lib/routes.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/server/lib/concepts.js'; branch='dit-3d-assets'},
+  @{repo='2'; scope='dit'; path='dit-site/server/lib/agents.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/server/lib/store-core.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/worker/provider-bridge.js'; branch='dit-3d-assets'},
+  @{repo='2'; scope='dit'; path='dit-site/worker/market-bridge.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/Start-DIT-With-JARVIS.ps1'; branch='dit-3d-assets'}
 )
 $stage = Join-Path $env:TEMP ('DIT-update-' + [guid]::NewGuid().ToString('N'))
