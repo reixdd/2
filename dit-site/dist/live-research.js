@@ -1,6 +1,7 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
   const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js');
+  const {chooseVisibleSignals}=await import('./market-view.js');
   const {mountControlRoom,updateControlRoom}=await import('./control-room.js');
   const $ = id => document.getElementById(id);
   const hero=document.getElementById('stage'),controls=document.querySelector('.bottom-bar');
@@ -47,10 +48,17 @@
   const artTile=(c,cls)=>{const a=conceptArtwork(c,liveMarket?.signals||[]);
     return '<div class="'+cls+'">'+(a.url?'<img src="'+esc(a.url)+'" alt="'+esc(a.label)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span class="terminal-art-fallback" hidden>_ IMAGE UNAVAILABLE</span>':'<span>_ ORIGINAL ART PENDING</span>')+
     '<small>'+esc(a.label)+'</small></div>';};
+  const loadedArtwork=new Map(),failedArtwork=new Set();
+  document.addEventListener('load',event=>{
+    const img=event.target;
+    if(img instanceof HTMLImageElement&&img.closest('.market-card-image')&&img.naturalWidth>0)
+      loadedArtwork.set(img.dataset.contract,img.currentSrc||img.src);
+  },true);
   document.addEventListener('error',event=>{
     const img=event.target;
     if(!(img instanceof HTMLImageElement))return;
     if(img.closest('.market-card-image')){
+      failedArtwork.add(String(img.dataset.contract)+'|'+img.src);
       img.hidden=true;
       const missing=img.parentElement?.querySelector('.market-image-error');
       if(missing)missing.hidden=false;
@@ -274,9 +282,14 @@
   }
 
   const money=x=>typeof x==='number'&&Number.isFinite(x)?('$'+(x>=1000?(x/1000).toFixed(1)+'k':Math.round(x).toLocaleString())):'—';
-  const marketImage=s=>safeArtUrl(s.image_url)
-    ?'<img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="'+esc(safeArtUrl(s.image_url))+'" alt="'+esc((s.name||s.symbol||'Token')+' artwork')+'"><span class="market-image-error" hidden>_ IMAGE UNAVAILABLE</span>'
-    :'<div class="market-art-empty" aria-label="No verified artwork">◈ '+esc((s.symbol||'?').slice(0,6))+'</div>';
+  const artworkFor=s=>{
+    const known=loadedArtwork.get(s.address);
+    const url=known||safeArtUrl(s.image_url);
+    return url&&!failedArtwork.has(s.address+'|'+url)?url:null;
+  };
+  const marketImage=s=>artworkFor(s)
+    ?'<img data-contract="'+esc(s.address)+'" loading="lazy" decoding="async" src="'+esc(artworkFor(s))+'" alt="'+esc((s.name||s.symbol||'Token')+' artwork')+'"><span class="market-image-error" hidden>_ IMAGE UNAVAILABLE</span>'
+    :'<div class="market-art-empty" aria-label="No available token artwork">◈ '+esc((s.symbol||'?').slice(0,6))+'</div>';
   function renderLiveMarket(){
     const feed=$('dit-live-evidence');
     if(!feed)return;
@@ -296,10 +309,10 @@
       return;
     }
     delete feed.dataset.marketEmpty;
-    const stream=$('dit-live-filter')?.value||'';
-    const signals=liveMarket.signals.filter(s=>!stream||s.kind===stream).slice(0,12);
+    const stream=$('dit-live-filter')?.value||'new';
+    const signals=chooseVisibleSignals(liveMarket.signals,stream).slice(0,12);
     // Do not recreate image elements at 1Hz: GIFs must keep playing.
-    const structure=JSON.stringify(signals.map(s=>[s.address,s.image_url,s.symbol,s.kind]));
+    const structure=JSON.stringify(signals.map(s=>[s.address,s.symbol,s.kind]));
     if(structure!==marketStructureKey){
       marketStructureKey=structure;
       const cards=signals.map(s=>'<article class="market-card" data-market-index="'+signals.indexOf(s)+'"><div class="market-card-image">'+marketImage(s)+'</div>'+
@@ -308,11 +321,11 @@
         '<div class="market-card-stats"><span>5M VOL<strong data-stat="vol">'+money(s.volume_5m_usd)+'</strong></span><span>LIQUIDITY<strong data-stat="liq">'+money(s.liquidity_usd)+'</strong></span>'+
         '<span>BUYS / SELLS<strong data-stat="txns">'+esc(s.buys_5m??'—')+' / '+esc(s.sells_5m??'—')+'</strong></span>'+
         '<span>MCAP<strong data-stat="mc">'+money(s.market_cap_usd)+'</strong></span>'+
-        '<span>PAIR AGE<strong data-stat="age">'+(s.created_at?esc(new Date(s.created_at).toLocaleString()):'—')+'</strong></span></div>'+
+        '<span>PAIR AGE<strong data-stat="age">'+(s.pair_created_at?esc(new Date(s.pair_created_at).toLocaleString()):'UNVERIFIED')+'</strong></span></div>'+
         '<div class="market-card-foot"><small>'+esc(s.provider||'JARVIS')+' · <time class="market-age" data-time="'+esc(s.source_observed_at||'')+'"></time></small>'+
         '<a href="'+esc(valid(s.url)||'#')+'" target="_blank" rel="noopener noreferrer">VIEW SOURCE ↗</a></div>'+
         '<small class="market-card-disclaimer">Safety: '+esc(s.safety||'UNVERIFIED')+(s.paid_attention?' · PAID ATTENTION':'')+'</small></div></article>').join('');
-      feed.innerHTML='<div class="market-feed-meta"><span>_ JARVIS TAPE / SOURCE-OBSERVED MARKET DATA</span>'+
+      feed.innerHTML='<div class="market-feed-meta"><span>_ '+esc(stream.toUpperCase())+' / JARVIS MARKET TAPE · '+signals.length+' SHOWN</span>'+
         '<span>OBSERVED <time id="market-last-observed"></time></span></div>'+
         '<div class="market-grid">'+cards+'</div>';
     }
@@ -324,7 +337,14 @@
       put('[data-stat="liq"]',money(token.liquidity_usd));
       put('[data-stat="txns"]',String(token.buys_5m??'—')+' / '+String(token.sells_5m??'—'));
       put('[data-stat="mc"]',money(token.market_cap_usd));
-      put('[data-stat="age"]',token.created_at?age(token.created_at):'—');
+      put('[data-stat="age"]',token.pair_created_at?age(token.pair_created_at):'UNVERIFIED');
+      // Reconcile image nodes independently: do not restart successful artwork at 1 Hz.
+      const imageBox=card.querySelector('.market-card-image');
+      const selectedArt=artworkFor(token);
+      const existingImage=imageBox?.querySelector('img');
+      if(imageBox&&selectedArt&&!existingImage)imageBox.innerHTML=marketImage(token);
+      else if(imageBox&&existingImage&&existingImage.hidden&&selectedArt&&existingImage.src!==selectedArt)
+        imageBox.innerHTML=marketImage(token);
       const tick=card.querySelector('.market-age');if(tick){tick.dataset.time=token.source_observed_at||'';tick.textContent=token.source_observed_at?age(token.source_observed_at):'RECEIVED ONLY / SOURCE TIME UNKNOWN'}
     });
     const updated=feed.querySelector('#market-last-observed');
