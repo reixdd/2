@@ -5,7 +5,7 @@ export function artworkUrl(raw){if(typeof raw!=='string'||raw.length>1500)return
 export function artworkCandidates(values,provider='source'){const seen=new Set();return values.flatMap(v=>{const url=artworkUrl(typeof v==='object'?v?.url:v);if(!url||seen.has(url))return [];seen.add(url);return [{url,provider:typeof v?.provider==='string'?v.provider:provider}]}).slice(0,12);}
 export function mergeMarketRows(old,row){if(!old)return {...row};const joined={...old,providers:[...new Set([...(old.providers||[]),...(row.providers||[])])],kinds:[...new Set([...(old.kinds||[old.kind]),...(row.kinds||[row.kind])])],metric_sources:{...old.metric_sources}};
  const newer=(Date.parse(row.source_observed_at||row.provider_response_at||'')||0)>(Date.parse(old.source_observed_at||old.provider_response_at||'')||0);
- for(const key of ['name','symbol','safety','url','pair_created_at','token_created_at','created_at','pair_time_source'])if(!joined[key]&&row[key])joined[key]=row[key];
+ for(const key of ['name','symbol','safety','url','pair_created_at','token_created_at','created_at','pair_time_source','twitter_url'])if(!joined[key]&&row[key])joined[key]=row[key];
  joined.pair_time_verified=!!joined.pair_created_at&&(old.pair_time_verified===true||row.pair_time_verified===true);
  joined.first_observed_at=old.first_observed_at||old.received_at||row.first_observed_at;
  joined.received_at=row.received_at||old.received_at;

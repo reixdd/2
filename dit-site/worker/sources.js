@@ -1,6 +1,7 @@
 // Research source adapters. Every adapter hits a documented public/authorised endpoint, honours a per-source rate limit,
 // and returns normalised observations. None of them has been exercised against the live internet in the build environment:
 // research_sources.verified_live only flips to true after a real successful response at runtime.
+import {coinXFromMetadata} from '../dist/coin-twitter.js';
 const UA = env => env.DIT_USER_AGENT || 'DeadInternetTheoryResearch/1.0 (+contact: set DIT_USER_AGENT)';
 const iso = d => new Date(d).toISOString();
 const pad = n => String(n).padStart(2, '0');
@@ -22,7 +23,7 @@ export const SOURCES = {
       return (j.events || []).filter(e => on.test(e.text)).slice(0, 12).map(e => ({ external_id: `otd:${e.year}:${e.text.slice(0, 40)}`, title: `${e.year}: ${e.text}`.slice(0, 220), url: e.pages?.[0]?.content_urls?.desktop?.page || null, observed_at: iso(ctx.now()), metrics: { year: e.year }, engagement: 1 })); } },
   dexscreener_profiles: { kind: 'market', base_url: 'https://api.dexscreener.com', docs_url: 'https://docs.dexscreener.com/api/reference', rpm: 30,
     async fetch(ctx) { const j = await getJson(ctx, 'https://api.dexscreener.com/token-profiles/latest/v1');
-      return (Array.isArray(j) ? j : []).filter(p => p.chainId === 'solana').slice(0, 25).map(p => ({ external_id: `dsp:${p.tokenAddress}`, title: (p.description && !/^https?:\/\//i.test(p.description) ? p.description : `Solana token ${p.tokenAddress.slice(0,7)}…`).slice(0, 140), url: p.url || `https://dexscreener.com/solana/${p.tokenAddress}`, observed_at: iso(ctx.now()), metrics: { links: (p.links || []).length }, engagement: (p.links || []).length + 1, evidence: { token_address: p.tokenAddress } })); } },
+      return (Array.isArray(j) ? j : []).filter(p => p.chainId === 'solana').slice(0, 25).map(p => ({ external_id: `dsp:${p.tokenAddress}`, title: (p.description && !/^https?:\/\//i.test(p.description) ? p.description : `Solana token ${p.tokenAddress.slice(0,7)}…`).slice(0, 140), url: p.url || `https://dexscreener.com/solana/${p.tokenAddress}`, observed_at: iso(ctx.now()), metrics: { links: (p.links || []).length }, engagement: (p.links || []).length + 1, evidence: { token_address: p.tokenAddress, x_url:coinXFromMetadata(p) } })); } },
   dexscreener_boosts: { kind: 'market', base_url: 'https://api.dexscreener.com', docs_url: 'https://docs.dexscreener.com/api/reference', rpm: 30,
     async fetch(ctx) { const j = await getJson(ctx, 'https://api.dexscreener.com/token-boosts/top/v1');
       // Boosts are PAID promotion. They are recorded but flagged so they are never presented as organic demand.

@@ -1,5 +1,6 @@
 import {timestamp,artworkCandidates,mergeMarketRows} from '../dist/market-data.js';
 import {enrichVerifiedPairs} from './pair-metadata.js';
+import {coinXFromMetadata} from '../dist/coin-twitter.js';
 // Read-only JARVIS market bridge. No direct credentials, wallets, trades or extra schedulers.
 const SOL=/^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const str=(v,n=100)=>String(v??'').replace(/[\r\n\t]+/g,' ').trim().slice(0,n);
@@ -34,7 +35,7 @@ function normalize(row,kind,now,freshnessMs){
  const image_candidates=artworkCandidates([a.logo,a.image_url,a.imageUrl,a.icon,a.logoURI,a.image?.url,row.image_url,row.imageUrl,row.info?.imageUrl,row.info?.image_url,a.metadata?.image,row.metadata?.image,row.baseToken?.logo,row.baseToken?.logoURI],provider);
  const result={chain:'sol',address,name:str(first(a.name,a.token_name,row.name),90),symbol:str(first(a.symbol,a.token_symbol,row.symbol),20),
  kind,kinds:[kind],provider,providers:[provider],pair_created_at,token_created_at,pair_time_verified:!!pair_created_at,pair_time_source:pair_created_at?provider:null,first_observed_at:received_at,first_seen_at:received_at,observed_at:seen,source_observed_at,provider_response_at,received_at,created_at,freshness:fresh?'FRESH':'STALE',
- image_candidates,image_url:image_candidates[0]?.url||null,
+ image_candidates,image_url:image_candidates[0]?.url||null,twitter_url:coinXFromMetadata(row)||coinXFromMetadata(a),
  market_cap_usd:num(first(row.market_cap,row.marketcap,row.marketCap)),
  liquidity_usd:num(first(row.liquidity?.usd,row.liquidity_usd,typeof row.liquidity==='object'?null:row.liquidity)),
  volume_5m_usd:num(first(row.volume_5m,row.volume?.m5)),

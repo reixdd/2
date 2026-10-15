@@ -1,4 +1,5 @@
 import {timestamp,artworkCandidates} from '../dist/market-data.js';
+import {coinXFromMetadata} from '../dist/coin-twitter.js';
 // Targeted pool-age lookup of EXISTING JARVIS observations, never a second scanner.
 const SOL=/^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 export async function enrichVerifiedPairs(snapshot,{fetchImpl=fetch,now=Date.now(),signal}={}){
@@ -25,6 +26,8 @@ export async function enrichVerifiedPairs(snapshot,{fetchImpl=fetch,now=Date.now
   }
   for(const [address,item] of pools){
    const row=byAddress.get(address);
+   const twitter=coinXFromMetadata(item.pair);
+   if(twitter&&!row.twitter_url)row.twitter_url=twitter;
    row.pair_created_at=item.time;row.pair_time_verified=true;
    row.pair_time_source='DexScreener pairCreatedAt · provider-reported';
    if(!row.created_at)row.created_at=item.time;

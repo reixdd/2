@@ -50,6 +50,15 @@ try{
  await page.locator('.market-source-warning').waitFor({timeout:20000});
  assert.equal(await page.locator('#dit-live-evidence .live-row').count(),0,'source research headlines cannot impersonate market pairs');
  assert.equal(await page.locator('.dit-entity').count(),3,'three original HD character controls');
+ await page.locator('.terminal-code-bg--left').waitFor({timeout:15000});
+ await page.locator('.terminal-code-bg--right').waitFor({timeout:15000});
+ const sideRails=await page.locator('.terminal-code-bg').evaluateAll(nodes=>nodes.map(n=>({
+  rows:n.textContent.split('\n').length,top:n.getBoundingClientRect().top,
+  bottom:n.getBoundingClientRect().bottom,color:getComputedStyle(n).color
+ })));
+ assert.equal(sideRails.length,2,'left and right full-height terminal wallpapers');
+ for(const rail of sideRails){assert.ok(rail.rows>=50);assert.ok(rail.top<=0&&rail.bottom>=899);}
+
  assert.equal(await page.locator('#dit-room-pairs').count(),1);
  assert.equal(await page.locator('#dit-treasury-target').count(),1);
  assert.equal(await page.locator('#dit-gfx-toggle').getAttribute('aria-pressed'),'false','HD art is the default');
@@ -74,8 +83,20 @@ try{
  assert.equal(await page.locator('#dit-hud-system').isVisible(),false);
  await page.locator('#dit-appearance').click();
  assert.equal(await page.locator('#dit-appearance').getAttribute('aria-pressed'),'true');
+ const contract='So11111111111111111111111111111111111111112';
+ await page.route('**/api/agents/GHOST_001',route=>route.fulfill({json:{
+  activity:[],research_runs:[],observations:[
+   {title:'Unrelated mainstream source',url:'https://example.org/random-story',observed_at:new Date().toISOString()},
+   {external_id:'dsp:'+contract,evidence:{token_address:contract,x_url:'https://twitter.com/OriginalCoin'},observed_at:new Date().toISOString()}
+  ]
+ }}));
  await page.locator('[data-room-agent="GHOST_001"]').first().click();
  assert.equal(await page.locator('#dit-live-dialog').isVisible(),true,'interactive real dossier');
+ assert.equal(await page.locator('#dit-live-modal-body a[href="https://x.com/OriginalCoin"]').count(),1,
+   'exact-contract source-associated X handle appears as a working safe link');
+ assert.equal(await page.locator('#dit-live-modal-body a[href="https://example.org/random-story"]').count(),0,
+   'unrelated cultural articles excluded from supporting evidence');
+
  await page.locator('#dit-live-close').click();
  await page.locator('.dit-entity[data-id="GHOST_001"] [data-vote]').click();
  await page.locator('#identity-email').waitFor({timeout:5000});

@@ -1,4 +1,5 @@
 import {timestamp,artworkCandidates,METRICS} from '../../dist/market-data.js';
+import {canonicalCoinXUrl} from '../../dist/coin-twitter.js';
 // Server-side JARVIS -> hosted public market snapshot boundary.
 // The browser receives public on-chain observations only; no keys, local URLs or wallet actions.
 const SOL=/^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -24,7 +25,7 @@ export function sanitizeMarketSnapshot(data, now=Date.now()){
       source_observed_at:timestamp(s.source_observed_at),
       provider_response_at:timestamp(s.provider_response_at),
       received_at:Number.isFinite(Date.parse(s.received_at||''))?new Date(s.received_at).toISOString():null,
-      image_url:https(s.image_url),created_at:Number.isFinite(Date.parse(s.created_at||''))?new Date(s.created_at).toISOString():null,
+      image_url:https(s.image_url),twitter_url:canonicalCoinXUrl(s.twitter_url),created_at:Number.isFinite(Date.parse(s.created_at||''))?new Date(s.created_at).toISOString():null,
       volume_5m_usd:num(s.volume_5m_usd),liquidity_usd:num(s.liquidity_usd),
       buys_5m:num(s.buys_5m),sells_5m:num(s.sells_5m),market_cap_usd:num(s.market_cap_usd),
       safety:text(s.safety||'UNVERIFIED',40),paid_attention:s.paid_attention===true,
