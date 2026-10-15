@@ -18,7 +18,7 @@ export class MarketFeed {
 
  const all=snapshot?.signals||[],rows=all.filter(s=>matchesMarketFilter(s,filter,now,snapshot?.new_window_ms||300000)).slice(0,100);
 
- for(const option of document.querySelectorAll('#dit-live-filter option')){const labels={new:'NEW / VERIFIED 5M',recent:'RECENT / VERIFIED 24H',trending:'TRENDING',all:'ALL OBSERVATIONS'};const count=all.filter(s=>matchesMarketFilter(s,option.value,now,snapshot?.new_window_ms||300000)).length;option.textContent=(labels[option.value]||option.value)+' ('+count+')';}
+ for(const option of document.querySelectorAll('#dit-live-filter option')){const labels={new:'NEW / VERIFIED 5M',recent:'RECENT / OBSERVED 24H',trending:'TRENDING',all:'ALL OBSERVATIONS'};const count=all.filter(s=>matchesMarketFilter(s,option.value,now,snapshot?.new_window_ms||300000)).length;option.textContent=(labels[option.value]||option.value)+' ('+count+')';}
  const sources=Object.entries(snapshot?.source_states||{}).map(([k,v])=>k+': '+v).join(' / ');
 
  const times=all.map(s=>Date.parse(s.source_observed_at||'')).filter(Number.isFinite),latest=times.length?Math.max(...times):null;
@@ -58,4 +58,3 @@ export class MarketFeed {
  }
 
 }
-

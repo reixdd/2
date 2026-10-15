@@ -17,6 +17,6 @@ export function mergeMarketRows(old,row){if(!old)return {...row};const joined={.
  return joined;}
 export function matchesMarketFilter(row,filter,now=Date.now(),newWindowMs=300000){const at=Date.parse(row.pair_created_at||''),age=now-at;const verified=row.pair_time_verified===true&&Number.isFinite(at)&&age>=0;
  if(filter==='new')return verified&&age<=newWindowMs;
- if(filter==='recent')return verified&&age<=86400000;
+ if(filter==='recent'){const observed=Date.parse(row.source_observed_at||'');return Number.isFinite(observed)&&now-observed>=-60000&&now-observed<=86400000;}
  if(filter==='trending')return (row.kinds||[row.kind]).includes('trending');
  return true;}

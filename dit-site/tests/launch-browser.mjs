@@ -20,7 +20,7 @@ const cdp=await page.context().newCDPSession(page);await cdp.send('Performance.e
 const outages=[];while(scan<Number(process.env.QA_UPDATES||62)){await page.waitForTimeout(1000);if([15,30,45].includes(scan)){outages.push(scan);assert.match(await page.locator('.market-health').innerText(),/DELAYED/);}assert.equal(await page.evaluate(()=>window.qaImages.every((img,i)=>document.querySelectorAll('.market-card img')[i]===img&&img.src===window.qaSources[i]&&!img.hidden)),true,'image survives scan '+scan);}
 assert.match(await page.locator('[data-stat="vol"]').first().innerText(),/1,0/);
 await page.locator('#dit-live-filter').selectOption('new');assert.equal(await page.locator('.market-card').count(),1);assert.equal(await page.locator('.market-card').first().getAttribute('data-contract'),addresses[0]);
-await page.locator('#dit-live-filter').selectOption('recent');assert.equal(await page.locator('.market-card').count(),5);
+await page.locator('#dit-live-filter').selectOption('recent');assert.equal(await page.locator('.market-card').count(),6);
 await page.locator('#dit-live-filter').selectOption('trending');assert.equal(await page.locator('.market-card').count(),1);
 await page.locator('#dit-live-filter').selectOption('all');assert.equal(await page.locator('.market-card').count(),6);
 await page.locator('#dit-nav-system').click();await page.locator('#dit-hud-system').waitFor({state:'visible'});await page.keyboard.press('Escape');
