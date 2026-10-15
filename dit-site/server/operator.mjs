@@ -90,7 +90,7 @@ export class Operator {
   marketStatus(){
     if(Date.now()-this.marketAt>1000&&!this.marketInflight)this.refreshMarket().catch(()=>{});
     const snapshot=this.marketSnapshot||{signals:[],source_states:{},research_only:true};
-    const upstream=(snapshot.signals||[]).map(x=>Date.parse(x.source_observed_at||x.observed_at||'')).filter(Number.isFinite);
+    const upstream=(snapshot.signals||[]).map(x=>Date.parse(x.source_observed_at||'')).filter(Number.isFinite);
     const lastUpstream=upstream.length?Math.max(...upstream):NaN;
     const observedAge=Date.now()-lastUpstream;
     return {...snapshot,stale:!!snapshot.stale||!Number.isFinite(observedAge)||observedAge>180_000,
