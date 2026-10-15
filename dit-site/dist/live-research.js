@@ -11,7 +11,7 @@
   const api=async path=>{const r=await fetch(path,{cache:'no-store',signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('HTTP '+r.status);return r.json()};
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
   let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketAvailable=true,marketBusy=false,localDrafts=[];
-  let marketStructureKey='',activityStructureKey='',lastActivityTime=0;
+  let marketStructureKey='',activityStructureKey='',conceptStructureKey='',lastActivityTime=0;
   for(const [id,title] of [['dit-live-evidence-section','NEW PAIRS // EVIDENCE'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // APPROVED CONCEPTS']]){
     const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
   }
@@ -94,9 +94,16 @@
     $('dit-live-evidence').innerHTML=rows.length?rows.map(o=>'<article class="live-row"><div><span class="byline">'+esc(o.agent_id)+' / '+esc(o.source_id)+'</span><time>'+when(o.observed_at)+'</time></div><div><h3>'+link(o.url,o.title)+'</h3><p>'+esc(o.evidence?.summary||'Source recorded, claims not independently established.')+'</p></div></article>').join(''):'<p class="live-empty">No recent market observations recorded. General news is hidden.</p>';
     // Activity comes from persisted activity_events, not from old model answer dumps.
     const realEvents=events.map(formatActivity).filter(Boolean).slice(0,20);
-    const key=realEvents.map(e=>e.id+'|'+e.status).join(';');
+    const key=realEvents.map(e=>e.id+'|'+e.status+'|'+e.title).join(';');
     if(key!==activityStructureKey){
       activityStructureKey=key;
+      const shell=document.querySelector('.dit-live');
+      if(shell){
+        let backdrop=shell.querySelector('.terminal-ghost-lines');
+        if(!backdrop){backdrop=document.createElement('div');backdrop.className='terminal-ghost-lines';backdrop.setAttribute('aria-hidden','true');shell.insertBefore(backdrop,shell.firstChild);}
+        backdrop.innerHTML=realEvents.slice(0,14).map((ev,i)=>'<span style="animation-delay:-'+(i*0.7).toFixed(1)+'s">_ '+esc(ev.agent_id)+
+          ' :: '+esc(ev.title)+'</span>').join('');
+      }
       const lines=realEvents.map((ev,i)=>'<button type="button" class="terminal-event" data-live-event="'+esc(ev.id)+'">'+
         portrait(ev.agent_id)+
         '<span class="terminal-event-copy"><small>_ '+esc(ev.agent_id)+' / '+esc(ev.status)+' / '+esc(when(ev.at))+'</small>'+
@@ -114,7 +121,11 @@
     renderLiveMarket();
     const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,12);
     const present=[...liveDrafts.map(c=>({...c,_private:true})),...concepts.map(c=>({...c,_private:false}))];
-    $('dit-live-concepts').innerHTML=present.length?present.map(c=>{
+    const conceptKey=JSON.stringify(present.map(c=>[c.id,c.status,c.updated_at,c.content?.name,c.content?.hook,
+      c.content?.image_url,c.source_refs?.map(x=>x.url), (liveMarket?.signals||[]).filter(s=>(c.source_refs||[]).some(r=>r.url===s.url)).map(s=>s.image_url)]));
+    if(conceptKey!==conceptStructureKey){
+      conceptStructureKey=conceptKey;
+      $('dit-live-concepts').innerHTML=present.length?present.map(c=>{
       const x=c.content||{},label=c._private?'DRAFT // REQUIRES HUMAN REVIEW':'APPROVED CONCEPT';
       return '<article class="terminal-concept-card">'+artTile(c,'terminal-concept-image')+
         '<div class="terminal-concept-copy"><small>_ '+esc(c.agent_id)+' / '+label+'</small>'+
@@ -126,6 +137,7 @@
         '</div></article>';
     }).join(''):'<p class="live-empty">_ NO REVIEWED CONCEPTS YET. MARKET SCANS CONTINUE INDEPENDENTLY<span class="terminal-cursor">_</span></p>';
 
+    }
   }
 
   const money=x=>typeof x==='number'&&Number.isFinite(x)?('$'+(x>=1000?(x/1000).toFixed(1)+'k':Math.round(x).toLocaleString())):'—';
@@ -137,14 +149,14 @@
     if(!feed||!liveMarket?.signals?.length)return;
     const signals=liveMarket.signals.slice(0,12);
     // Do not recreate image elements at 1Hz: GIFs must keep playing.
-    const structure=JSON.stringify(signals.map(s=>[s.address,s.image_url,s.symbol,s.volume_5m_usd,s.liquidity_usd,s.buys_5m,s.sells_5m]));
+    const structure=JSON.stringify(signals.map(s=>[s.address,s.image_url,s.symbol,s.kind]));
     if(structure!==marketStructureKey){
       marketStructureKey=structure;
-      const cards=signals.map(s=>'<article class="market-card"><div class="market-card-image">'+marketImage(s)+'</div>'+
+      const cards=signals.map(s=>'<article class="market-card" data-market-index="'+signals.indexOf(s)+'"><div class="market-card-image">'+marketImage(s)+'</div>'+
         '<div class="market-card-body"><div class="market-card-title"><b>'+esc(s.symbol||'???')+'</b><span>_ '+esc(s.kind||'PAIR')+'</span></div>'+
         '<p class="market-card-name terminal-type">'+esc(s.name||'Unnamed Solana token')+'</p>'+
-        '<div class="market-card-stats"><span>5M VOL<strong>'+money(s.volume_5m_usd)+'</strong></span><span>LIQUIDITY<strong>'+money(s.liquidity_usd)+'</strong></span>'+
-        '<span>BUYS / SELLS<strong>'+esc(s.buys_5m??'—')+' / '+esc(s.sells_5m??'—')+'</strong></span></div>'+
+        '<div class="market-card-stats"><span>5M VOL<strong data-stat="vol">'+money(s.volume_5m_usd)+'</strong></span><span>LIQUIDITY<strong data-stat="liq">'+money(s.liquidity_usd)+'</strong></span>'+
+        '<span>BUYS / SELLS<strong data-stat="txns">'+esc(s.buys_5m??'—')+' / '+esc(s.sells_5m??'—')+'</strong></span></div>'+
         '<div class="market-card-foot"><small>'+esc(s.provider||'JARVIS')+' · <time class="market-age" data-time="'+esc(s.observed_at)+'"></time></small>'+
         '<a href="'+esc(valid(s.url)||'#')+'" target="_blank" rel="noopener noreferrer">VIEW SOURCE ↗</a></div>'+
         '<small class="market-card-disclaimer">Safety: '+esc(s.safety||'UNVERIFIED')+(s.paid_attention?' · PAID ATTENTION':'')+'</small></div></article>').join('');
@@ -153,7 +165,14 @@
         '<div class="market-grid">'+cards+'</div>';
     }
     const age=x=>{const t=Date.parse(x||'');return Number.isFinite(t)?Math.max(0,Math.floor((Date.now()-t)/1000))+'s ago':'unknown'};
-    feed.querySelectorAll('.market-age').forEach(el=>{el.textContent=age(el.dataset.time)});
+    feed.querySelectorAll('.market-card').forEach(card=>{
+      const token=signals[Number(card.dataset.marketIndex)];if(!token)return;
+      const put=(sel,value)=>{const el=card.querySelector(sel);if(el&&el.textContent!==value)el.textContent=value};
+      put('[data-stat="vol"]',money(token.volume_5m_usd));
+      put('[data-stat="liq"]',money(token.liquidity_usd));
+      put('[data-stat="txns"]',String(token.buys_5m??'—')+' / '+String(token.sells_5m??'—'));
+      const tick=card.querySelector('.market-age');if(tick){tick.dataset.time=token.observed_at;tick.textContent=age(token.observed_at)}
+    });
     const updated=feed.querySelector('#market-last-observed');
     if(updated)updated.textContent=age(liveMarket.last_checked_at)+(liveMarket.refreshing?' / REFRESHING':'');
   }
@@ -198,6 +217,6 @@
   }
   refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);setInterval(refreshPrivateDrafts,15000);
   setInterval(refreshActivity,5000);setInterval(()=>{if(liveMarket)renderLiveMarket()},1000);
-  if(typeof EventSource!=='undefined'){const channel=new EventSource('/api/stream');channel.onmessage=()=>{refreshActivity();refreshPrivateDrafts()};}
+  if(typeof EventSource!=='undefined'&&['localhost','127.0.0.1'].includes(location.hostname)){const channel=new EventSource('/api/stream');channel.onmessage=()=>{refreshActivity();refreshPrivateDrafts()};}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();refreshLiveMarket()}});
 })();
