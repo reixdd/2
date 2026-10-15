@@ -337,6 +337,9 @@ async function buildStage(THREE, canvas, live, section, ambient=false) {
   function frame(now) {
     raf = 0; pending = false;
     if (!visible || document.hidden || disposed || lost || !gfxEnabled || section.dataset.performance === 'slow') { lastFrame=0; return; }
+    // High-refresh monitors can schedule hundreds of frames/sec. Cap the expensive
+    // shader to ~110fps while CSS architecture continues on its own compositor.
+    if(ambient && lastFrame && now-lastFrame < 9){raf=requestAnimationFrame(frame);return;}
     if (needsResize) { resize(); needsResize=false; }
     if(lastFrame && ambient && guard.sample(now-lastFrame)){
       section.dataset.performance = 'slow';
