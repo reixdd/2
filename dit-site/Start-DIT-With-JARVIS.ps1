@@ -51,9 +51,13 @@ if (-not (Get-JarvisHealth)) {
 }
 # Refuse to call an outdated JARVIS API that lacks bounded "lite" mode.
 $openapi = Invoke-RestMethod -Uri "http://127.0.0.1:$JarvisPort/openapi.json" -TimeoutSec 5
+$healthInfo = Invoke-RestMethod -Uri "http://127.0.0.1:$JarvisPort/health" -TimeoutSec 5
+if($healthInfo.dit_stream_protocol -ne 2){
+  throw 'The existing JARVIS is still running older chat streaming code. Stop JARVIS, run UPDATE-JARVIS-DIT.cmd in this DIT folder, and restart this launcher.'
+}
 $modes = @($openapi.components.schemas.ChatRequest.properties.mode.enum)
 if ('lite' -notin $modes -or -not $openapi.components.schemas.ChatRequest.properties.model) {
-  throw 'JARVIS is running an older API without three-agent model routing. Update the existing reixdd/1 installation and restart JARVIS; do not launch a duplicate.'
+  throw 'JARVIS is running older agent routing. Stop JARVIS, run UPDATE-JARVIS-DIT.cmd in this DIT folder, then restart the launcher.'
 }
 try {
   $ollama = Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/tags' -TimeoutSec 3
