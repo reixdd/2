@@ -1,0 +1,55 @@
+name: Verify DIT three-agent JARVIS local runtime
+on:
+  push:
+    branches: [dit-3d-assets]
+    paths:
+      - 'dit-site/server/operator.mjs'
+      - 'dit-site/server/local.mjs'
+      - 'dit-site/server/autonomous.mjs'
+      - 'dit-site/server/lib/concepts.js'
+      - 'dit-site/server/lib/routes.js'
+      - 'dit-site/server/lib/store-core.js'
+      - 'dit-site/dist/index.html'
+      - 'dit-site/dist/live-research.js'
+      - 'dit-site/dist/live-research.css'
+      - 'dit-site/dist/operator.html'
+      - 'dit-site/dist/operator-review.js'
+      - 'dit-site/dist/operator.css'
+      - 'dit-site/tests/autonomous-research.test.js'
+      - 'dit-site/tests/miami-live.test.js'
+      - 'dit-site/tests/visual-backend-regression.test.js'
+      - 'dit-site/tests/legacy-archive.test.js'
+      - 'dit-site/Start-DIT-With-JARVIS.ps1'
+      - 'dit-site/worker/market-bridge.js'
+      - 'dit-site/worker/sources.js'
+      - 'dit-site/server/lib/agents.js'
+      - 'dit-site/dist/operator.js'
+      - 'dit-site/tests/market-bridge.test.js'
+      - 'dit-site/Update-JARVIS-DIT.ps1'
+      - 'dit-site/UPDATE-DIT-LOCAL.ps1'
+      - 'dit-site/supabase/functions/dit-cultural-evidence/index.ts'
+      - 'dit-site/worker/provider-bridge.js'
+      - 'dit-site/tests/operator-bridge.test.js'
+      - '.github/workflows/dit-jarvis-lite-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dit-site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify three-agent operator bridge
+        run: node --test tests/operator-bridge.test.js
+      - name: Run existing source regression tests
+        run: npm test
+      - name: Check live browser module
+        run: node --check dist/live-research.js && node --check dist/operator-review.js
+      - name: Check host worker build
+        run: npm run build

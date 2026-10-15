@@ -1,3 +1,4 @@
+// Archived V7 design regression: current homepage intentionally uses the user's MIAMI SIGNAL HTML.
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
@@ -34,7 +35,7 @@ test('cinematic effects respect reduced motion and mobile layout', () => {
 });
 
 test('only the original read-only API remains responsible for displaying real data', () => {
-  const html = src('index.html');
+  const html = src('legacy-v7.html');
   assert.match(html, /id="dit-stage-note">AWAITING BACKEND/);
   assert.match(html, /id="dit-activity"/);
   assert.match(html, /id="dit-treasury"/);

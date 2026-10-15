@@ -1,8 +1,9 @@
+// Archived V7 design regression: current homepage intentionally uses the user's MIAMI SIGNAL HTML.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const read = p => fs.readFileSync(new URL(p,import.meta.url),'utf8');
-const html=read('../dist/index.html');const css=read('../dist/experience.css');const stage=read('../dist/stage.js');const sound=read('../dist/sound.js');const scheduler=read('../worker/scheduler.js');
+const html=read('../dist/legacy-v7.html');const css=read('../dist/experience.css');const stage=read('../dist/stage.js');const sound=read('../dist/sound.js');const scheduler=read('../worker/scheduler.js');
 test('V4 uses an open character stage rather than a boxed crypto dashboard',()=>{
  assert.match(html,/id="dit-stage"/);assert.match(html,/id="dit-sound-toggle"/);assert.match(html,/reference-v7.css/);
  assert.match(css,/\.control-deck\{[^}]*border:0!important/);

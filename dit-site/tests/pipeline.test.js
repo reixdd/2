@@ -8,6 +8,7 @@ import { bootstrap } from '../worker/bootstrap.js';
 import { Scheduler } from '../worker/scheduler.js';
 import {createLlm} from '../worker/llm.js';
 const fakeFetch=async(url)=>{
+ if(url.includes('token-profiles/latest/v1'))return {ok:true,json:async()=>[{chainId:'solana',tokenAddress:'So11111111111111111111111111111111111111112',description:'New Solana joke'}, {chainId:'solana',tokenAddress:'11111111111111111111111111111111',description:'Old meme returned'}]};
  if(url.includes('/metrics/pageviews'))return {ok:true,json:async()=>({items:[{articles:[{article:'GeoCities',views:40000,rank:1}]}]})};
  if(url.includes('onthisday'))return {ok:true,json:async()=>({events:[{year:1999,text:'The computer internet network changed',pages:[{content_urls:{desktop:{page:'https://en.wikipedia.org/wiki/Internet'}}}]}]})};
  if(url.includes('dex/search'))return {ok:true,json:async()=>({pairs:[]})};

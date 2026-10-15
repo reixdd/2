@@ -1,3 +1,4 @@
+import {publicConcepts} from './concepts.js';
 // Backend routes beyond the original read-only chain verifier. Returns a Response, or null when the path is not ours.
 import { AGENTS, AGENT_IDS } from './agents.js';
 import { createStore } from './store-core.js';
@@ -18,12 +19,12 @@ const publicAgent = (a, p) => ({ id: a.id, title: a.title, tagline: a.tagline, s
 async function workerStatus(store) {
   const beats = await store.select('worker_heartbeats'); const now = Date.now();
   const workers = beats.map(b => ({ worker_id: b.worker_id, version: b.version, started_at: b.started_at, last_seen_at: b.last_seen_at, alive: now - Date.parse(b.last_seen_at) < 180_000, info: b.info }));
-  return { alive: workers.some(w => w.alive), workers };
+  return { alive: workers.some(w => w.alive && ['local_autonomous_research','local_research'].includes(w.info?.kind)), workers };
 }
 
 export async function handleBackendApi(request, env, deps = {}) {
   const url = new URL(request.url); const path = url.pathname; const method = request.method;
-  const mine = path === '/api/config' || path === '/api/health' || path === '/api/vote' || path === '/api/votes' || path === '/api/me/vote' || /^\/api\/(agents|activity|proposals|tokens|treasury|memories|observations|evidence|integrations|results)(\/|$)/.test(path);
+  const mine = path === '/api/config' || path === '/api/health' || path === '/api/vote' || path === '/api/votes' || path === '/api/me/vote' || /^\/api\/(agents|activity|proposals|tokens|treasury|memories|observations|evidence|integrations|results|observatory|concepts)(\/|$)/.test(path);
   if (!mine) return null;
   const allowedPost = path === '/api/vote' || path === '/api/integrations/circuit';
   if (method !== 'GET' && !(method === 'POST' && allowedPost)) return json({ error: 'Read-only API. Token signing is never exposed to visitors.' }, 405);
@@ -34,9 +35,41 @@ export async function handleBackendApi(request, env, deps = {}) {
     const authMode = publicUrl && anonKey ? 'supabase' : env.DIT_DEV_AUTH === '1' && !publicUrl ? 'dev' : 'none';
     // Safe diagnostic: only missing variable NAMES, never values or secret prefixes.
     const missing = [!publicUrl && 'SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL', !env.SUPABASE_SERVICE_ROLE_KEY && 'SUPABASE_SERVICE_ROLE_KEY'].filter(Boolean);
-    if (path === '/api/config') return json({ backend: { configured: !!store, kind: store?.kind || null, missingBindings: store ? [] : missing }, auth: authMode, supabase: authMode === 'supabase' ? { url: publicUrl, anonKey } : null, treasuryTargetBps: Number(env.TREASURY_BPS || 2500), simulationOnly: true, release: 'v7-interactive-2_5d-20261014' });
+    if (path === '/api/config') return json({ backend: { configured: !!store, kind: store?.kind || null, missingBindings: store ? [] : missing }, auth: authMode, supabase: authMode === 'supabase' ? { url: publicUrl, anonKey } : null, treasuryTargetBps: Number(env.TREASURY_BPS || 2500), simulationOnly: true, release: 'dit-miami-signal-20261015' });
     if (!store) return json({ error: 'backend_not_configured', message: 'The database is not connected. Nothing below is live.' }, 503);
 
+    if(path==='/api/concepts'||path.startsWith('/api/concepts/')){
+      const id=path==='/api/concepts'?null:decodeURIComponent(path.slice('/api/concepts/'.length));
+      const rows=await publicConcepts(store,id);
+      return id?(rows.length?json({concept:rows[0],fictional:true}):json({error:'Not found'},404)):
+        json({concepts:rows,fictional:true});
+    }
+    if(path==='/api/observatory'){
+      const [agents,profiles,beats,schedules,runs]=await Promise.all([
+        store.select('agents'),store.select('agent_profiles'),store.select('worker_heartbeats'),
+        store.select('research_schedules'),store.select('agent_research_runs',{order:['started_at','desc'],limit:50})
+      ]);
+      const local=beats.find(x=>x.worker_id==='dit-autonomous-local');
+      const collector=beats.find(x=>x.worker_id==='dit-edge-cultural-evidence');
+      const fresh=x=>!!x&&Number.isFinite(Date.parse(x.last_seen_at))&&
+        Date.now()>=Date.parse(x.last_seen_at)&&Date.now()-Date.parse(x.last_seen_at)<180000;
+      const live=fresh(local);
+      return json({checked_at:new Date().toISOString(),researcher:{
+        online:live,last_seen_at:local?.last_seen_at||null,
+        paused_reason:live?local.info?.paused_reason||null:null,
+        active:live?local.info?.active||[]:[],
+        resources:live?local.info?.resources||null:null
+      },collector:{online:fresh(collector),last_seen_at:collector?.last_seen_at||null},
+      agents:agents.map(a=>{
+        const schedule=schedules.find(x=>x.agent_id===a.id);
+        const run=runs.find(x=>x.agent_id===a.id);
+        return {...publicAgent(a,profiles.find(p=>p.agent_id===a.id)),
+          presence:!live?'offline':local.info?.active?.includes(a.id)?'researching':
+            local.info?.paused_reason?'resource pause':schedule?.enabled===false?'paused':'waiting',
+          next_due_at:schedule?.next_due_at||null,queue_status:schedule?.status||null,
+          last_run:run?{id:run.id,status:run.status,started_at:run.started_at,finished_at:run.finished_at,error:run.error}:null};
+      })});
+    }
     if (path === '/api/health') {
       const [w, jobs, sources] = await Promise.all([workerStatus(store), store.select('agent_jobs', { order: ['created_at', 'desc'], limit: 30, columns: 'id,agent_id,kind,status,stage,attempts,error,started_at,finished_at,created_at' }), store.select('research_sources')]);
       const agents = await store.select('agents');

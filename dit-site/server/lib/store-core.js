@@ -51,14 +51,15 @@ const UNIQUE = {
   research_sources: [['id']], trend_clusters: [['agent_id', 'key']], observations: [['agent_id', 'source_id', 'external_id']],
   token_proposals: [], verified_tokens: [['mint'], ['signature']], circuit_events: [['source', 'external_id']],
   fee_receipts: [['source', 'external_id']], treasury_allocations: [['receipt_id'], ['transfer_signature']],
-  treasury_ledger: [['idempotency_key']], worker_heartbeats: [['worker_id']], agent_research_runs: [['id']]
+  treasury_ledger: [['idempotency_key']], worker_heartbeats: [['worker_id']], agent_research_runs: [['id']],
+  research_schedules: [['agent_id']], fictional_concepts: [['id'], ['run_id']]
 };
-const IDENTITY = { agents: 'id', agent_profiles: 'agent_id', agent_vote_counts: 'agent_id', research_sources: 'id', verified_tokens: 'mint', worker_heartbeats: 'worker_id', agent_votes: 'user_id' };
+const IDENTITY = { agents: 'id', agent_profiles: 'agent_id', agent_vote_counts: 'agent_id', research_sources: 'id', verified_tokens: 'mint', worker_heartbeats: 'worker_id', agent_votes: 'user_id', research_schedules: 'agent_id', fictional_concepts: 'id' };
 const SERIAL = new Set(['activity_events', 'audit_logs', 'treasury_ledger', 'vote_changes']);
 const DEFAULTS = {
   agents: { state: 'IDLE', current_stage: null, state_since: nowIso, last_active_at: null, is_active: true },
   agent_jobs: { status: 'queued', stage: null, payload: () => ({}), attempts: 0, max_attempts: 3, run_after: nowIso, timeout_ms: 120000, locked_by: null, locked_until: null, started_at: null, finished_at: null, error: null, result: null, tokens_in: 0, tokens_out: 0, cost_usd_micros: 0, created_at: nowIso },
-  agent_memories: { tags: () => [], importance: 0.5, source_refs: () => [], job_id: null, recall_count: 0, last_recalled_at: null, created_at: nowIso },
+  agent_memories: { tags: () => [], importance: 0.5, source_refs: () => [], job_id: null, run_id: null, recall_count: 0, last_recalled_at: null, created_at: nowIso },
   observations: { category: 'general', classifier: 'rules', confidence: null, metrics: () => ({}), evidence: () => ({}), cluster_id: null, job_id: null, observed_at: nowIso, created_at: nowIso, url: null },
   trend_clusters: { score: 0, observation_count: 0, first_seen_at: nowIso, last_seen_at: nowIso },
   token_proposals: { status: 'RESEARCHING', evidence_ids: () => [], created_at: nowIso, updated_at: nowIso, approved_by: null, approved_at: null, simulation: null, outcome: null, outcome_checked_at: null, lesson: null, rejected_reason: null, dedupe_key: null },
@@ -70,7 +71,9 @@ const DEFAULTS = {
   fee_receipts: { status: 'observed', simulated: false, observed_at: nowIso, confirmed_lamports: null, confirmed_at: null, note: null, circuit_event_id: null, mint: null, tx_signature: null },
   treasury_allocations: { status: 'calculated', transferred_lamports: 0, transfer_signature: null, simulated: false, note: null, created_at: nowIso, updated_at: nowIso, mechanism: null },
   agent_votes: { created_at: nowIso, updated_at: nowIso, change_count: 0 },
-  agent_research_runs: { status:'running', source_refs:()=>[], started_at:nowIso, finished_at:null, model:null, answer:null, error:null },
+  agent_research_runs: { status:'running', source_refs:()=>[], diagnostics:()=>({}), started_at:nowIso, finished_at:null, model:null, answer:null, error:null },
+  research_schedules: { enabled:true,interval_minutes:20,next_due_at:nowIso,last_run_id:null,attempts:0,status:'waiting',detail:null,owner:null,lease_until:'1970-01-01T00:00:00Z',revision:1,updated_at:nowIso },
+  fictional_concepts: { status:'review',revision:1,source_refs:()=>[],history:()=>[],created_at:nowIso,updated_at:nowIso,published_at:null },
   verified_tokens: { finality: 'finalized', verified_at: nowIso, proposal_id: null }
 };
 const PROPOSAL_ALLOWED = new Set(['RESEARCHING>DRAFT', 'DRAFT>EVALUATED', 'EVALUATED>PROPOSED', 'PROPOSED>APPROVED', 'APPROVED>SIMULATED', 'SIMULATED>VERIFIED', 'RESEARCHING>REJECTED', 'DRAFT>REJECTED', 'EVALUATED>REJECTED', 'PROPOSED>REJECTED']);

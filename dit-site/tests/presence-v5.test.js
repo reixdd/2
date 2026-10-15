@@ -1,10 +1,11 @@
+// Archived V7 design regression: current homepage intentionally uses the user's MIAMI SIGNAL HTML.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createLlm, selectOllamaModels } from '../worker/llm.js';
 const file = n=>readFileSync(new URL(n, import.meta.url),'utf8');
 test('V5 keeps one open stage, top-level system, independent music controls and a 2.5D stage',()=>{
- const html=file('../dist/index.html'),css=file('../dist/presence-v5.css'),stage=file('../dist/stage.js');
+ const html=file('../dist/legacy-v7.html'),css=file('../dist/presence-v5.css'),stage=file('../dist/stage.js');
  assert.match(html,/reference-v7\.css/);assert.match(html,/id="dit-music-toggle"/);assert.match(html,/03 \/ SYSTEM</);
  assert.match(stage,/PlaneGeometry/);assert.match(stage,/assets\/cutouts/);assert.doesNotMatch(stage,/CylinderGeometry/);assert.doesNotMatch(stage,/const orbitRings/);
  assert.match(css,/\.dit-stage-labels\{width:min\(67%/);assert.match(css,/grayscale\(1\)/);

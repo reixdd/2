@@ -2,9 +2,9 @@
 // DIT owns its prompts, records and validation; JARVIS retains control of its specialist manager.
 export const IDENTITIES = ['GHOST_001','NULL_ENTITY','ECHO.exe'];
 export const BRIEFS = {
-  GHOST_001:'Historical context and remembered internet culture. Request INVESTIGATOR, REVIEWER and SCIENTIST emphasis; distinguish observed facts and interpretations.',
-  NULL_ENTITY:'Early signals and counter-evidence. Request SCOUT, QUANT_SKEPTIC and REVIEWER emphasis; flag paid attention and uncertain sources.',
-  'ECHO.exe':'Viral narratives, recurring memes and independent sources. Request SOCIAL, CALLER and REVIEWER emphasis; never present promotional claims as fact.'
+  GHOST_001:'Meme archivist. Connect genuine observed Solana themes to old internet jokes; be brief, funny and original.',
+  NULL_ENTITY:'New-pair signal hunter. Use only supplied market evidence; explain one real pattern, one uncertainty and one original meme idea.',
+  'ECHO.exe':'Absurdist meme writer. Produce a short punchline, ticker-like name and X-style draft from verified evidence; no fabricated buzz.'
 };
 const loopback = new Set(['localhost','127.0.0.1','[::1]','::1']);
 export function normalizedBase(raw, provider) {
@@ -32,7 +32,19 @@ export async function discoverProvider(settings,{fetchImpl=fetch,signal}={}){
   let rows=s.provider==='ollama'?j.models:s.provider==='jarvis'?(j.models||j.available_models||j.data):j.data;
   if(!Array.isArray(rows) && s.provider==='jarvis') rows=Object.values(rows||{}).flatMap(v=>typeof v==='string'?[v]:Array.isArray(v)?v:[]);
   const models=(Array.isArray(rows)?rows:[]).map(x=>typeof x==='string'?x:x?.name||x?.id||x?.model).filter(x=>typeof x==='string'&&x.length<150);
-  return {provider:s.provider,models:[...new Set(models)],healthy:true,service:s.url};
+  return {provider:s.provider,models:[...new Set(models)],healthy:true,service_reachable:true,models_discovered:models.length>0,inference_verified:false,service:s.url};
+}
+export async function verifyModel(settings,agentId,{fetchImpl=fetch,signal}={}) {
+  const discovery=await discoverProvider(settings,{fetchImpl,signal});
+  const chosen=validateSettings(settings).models[agentId];
+  if(!IDENTITIES.includes(agentId))throw Error('Invalid agent');
+  if(chosen && !discovery.models.includes(chosen)) return {...discovery,agent_id:agentId,model:chosen,model_installed:false,inference_verified:false,error:'Assigned model not installed; inspect JARVIS /api/models'};
+  if(!chosen && !discovery.models.length) return {...discovery,agent_id:agentId,model:null,model_installed:false,inference_verified:false,error:'No installed text models discovered'};
+  try {
+    const probeSignal=signal?AbortSignal.any([signal,AbortSignal.timeout(60_000)]):AbortSignal.timeout(60_000);
+    const r=await runResearch({settings,agentId,prompt:'Reply with exactly: READY. This is a short local inference diagnostic, not a research task.',fetchImpl,signal:probeSignal});
+    return {...discovery,agent_id:agentId,model:r.model||chosen||null,model_installed:!!(chosen||discovery.models.length),inference_verified:!!r.answer?.trim(),sample:r.answer.trim().slice(0,100)};
+  } catch(e) {return {...discovery,agent_id:agentId,model:chosen||null,model_installed:!!(chosen||discovery.models.length),inference_verified:false,error:boundedText(e.message,230)};}
 }
 function boundedText(x,limit=20000){return String(x||'').slice(0,limit)}
 export async function readNdjson(response,{signal,onRecord}={}){
@@ -54,6 +66,7 @@ export async function readNdjson(response,{signal,onRecord}={}){
     }
     if(tail.trim()){try{const r=JSON.parse(tail);onRecord?.(r);if(r.type==='answer')answer=boundedText(r.answer||r.text||answer);if(r.type==='done')finished=true}catch{}}
   } finally {try{await reader.cancel()}catch{}}
+  if(!finished)throw Error('JARVIS stream ended before done; check JARVIS request logs for the matching failure');
   return {answer:boundedText(answer),done:finished,model:actualModel,events:records};
 }
 export async function runResearch({settings,agentId,prompt,signal,fetchImpl=fetch,onRecord}){
@@ -61,10 +74,10 @@ export async function runResearch({settings,agentId,prompt,signal,fetchImpl=fetc
  const selected=s.models[agentId];if(s.provider!=='jarvis'&&!selected)throw Error('Choose an installed model for '+agentId);
  const p=boundedText(prompt,3500).trim();if(!p||p.length<8)throw Error('Research prompt must be 8–3500 characters');
  const user=`DEAD INTERNET THEORY RESEARCH ONLY. Do not sign transactions, propose deceptive promotion or claim unverified observations as fact. Identity: ${agentId}. ${BRIEFS[agentId]}\nResearch question: ${p}\nSeparate source facts, hypotheses and uncertainty. Include source links when available.`;
- const abort=timeoutSignal(signal,90000);
+ const abort=timeoutSignal(signal,s.provider==='jarvis'?660000:75000);
  if(s.provider==='jarvis'){
-    const response=await fetchImpl(s.url+'/api/chat',{method:'POST',headers:{'content-type':'application/json',accept:'application/x-ndjson'},body:JSON.stringify({message:user,identity_key:agentId,mode:agentId==='NULL_ENTITY'?'deep':'fast'}),signal:abort});
-    const result=await readNdjson(response,{signal:abort,onRecord});if(!result.answer)throw Error('JARVIS returned no research answer');return {answer:result.answer,model:result.model,provider:'jarvis',requested_specialists:BRIEFS[agentId],stream_completed:result.done};
+    const response=await fetchImpl(s.url+'/api/chat',{method:'POST',headers:{'content-type':'application/json',accept:'application/x-ndjson'},body:JSON.stringify({message:user,identity_key:agentId,mode:'lite',...(selected?{model:selected}:{})}),signal:abort});
+    const result=await readNdjson(response,{signal:abort,onRecord});if(!result.answer)throw Error('JARVIS returned no research answer after completed stream');return {answer:result.answer,model:result.model||selected||null,provider:'jarvis',requested_specialists:BRIEFS[agentId],stream_completed:result.done};
  }
  const discovery=await discoverProvider(s,{fetchImpl,signal:abort});if(!discovery.models.includes(selected))throw Error(`Configured model ${selected} is unavailable; refresh models`);
  let response;

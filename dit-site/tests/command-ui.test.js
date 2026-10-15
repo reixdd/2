@@ -1,7 +1,8 @@
+// Archived V7 design regression: current homepage intentionally uses the user's MIAMI SIGNAL HTML.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-const html = fs.readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
+const html = fs.readFileSync(new URL('../dist/legacy-v7.html', import.meta.url), 'utf8');
 const script = fs.readFileSync(new URL('../dist/command.js', import.meta.url), 'utf8');
 const css = fs.readFileSync(new URL('../dist/command.css', import.meta.url), 'utf8');
 const stage = fs.readFileSync(new URL('../dist/stage.js', import.meta.url), 'utf8');
