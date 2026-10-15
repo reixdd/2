@@ -72,7 +72,7 @@ export class Scheduler {
     } catch (e) {
       const dead = e.fatal || job.attempts >= job.max_attempts;
       await this.store.update('agent_jobs', [['id', 'eq', job.id]], dead ? { status: 'dead', error: String(e.message).slice(0, 500), finished_at: this.iso(), locked_until: null } : { status: 'queued', error: String(e.message).slice(0, 500), run_after: this.iso(this.clock() + backoff(job.attempts, this.limits.backoffBaseMs)), locked_until: null, locked_by: null });
-      if (job.agent_id) { await setAgentState(this.store, job.agent_id, null, this.clock).catch(() => {}); await this.store.insert('activity_events', { agent_id: job.agent_id, job_id: job.id, event_type: dead ? 'job_dead' : 'job_retry', severity: 'error', title: `${job.agent_id} ${job.kind} ${dead ? 'failed permanently' : 'failed; retry scheduled'}`, detail: String(e.message).slice(0, 300) }).catch(() => {}); }
+      if (job.agent_id) { await setAgentState(this.store, job.agent_id, null, this.clock).catch(() => {}); await this.store.insert('activity_events', { agent_id: job.agent_id, job_id: job.id, event_type: dead ? 'job_dead' : 'job_retry', severity: 'error', title: `${job.agent_id} ${job.kind} ${dead ? 'exhausted attempts for this run; check operator diagnostics' : 'failed; retry scheduled'}`, detail: String(e.message).slice(0, 300) }).catch(() => {}); }
       this.log('job fail', job.kind, job.agent_id, e.message); return { ok: false, dead };
     } finally { clearTimeout(timer); }
   }
