@@ -23,7 +23,7 @@ test('hosted Site supports public Supabase URL alias but still requires a privat
 test('backend diagnostic describes missing bindings by name only and identifies deployed release',async()=>{
  const r=await (await handleApi(req('/api/config'), {})).json();
  assert.deepEqual(r.backend.missingBindings,['SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY']);
- assert.equal(r.release,'v7-interactive-2_5d-20261014');
+ assert.equal(r.release,'dit-miami-signal-20261015');
 });
 test('moving background bars never overlay characters or run during reduced motion',()=>{
  const css=read('../dist/reference-v7.css'), html=read('../dist/legacy-v7.html'), stage=read('../dist/stage.js');
