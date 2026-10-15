@@ -19,7 +19,7 @@ $('schedule-controls').onsubmit=async ev=>{
   try{await request('/operator/api/schedule',{agent_id:form.dataset.agent,revision:Number(form.dataset.revision),enabled:data.has('enabled'),interval_minutes:Number(data.get('interval_minutes'))});$('schedule-message').textContent='Saved. The identity will honor its next interval.';await schedules()}
   catch(e){$('schedule-message').textContent=e.message}
 };
-const required={name:'Concept name',ticker:'Ticker-style identifier (fictional)',narrative:'Cultural narrative',cultural_origin:'Historical / cultural origin',artwork_brief:'Art direction',social_draft:'Original social content draft (not posted)'};
+const required={name:'Concept name',ticker:'Ticker-style identifier (fictional)',hook:'One-line meme hook (under 15 words)',buzzwords:'Buzzwords (comma-separated)',narrative:'Cultural narrative',cultural_origin:'Historical / cultural origin',artwork_brief:'Art direction',social_draft:'Original social content draft (not posted)'};
 const anatomy={spread:'Why the narrative may spread',references:'References and recognition',evidence:'What recorded evidence supports',synthetic_distortion:'Risks of synthetic amplification',uncertainty:'Unknowns / limitations'};
 function paint(){
   selected=drafts.find(x=>x.id===$('review-select').value)||null;
@@ -27,7 +27,7 @@ function paint(){
   if(!selected)return;
   const c=selected.content||{},a=c.attention_anatomy||{};
   const textarea=(name,label,value)=>'<label>'+h(label)+'<textarea name="'+h(name)+'" rows="'+(['name','ticker'].includes(name)?1:3)+'" required>'+h(value||'')+'</textarea></label>';
-  $('review-fields').innerHTML=Object.entries(required).map(([k,v])=>textarea(k,v,c[k])).join('')+
+  $('review-fields').innerHTML=Object.entries(required).map(([k,v])=>textarea(k,v,k==='buzzwords'?(c[k]||[]).join(', '):c[k])).join('')+
     '<label>Interpretation confidence (0–1)<input name="confidence" type="number" min="0" max="1" step=".01" value="'+h(c.confidence??0.25)+'"></label>'+
     textarea('contradictory_evidence','Counter-evidence (one per line)',(c.contradictory_evidence||[]).join('\n'))+
     '<h3>ATTENTION ANATOMY</h3>'+Object.entries(anatomy).map(([k,v])=>textarea('a_'+k,v,a[k])).join('');
@@ -47,7 +47,7 @@ $('review-select').onchange=paint;
 $('review-form').onsubmit=async ev=>{
   ev.preventDefault();if(!selected)return;
   const data=new FormData(ev.target),content={...selected.content};
-  for(const key of Object.keys(required))content[key]=String(data.get(key)||'');
+  for(const key of Object.keys(required))content[key]=key==='buzzwords'?String(data.get(key)||'').split(',').map(v=>v.trim()).filter(Boolean).slice(0,4):String(data.get(key)||'');
   content.ticker=content.ticker.toUpperCase().trim();
   content.confidence=Number(data.get('confidence'));
   content.contradictory_evidence=String(data.get('contradictory_evidence')||'').split('\n').map(x=>x.trim()).filter(Boolean);
