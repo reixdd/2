@@ -30,7 +30,7 @@ export function mountControlRoom({openAgent,activateTab}={}){
    '<div class="dit-room-title"><span>PROTOCOL_001 / JARVIS EVIDENCE ENGINE</span><h1>DEAD INTERNET THEORY<span class="dit-blink">_</span></h1>'+
    '<p>THE INTERNET IS NO LONGER YOURS. THREE MACHINES. ONE OBSERVABLE NETWORK.</p></div>'+
    '<div class="dit-room-metrics"><div><strong id="dit-room-pairs">—</strong><span>PAIRS IN SNAPSHOT</span></div>'+
-   '<div><strong id="dit-room-events">—</strong><span>RECORDED EVENTS</span></div>'+
+   '<div><strong id="dit-room-events">—</strong><span>RECENT EVENTS LOADED</span></div>'+
    '<div><strong id="dit-room-agents">—</strong><span>CONFIGURED AGENTS</span></div>'+
    '<div><strong id="dit-room-freshness">UNAVAILABLE</strong><span>MARKET STATUS</span></div></div>'+
    '<div class="dit-entity-stage">'+cards+'</div>'+
