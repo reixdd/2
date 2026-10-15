@@ -5,6 +5,19 @@ These are TWO existing projects, not duplicate services:
 - **DIT:** https://github.com/reixdd/2 on branch **dit-3d-assets**, inside `dit-site`.
 - Supabase project **dndlvvdzzucmdrrerahj** already has public source research from its independent Edge Function. Do not remove it.
 
+## Start the recovered Astra integration on Windows (October 14, 2026)
+
+1. Download **reixdd/2 → dit-3d-assets → Code → Download ZIP** and extract a **new** `dit-site` folder. Copy only your existing private `.env` into the new folder. Do not upload or commit that file.
+2. Stop old JARVIS (port 8768) and old DIT (port 4173) terminals with Ctrl+C. Leave the already installed Ollama service running.
+3. In the new `dit-site` folder run **UPDATE-JARVIS-DIT.cmd** once. This backs up exactly the two updated JARVIS Python modules, restores missing workbench files if necessary, and runs a Python syntax check. It does not overwrite JARVIS data, history, GMGN settings or models.
+4. Run **START-DIT-WITH-JARVIS.cmd**. Its health gate requires JARVIS `dit_stream_protocol: 2` and current model-routing support.
+5. Open `http://127.0.0.1:4173/operator` for private **AUTONOMOUS ENTITIES**, saved schedules, model selection, and human-reviewed fictional concepts. Automatic cycles require NO manual Run button.
+6. Open `http://127.0.0.1:4173/` for the user's **original MIAMI SIGNAL HTML** (full artwork, hotspots, audio) with real researcher presence, evidence, research transmissions and approved fictional concept archive below. If local JARVIS is unavailable, it shows **offline**, not simulated online status.
+
+**Publication is separate:** Updating this GitHub branch does not deploy to the already published `*.chatgpt.site` URL. In ChatGPT Sites open the existing Site in edit mode, sync/redeploy its source from this branch, review the new preview, and click Publish. Keep the original hosting secrets server-side. Do not create an unrelated Site or Supabase project.
+
+Agent responses are persisted to `agent_research_runs`. Supported source URLs are matched against recorded `observations`, with one independent episodic memory per completed run. Valid structured JSON concepts with recorded evidence become private `fictional_concepts` in **review**; a human may edit and approve a *fictional concept page* through the loopback Command Center. No automated mainnet token launch, wallet action, trading or paid API use is enabled.
+
 ## What runs concurrently
 - **GHOST_001**: `qwen3.5:4b`, histories and internet lore.
 - **NULL_ENTITY**: `qwen3.5:9b`, emerging culture/technology evidence and counter-evidence.
