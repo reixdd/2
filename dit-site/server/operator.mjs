@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { validateSettings,discoverProvider,verifyModel,runResearch,IDENTITIES } from '../worker/provider-bridge.js';
 import { StoreError } from './lib/store-core.js';
+import { collectJarvisMarkets } from '../worker/market-bridge.js';
 import { persistCompletedResearch, reviewConcept } from './lib/concepts.js';
 const out=(data,status=200)=>Response.json(data,{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}});
 const tidy=x=>String(x||'').slice(0,400);
@@ -13,19 +14,35 @@ export function allowedOperatorRequest(req,port){
 }
 export class Operator {
   constructor({store,env,port,fetchImpl=fetch,configFile='.data/operator-settings.json',onSettings=async()=>{}}){
-    this.store=store;this.env=env;this.port=port;this.fetchImpl=fetchImpl;this.configFile=configFile;this.onSettings=onSettings;this.running=new Map();this.verifying=new Set();
+    this.store=store;this.env=env;this.port=port;this.fetchImpl=fetchImpl;this.configFile=configFile;this.onSettings=onSettings;this.running=new Map();this.marketSnapshot=null;this.marketAt=0;this.marketInflight=null;this.verifying=new Set();
     this.lowLoad = env.DIT_JARVIS_SHARED === '1';
     this.maxConcurrent = this.lowLoad ? Math.max(1, Math.min(3, Number(env.DIT_JARVIS_PARALLEL || 3))) : 3;
     const fallback={provider:this.lowLoad?'jarvis':'ollama',url:this.lowLoad?(env.DIT_JARVIS_URL||'http://127.0.0.1:8768'):(env.OLLAMA_URL||'http://127.0.0.1:11434'),models:{GHOST_001:env.DIT_MODEL_GHOST||'',NULL_ENTITY:env.DIT_MODEL_NULL||'','ECHO.exe':env.DIT_MODEL_ECHO||''}};
     let saved={};try{saved=JSON.parse(fs.readFileSync(configFile,'utf8'))}catch{}
     try{this.settings=validateSettings(this.lowLoad?{...fallback,models:{...fallback.models,...(saved.models||{})}}:{...fallback,...saved})}catch{this.settings=validateSettings(fallback)}
   }
+  // The dashboard updates each second from cache. Providers are queried only
+  // once per TTL with one shared in-flight read. No extra market scheduler.
+  async refreshMarket(){
+    if(this.marketSnapshot&&Date.now()-this.marketAt<20_000)return this.marketSnapshot;
+    if(this.marketInflight)return this.marketInflight;
+    this.marketInflight=collectJarvisMarkets({baseUrl:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',fetchImpl:this.fetchImpl})
+      .then(snapshot=>{this.marketSnapshot=snapshot;this.marketAt=Date.now();return snapshot})
+      .finally(()=>{this.marketInflight=null});
+    return this.marketInflight;
+  }
+  marketStatus(){
+    if(Date.now()-this.marketAt>20_000&&!this.marketInflight)this.refreshMarket().catch(()=>{});
+    return {...(this.marketSnapshot||{signals:[],source_states:{},research_only:true}),refreshing:!!this.marketInflight,
+      last_checked_at:this.marketAt?new Date(this.marketAt).toISOString():null,ui_refresh_ms:1000};
+  }
   publicStatus(){return {settings:this.settings,lowLoad:this.lowLoad,maxConcurrent:this.maxConcurrent,running:[...this.running.keys()],autonomous:this.autonomous?.snapshot()||null,note:'Research only. No wallet signing or launches.'}}
   async handle(request,body={}){
     const {method,url,headers}=request;if(!allowedOperatorRequest({headers},this.port))return out({error:'Loopback operator only; Host/Origin rejected'},403);
     const p=new URL(url).pathname;
     try{
-      if(p==='/operator/api/settings'&&method==='GET')return out(this.publicStatus());
+      if(p==='/operator/api/market'&&method==='GET')return out(this.marketStatus());
+       if(p==='/operator/api/settings'&&method==='GET')return out(this.publicStatus());
       if(p==='/operator/api/settings'&&method==='POST'){
         const next=validateSettings(this.lowLoad?{...body,provider:'jarvis',url:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',models:body.models||this.settings.models}:body);
         this.settings=next;await this.onSettings(next);fs.mkdirSync(path.dirname(this.configFile),{recursive:true});fs.writeFileSync(this.configFile,JSON.stringify(next,null,2),{mode:0o600});
