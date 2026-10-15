@@ -1,3 +1,4 @@
+// Archived V7 design regression: current homepage intentionally uses the user's MIAMI SIGNAL HTML.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -25,7 +26,7 @@ test('backend diagnostic describes missing bindings by name only and identifies 
  assert.equal(r.release,'v7-interactive-2_5d-20261014');
 });
 test('moving background bars never overlay characters or run during reduced motion',()=>{
- const css=read('../dist/reference-v7.css'), html=read('../dist/index.html'), stage=read('../dist/stage.js');
+ const css=read('../dist/reference-v7.css'), html=read('../dist/legacy-v7.html'), stage=read('../dist/stage.js');
  assert.match(html,/class="world-bars"/);
  assert.doesNotMatch(html,/class="world-noise"/);
  assert.match(css,/\.world-bars.*?z-index: 0/s);
