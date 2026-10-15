@@ -54,3 +54,36 @@ test('automatic model requests are opt-in; no autonomous jobs by default',async(
  await scheduler.tick();
  assert.equal(submissions.length,0);
 });
+
+test('retry on a failed autonomous run uses per-agent bounded backoff and success resets it',async()=>{
+ let now=10_000_000;
+ const {operator,scheduler}=build({clock:now});
+ const initial={enabled:true,interval_minutes:20,status:'running',attempts:0,last_run_id:'first-run',next_due_at:new Date(now).toISOString()};
+ scheduler.initialized=true;
+ scheduler.schedules={
+   GHOST_001:{...initial,agent_id:'GHOST_001'},
+   NULL_ENTITY:{...initial,agent_id:'NULL_ENTITY',last_run_id:'other'},
+   'ECHO.exe':{...initial,agent_id:'ECHO.exe',last_run_id:'echo'}
+ };
+ operator.store.update=async (_table, filters, patch)=>{
+   const id=filters.find(([col])=>col==='agent_id')[2];
+   scheduler.schedules[id]={...scheduler.schedules[id],...patch};
+   return [scheduler.schedules[id]];
+ };
+ await scheduler.onFinished('GHOST_001','first-run',{status:'failed',error:'JARVIS stream closed'});
+ assert.equal(scheduler.schedules.GHOST_001.status,'retry_wait');
+ assert.equal(scheduler.schedules.GHOST_001.attempts,1);
+ assert.equal(scheduler.nextAt.GHOST_001,now+120000);
+ assert.equal(scheduler.schedules.NULL_ENTITY.status,'running');
+ await scheduler.onFinished('GHOST_001','old-run',{status:'completed'});
+ assert.equal(scheduler.schedules.GHOST_001.status,'retry_wait','stale completion is ignored');
+ scheduler.schedules.GHOST_001.last_run_id='second-run';
+ await scheduler.onFinished('GHOST_001','second-run',{status:'failed',error:'model overloaded'});
+ assert.equal(scheduler.schedules.GHOST_001.attempts,2);
+ assert.equal(scheduler.nextAt.GHOST_001,now+240000);
+ scheduler.schedules.GHOST_001.last_run_id='third-run';
+ await scheduler.onFinished('GHOST_001','third-run',{status:'completed'});
+ assert.equal(scheduler.schedules.GHOST_001.status,'waiting');
+ assert.equal(scheduler.schedules.GHOST_001.attempts,0);
+ assert.equal(scheduler.nextAt.GHOST_001,now+20*60000);
+});
