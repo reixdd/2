@@ -107,3 +107,11 @@ test('real image artwork is present for at least 30 of 60 diverse image regressi
  assert.equal(data.signals.filter(x=>x.image_url?.startsWith('https://')).length,40,'40 test coins include valid working artwork metadata');
  assert.equal(data.signals.filter(x=>x.image_url===null).length,20,'20 deliberately missing artwork cases remain honest');
 });
+
+test('valid IPFS metadata imagery resolves to a safe public artwork URL after an invalid primary logo',()=>{
+ const cid='Qm'+'a'.repeat(44),now=Date.parse('2026-10-15T20:30:00Z');
+ const row={address,logo:'javascript:bad',metadata:{image:'ipfs://'+cid}};
+ const data=normalizeMarketResponses({trenches:{ok:true,data:{data:{new_creation:[row]}}}},{now});
+ assert.equal(data.signals.length,1);
+ assert.equal(data.signals[0].image_url,'https://ipfs.io/ipfs/'+cid);
+});
