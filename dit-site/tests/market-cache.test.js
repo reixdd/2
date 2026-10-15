@@ -17,7 +17,20 @@ test('second-by-second dashboard queries use a bounded single-flight JARVIS cach
  assert.equal(before.research_only,true);
  await operator.refreshMarket();
  const results=await Promise.all(Array.from({length:10},()=>operator.handle(req).then(r=>r.json())));
- assert.equal(calls,3,'cache must not re-poll JARVIS for each local UI tick');
+ assert.equal(calls,4,'initial source load reads three discovery routes plus one tape route');
  assert.equal(results[0].signals[0].address,address);
  assert.equal(results.every(x=>x.signals.length===1),true);
+});
+
+test('after the 20s discovery snapshot, a new 1s market tick reads tape only',async()=>{
+ const requested=[];
+ const operator=new Operator({store:{},env:{DIT_JARVIS_URL:'http://127.0.0.1:8768'},port:4173,
+  configFile:'/tmp/dit-nonexistent-market-settings.json',
+  fetchImpl:async url=>{requested.push(String(url));return Response.json({items:[]});}});
+ await operator.refreshMarket();
+ const first=requested.length;
+ operator.marketAt=Date.now()-1500;
+ await operator.refreshMarket();
+ assert.equal(requested.length,first+1,'only one additional request for fast updates');
+ assert.match(requested.at(-1),/\/api\/tape\?limit=/);
 });
