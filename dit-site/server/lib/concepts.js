@@ -54,6 +54,13 @@ export async function reviewConcept(store,{id,revision,status,content}){
   if(!row)throw Error('Concept does not exist');
   if(Number(revision)!==row.revision)throw Error('Concept was updated by another reviewer; reload');
   const merged={...row.content,...content};
+  // Artwork is a human-reviewed external HTTPS asset, never a generated model link.
+  if(merged.image_url){
+    let art;try{art=new URL(String(merged.image_url))}catch{throw Error('Invalid concept image URL')}
+    if(art.protocol!=='https:'||art.username||art.password||art.href.length>500)
+      throw Error('Concept artwork must use a safe HTTPS image URL');
+    merged.image_url=art.href;
+  }else merged.image_url=null;
   if(status==='published'){
     if(!row.source_refs?.length)throw Error('A concept needs linked recorded evidence');
     if(!/^[A-Z0-9]{2,10}$/.test(trim(merged.ticker,10).toUpperCase())||trim(merged.name,90).length<3||trim(merged.social_draft,1000).length<10)
