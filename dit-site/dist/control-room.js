@@ -2,8 +2,8 @@
 const IDS=['GHOST_001','NULL_ENTITY','ECHO.exe'];
 const ROLES=['THE ARCHIVIST','THE SIGNAL HUNTER','THE VIRAL MACHINE'];
 const ART=['/assets/cutouts/ghost_001.png','/assets/cutouts/null_entity.png','/assets/cutouts/echo_exe.png'];
-const COLORS=['#6bbdff','#ce86ff','#86edb4'];
-const fmtSol=lamports=>Number.isFinite(Number(lamports))&&Number(lamports)>=0?(Number(lamports)/1e9).toLocaleString(undefined,{maximumFractionDigits:4})+' SOL':'—';
+const COLORS=['var(--ghost)','var(--null)','var(--echo)'];
+const fmtSol=lamports=>lamports!=null&&Number.isFinite(Number(lamports))&&Number(lamports)>=0?(Number(lamports)/1e9).toLocaleString(undefined,{maximumFractionDigits:4})+' SOL':'—';
 const shortEvent=e=>e?.event_type==='job_dead'?'RUN FAILED — OPEN OPERATOR FOR ERROR':String(e?.title||'NO RECORDED SIGNAL');
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const el=id=>document.getElementById(id);
@@ -12,7 +12,7 @@ export function roomSummary(world,market,events=[]){
  const rows=Array.isArray(market?.signals)?market.signals:null;
  return {agents:configured,pairs:rows?rows.length:null,
    events:Array.isArray(events)?events.filter(x=>x?.agent_id&&x?.title).length:0,
-   status:rows&&rows.length?(market.stale?'LAST VERIFIED':'LIVE'):'AWAITING SOURCE',
+   status:rows&&rows.length?(market.stale?'DELAYED':rows.some(r=>r.source_observed_at&&Date.now()-Date.parse(r.source_observed_at)<180000)?'LIVE':'SOURCE TIME UNKNOWN'):'AWAITING SOURCE',
    checked:market?.last_checked_at||null};
 }
 export function mountControlRoom({openAgent,activateTab}={}){
@@ -22,12 +22,12 @@ export function mountControlRoom({openAgent,activateTab}={}){
  stage.classList.add('dit-functional-stage','dit-gfx-off');
  const cards=IDS.map((id,i)=>
    '<article class="dit-entity" style="--agent-accent:'+COLORS[i]+'" data-id="'+esc(id)+'"><button type="button" class="dit-entity-open" data-room-agent="'+esc(id)+'" aria-label="Open '+esc(id)+' dossier">'+
-   '<span class="dit-entity-ring"></span><img class="dit-entity-art" src="'+ART[i]+'" alt="'+esc(id)+' machine portrait" decoding="async"></button>'+
+   '<img class="dit-entity-art" src="'+ART[i]+'" alt="'+esc(id)+' machine portrait" decoding="async"></button>'+
    '<div class="dit-entity-meta dit-room-agent-strip"><small>ENTITY_00'+(i+1)+' / '+ROLES[i]+'</small><div><strong>'+esc(id)+'</strong>'+
    '<em id="dit-room-status-'+i+'">UNKNOWN</em></div><p id="dit-room-recent-'+i+'">_ WAITING FOR VERIFIED EVENTS</p>'+
    '<div class="dit-entity-actions"><button type="button" data-room-agent="'+esc(id)+'">VIEW DOSSIER ↗</button><button type="button" data-vote="'+esc(id)+'">VOTE ↗</button></div></div></article>').join('');
  const shell=document.createElement('section');shell.className='dit-room';shell.setAttribute('aria-label','JARVIS machine control room');
- shell.innerHTML='<div class="dit-motion-field" aria-hidden="true"><i></i><i></i><i></i><span></span></div>'+
+ shell.innerHTML=
    '<header class="dit-room-top"><a href="#stage" class="dit-room-brand">◇ DIT <small>// PROTOCOL_001 TRACKING</small></a>'+
    '<nav class="dit-hud-nav" aria-label="Machine terminal navigation"><button id="dit-nav-network" type="button">01 / NETWORK</button><button id="dit-nav-transmissions" type="button">02 / TRANSMISSIONS</button><button id="dit-nav-system" type="button" aria-controls="dit-hud-system" aria-expanded="false">03 / SYSTEM</button></nav>'+
    '<span class="dit-room-live" id="dit-room-protocol">_ AWAITING MARKET OBSERVATIONS</span>'+
@@ -47,8 +47,7 @@ export function mountControlRoom({openAgent,activateTab}={}){
    '<small id="dit-treasury-status">WAITING FOR VERIFIED LEDGER</small>'+
    '<button type="button" id="dit-treasury-open">VIEW TREASURY ↗</button></aside>'+
    '<div class="dit-entity-stage">'+cards+'</div>'+
-   '<aside class="dit-status-rail"><span class="dit-rail-kicker">[ SIGNAL STATUS ]</span>'+IDS.map((id,i)=>'<div><strong>'+esc(id)+'</strong><span id="dit-rail-state-'+i+'">UNKNOWN</span></div>').join('')+
-   '<p>Agent states are reported by the connected research worker.</p></aside></div>'+
+   '</div>'+
    '<div class="dit-room-bottom"><span id="dit-room-ticker">_ OBSERVE → VALIDATE → CLASSIFY → REMEMBER → SHORTLIST → PROPOSE → REVIEW</span>'+
    '<button type="button" id="dit-transmission-open">VIEW ALL TRANSMISSIONS →</button></div>'+
    '<div class="dit-transmission-ribbon"><span class="dit-rail-kicker">// RECENT TRANSMISSIONS</span>'+
@@ -61,7 +60,7 @@ export function mountControlRoom({openAgent,activateTab}={}){
  // One WebGL canvas renders all three portraits; real dossiers remain native buttons.
  const scenery=document.createElement('div');scenery.className='dit-scenery';scenery.setAttribute('aria-hidden','true');
  scenery.innerHTML='<div class="dit-world-canvas"></div><div class="dit-world-bars">'+
-   Array.from({length:28},(_,i)=>'<span style="--bar-h:'+((17+i*29)%65+18)+'%;--bar-i:'+i+'"></span>').join('')+'</div>';
+   Array.from({length:12},(_,i)=>'<span style="--bar-h:'+((17+i*29)%65+18)+'%;--bar-i:'+i+'"></span>').join('')+'</div>';
  stage.appendChild(scenery);
  const cinematic=document.createElement('div');
  cinematic.innerHTML='<div id="dit-stage" class="dit-scene-bg" data-mode="ambient" aria-hidden="true"></div>';
@@ -84,7 +83,7 @@ export function mountControlRoom({openAgent,activateTab}={}){
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&system&&!system.hidden){system.hidden=true;
    el('dit-nav-system')?.setAttribute('aria-expanded','false');el('dit-hud-expand')?.setAttribute('aria-expanded','false');}});
  live.classList.add('dit-tab-terminal');
- const tabs=document.createElement('nav');tabs.className='dit-research-tabs';tabs.setAttribute('aria-label','DIT terminal views');
+ const tabs=document.createElement('nav');tabs.className='dit-research-tabs';tabs.setAttribute('aria-label','DIT terminal views');tabs.setAttribute('role','tablist');
  tabs.innerHTML='<button type="button" data-dit-tab="radar" role="tab" aria-selected="true">_ MEME RADAR</button>'+
   '<button type="button" data-dit-tab="activity" role="tab" aria-selected="false">_ AGENT ACTIVITY</button>'+
   '<span id="dit-tab-state">_ SELECT A RESEARCH STREAM</span>';
@@ -123,8 +122,9 @@ export function updateControlRoom(world,market,events=[],treasury=null){
  put('dit-room-ticker',recent?'_ LAST RESEARCH EVENT / '+recent.agent_id+' // '+shortEvent(recent).slice(0,116):'_ AWAITING VERIFIED RESEARCH EVENTS / NEVER SIMULATED');
  const stat=el('dit-transmission-ribbon');
  const recentEvents=(Array.isArray(events)?events:[]).filter(e=>e?.title&&IDS.includes(e.agent_id)).slice(0,5);
- const ribbonKey=recentEvents.map(e=>String(e.id)+'|'+String(e.title)).join(';');
+ const ribbonKey=recentEvents.map(e=>String(e.id)+'|'+String(e.title)+'|'+String(e.created_at)).join(';');
  if(stat&&stat.dataset.events!==ribbonKey){
+  const arrival=!!stat.dataset.events;stat.classList.toggle('dit-arrival',arrival);
   stat.dataset.events=ribbonKey;
   stat.replaceChildren();
   if(!recentEvents.length){const span=document.createElement('span');span.textContent='AWAITING RECORDED AGENT EVENTS';stat.append(span);}
@@ -133,7 +133,7 @@ export function updateControlRoom(world,market,events=[],treasury=null){
    const headline=document.createElement('strong');headline.textContent=shortEvent(ev).slice(0,95);
    const time=document.createElement('time');
    const stamp=ev.created_at||ev.at||ev.occurred_at;
-   if(stamp&&Number.isFinite(Date.parse(stamp))){time.dateTime=new Date(stamp).toISOString();time.textContent=new Date(stamp).toLocaleTimeString();}
+   if(stamp&&Number.isFinite(Date.parse(stamp))){time.dateTime=new Date(stamp).toISOString();time.textContent='LOG_'+ev.id+' · '+new Date(stamp).toLocaleTimeString();}
    else time.textContent='TIME UNAVAILABLE';
    button.append(small,headline,time);stat.append(button);}
  }

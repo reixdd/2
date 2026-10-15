@@ -109,11 +109,11 @@ try{
    const seen=new Date(Date.now()-1000).toISOString();
    const signals=[
      {address:addressNew,chain:'sol',symbol:'ART',name:'Artwork verified',
-      kind:'trenches',provider:'GMGN via JARVIS',pair_created_at:newlyLaunched,
+      kind:'trenches',provider:'GMGN via JARVIS',pair_created_at:newlyLaunched,pair_time_verified:true,
       observed_at:seen,source_observed_at:seen,image_url:marketReplies===1?imageUrl:null,
       volume_5m_usd:1200,buys_5m:15,sells_5m:4,url:'https://gmgn.ai/sol/token/'+addressNew},
      {address:addressOld,chain:'sol',symbol:'OLD',name:'Older active market',
-      kind:'tape',provider:'JARVIS',pair_created_at:olderPair,
+      kind:'tape',provider:'JARVIS',pair_created_at:olderPair,pair_time_verified:true,
       observed_at:seen,source_observed_at:seen,image_url:null,
       volume_5m_usd:250,buys_5m:5,sells_5m:3,url:'https://gmgn.ai/sol/token/'+addressOld}
    ];
@@ -122,6 +122,7 @@ try{
        last_checked_at:seen,status:'LIVE'})});
  });
  await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#dit-live-filter').selectOption('new');
  await page.locator('.market-card-image img').waitFor({timeout:18000});
  await page.waitForFunction(()=>document.querySelector('.market-card-image img')?.naturalWidth>0,null,{timeout:10000});
  assert.equal(await page.locator('.market-card').count(),1,'NEW only shows verified recent pair launches');

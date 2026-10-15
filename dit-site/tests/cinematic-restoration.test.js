@@ -6,13 +6,13 @@ const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
 
 test('active terminal mounts the original cinematic WebGL stage without replacing market controls',()=>{
  const home=read('../dist/index.html');
- const room=read('../dist/control-room.js'),live=read('../dist/live-research.js'),css=read('../dist/control-room.css');
+ const room=read('../dist/control-room.js'),live=(read('../dist/live-research.js')+read('../dist/market-feed.js')),css=read('../dist/control-room.css');
  assert.match(room,/id="dit-stage"/);
  assert.match(live,/import\(['"]\.\/stage\.js['"]\)/);
  assert.match(css,/hero\.webp/);
- assert.match(css,/\[data-renderer="webgl"\]/);
+ assert.match(css,/\[data-renderer=webgl\]/);
  for(const s of ['dit-live-evidence-section','dit-live-concept-section','dit-live-transmission-section'])assert.ok(home.includes(s));
- for(const s of ['volume_5m_usd','buys_5m','sells_5m','marketStructureKey'])assert.ok(live.includes(s));
+ for(const s of ['volume_5m_usd','buys_5m','sells_5m','MarketFeed'])assert.ok(live.includes(s));
 });
 
 test('archived Three.js renderer supports background-only mode and does not require old dossier labels',()=>{
@@ -33,7 +33,7 @@ test('Meme Radar resolves actual observed token artwork by contract address',()=
 });
 
 test('Meme Radar keeps an honest broken-image fallback without substituting agent images',()=>{
- const live=read('../dist/live-research.js');
+ const live=(read('../dist/live-research.js')+read('../dist/market-feed.js'));
  assert.match(live,/terminal-art-fallback/);
  assert.match(live,/addEventListener\(['"]error['"]/);
  assert.equal(conceptArtwork({agent_id:'GHOST_001',source_refs:[],content:{}},[]).url,null);
@@ -46,7 +46,7 @@ test('concept-reference command deck keeps real state in a compact left rail and
  assert.match(room,/dit-ops-rail/);
  assert.match(room,/dit-room-live/);
  assert.match(room,/dit-room-agent-strip/);
- assert.match(css,/\.dit-entity-stage\s*>\s*#dit-stage/);
+ assert.match(css,/\.dit-scene-bg/);
  assert.match(css,/\.dit-room\s*\{/);
 });
 test('laggy WebGL automatically yields to the anchored HD portrait fallback',async()=>{
@@ -63,23 +63,23 @@ test('laggy WebGL automatically yields to the anchored HD portrait fallback',asy
 });
 test('the visible market UI never calls delayed source observations stale or passes them off as live',()=>{
  const room=read('../dist/control-room.js');
- const research=read('../dist/live-research.js');
+ const research=(read('../dist/live-research.js')+read('../dist/market-feed.js'));
  assert.doesNotMatch(room,/'STALE'/);
  assert.doesNotMatch(research,/STALE —/);
- assert.match(research,/LAST VERIFIED/);
- assert.match(room,/LAST VERIFIED/);
- for(const field of ['volume_5m_usd','buys_5m','sells_5m','marketStructureKey'])assert.match(research,new RegExp(field));
+ assert.match(research,/DELAYED \/ RETAINED DATA/);
+ assert.match(room,/DELAYED/);
+ for(const field of ['volume_5m_usd','buys_5m','sells_5m','MarketFeed'])assert.match(research,new RegExp(field));
 });
 
 test('performance fallback removes the GPU canvas instead of leaving a duplicate portrait',()=>{
  const css=read('../dist/control-room.css');
  const stage=read('../dist/stage.js');
- assert.match(css,/#dit-stage-canvas\[hidden\]\s*\{\s*display:none!important/);
+ assert.match(read('../dist/live-research.css'),/\[hidden\]\{display:none!important/);
  assert.match(stage,/canvas\.hidden\s*=\s*true/);
 });
 test('reference-style HUD has real actions, verified accounting and a live event ribbon',()=>{
  const room=read('../dist/control-room.js');
- const live=read('../dist/live-research.js');
+ const live=(read('../dist/live-research.js')+read('../dist/market-feed.js'));
  for(const k of ['dit-nav-network','dit-nav-transmissions','dit-nav-system','dit-appearance','dit-gfx-toggle','dit-hud-expand','dit-treasury','dit-transmission-ribbon'])assert.match(room,new RegExp(k));
  assert.match(live,/\/api\/treasury/);
  assert.match(room,/data-room-agent/);
@@ -88,10 +88,10 @@ test('reference-style HUD has real actions, verified accounting and a live event
 });
 test('agent visuals use independent blue, violet and green accents and constrained width',()=>{
  const css=read('../dist/control-room.css');
- assert.match(css,/#6bbdff/);
- assert.match(css,/#ce86ff/);
- assert.match(css,/#86edb4/);
- assert.match(css,/max-width:\s*min\(90vw,1720px\)/);
+ assert.match(read('../dist/live-research.css'),/--ghost:#9cd6f0/);
+ assert.match(read('../dist/live-research.css'),/--null:#b7a4ce/);
+ assert.match(read('../dist/live-research.css'),/--echo:#91d8b5/);
+ assert.match(css,/max-width:1600px/);
 });
 test('terminal retains backend failure evidence and handles exhausted cycle attempts explicitly',()=>{
  const room=read('../dist/control-room.js');
@@ -104,7 +104,7 @@ test('terminal retains backend failure evidence and handles exhausted cycle atte
 
 test('reference VOTE controls use authenticated backend vote endpoint, not a dead placeholder',()=>{
  const room=read('../dist/control-room.js');
- const live=read('../dist/live-research.js');
+ const live=(read('../dist/live-research.js')+read('../dist/market-feed.js'));
  assert.match(room,/data-vote/);
  assert.match(live,/\/api\/vote/);
  assert.match(live,/dit:vote-identity/);
@@ -113,14 +113,14 @@ test('reference VOTE controls use authenticated backend vote endpoint, not a dea
 });
 
 test('New Pairs never substitutes general cultural research observations for token cards',()=>{
- const live=read('../dist/live-research.js');
+ const live=(read('../dist/live-research.js')+read('../dist/market-feed.js'));
  assert.doesNotMatch(live,/\$\('dit-live-evidence'\)\.innerHTML=rows\.length/);
- assert.match(live,/MARKET SOURCE UNAVAILABLE/);
+ assert.match(live,/Market source unavailable/);
  assert.match(live,/source_states/);
  assert.match(live,/source_observed_at/);
 });
 test('front page actual token cards have missing-image and pair-age states',()=>{
- const live=read('../dist/live-research.js');
+ const live=(read('../dist/live-research.js')+read('../dist/market-feed.js'));
  assert.match(live,/market-card-image/);
  assert.match(live,/market-image-error/);
  assert.match(live,/data-stat="mc"/);
@@ -132,13 +132,13 @@ test('transmissions are a compact telemetry ribbon and obsolete gold CSS patch i
  const js=read('../dist/control-room.js');
  assert.doesNotMatch(css,/CINEMATIC COMMAND DECK v2/);
  assert.match(css,/\.dit-transmission-ribbon/);
- assert.match(css,/\.dit-transmission-ribbon\s+time/);
+ assert.match(css,/#dit-transmission-ribbon time/);
  assert.match(js,/document\.createElement\('time'\)/);
  assert.match(js,/button\.dataset\.liveEvent/);
 });
 
 test('HD cutouts and the animated city load without expensive WebGL until GFX is requested',()=>{
- const room=read('../dist/control-room.js'),live=read('../dist/live-research.js');
+ const room=read('../dist/control-room.js'),live=(read('../dist/live-research.js')+read('../dist/market-feed.js'));
  assert.match(room,/classList\.add\('dit-functional-stage','dit-gfx-off'\)/);
  assert.match(room,/id="dit-gfx-toggle" aria-pressed="false">GFX OFF/);
  assert.match(live,/dit:gfx/);
@@ -148,13 +148,13 @@ test('HD cutouts and the animated city load without expensive WebGL until GFX is
 test('spectral phosphor is the coherent structural palette without old pink overlays or Echo ring',()=>{
  const css=read('../dist/control-room.css'),live=read('../dist/live-research.css');
  for(const hex of ['#030606','#192522','#A4BDB1','#E8FFB7','#6D7771'])
-   assert.match(css,new RegExp(hex,'i'));
+   assert.match(css+live,new RegExp(hex,'i'));
  assert.doesNotMatch(css,/#(?:ec6cff|cb8eff|df87fd|d58be5|e390ff)/i);
- assert.match(css,/\.dit-entity-ring\{display:none/);
- assert.match(live,/--dit-mint:\s*#E8FFB7/i);
+ assert.doesNotMatch(read('../dist/control-room.js'),/class="dit-entity-ring"/);
+ assert.match(live,/--phosphor:\s*#E8FFB7/i);
 });
 test('premium skip-to-market control remains accessible and keyboard-focus visible',()=>{
- const css=read('../dist/control-room.css'),html=read('../dist/index.html');
+ const css=read('../dist/live-research.css'),html=read('../dist/index.html');
  assert.match(html,/class="dit-skip"/);
- assert.match(css,/\.dit-skip:focus-visible/);
+ assert.match(css,/\.dit-skip:focus(?:-visible)?/);
 });

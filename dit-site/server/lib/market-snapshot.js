@@ -1,3 +1,4 @@
+import {timestamp,artworkCandidates,METRICS} from '../../dist/market-data.js';
 // Server-side JARVIS -> hosted public market snapshot boundary.
 // The browser receives public on-chain observations only; no keys, local URLs or wallet actions.
 const SOL=/^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -14,20 +15,21 @@ export function sanitizeMarketSnapshot(data, now=Date.now()){
     if(!Number.isFinite(stamp)||stamp>now+60_000)continue;
     signals.push({
       chain:'sol',address:s.address,name:text(s.name,90),symbol:text(s.symbol,20),
+      kinds:(s.kinds||[s.kind]).filter(k=>['trenches','trending','radar','tape'].includes(k)),
+      pair_created_at:timestamp(s.pair_created_at),token_created_at:timestamp(s.token_created_at),first_observed_at:timestamp(s.first_observed_at),first_seen_at:timestamp(s.first_seen_at||s.first_observed_at),pair_time_verified:s.pair_time_verified===true&&!!timestamp(s.pair_created_at),pair_time_source:text(s.pair_time_source,65),
+      image_candidates:artworkCandidates(s.image_candidates||[s.image_url],text(s.provider,65)).map(c=>({url:c.url,provider:text(c.provider,65)})),
+      metric_sources:Object.fromEntries(METRICS.filter(k=>s.metric_sources?.[k]).map(k=>[k,{provider:text(s.metric_sources[k].provider,65),observed_at:timestamp(s.metric_sources[k].observed_at)}])),
       kind:['trenches','trending','radar','tape'].includes(s.kind)?s.kind:'radar',
       provider:text(s.provider,65),observed_at:new Date(stamp).toISOString(),
       source_observed_at:Number.isFinite(Date.parse(s.source_observed_at||''))?new Date(s.source_observed_at).toISOString():null,
       received_at:Number.isFinite(Date.parse(s.received_at||''))?new Date(s.received_at).toISOString():null,
       image_url:https(s.image_url),created_at:Number.isFinite(Date.parse(s.created_at||''))?new Date(s.created_at).toISOString():null,
-      pair_created_at:Number.isFinite(Date.parse(s.pair_created_at||''))?new Date(s.pair_created_at).toISOString():null,
-      token_created_at:Number.isFinite(Date.parse(s.token_created_at||''))?new Date(s.token_created_at).toISOString():null,
-      first_seen_at:Number.isFinite(Date.parse(s.first_seen_at||''))?new Date(s.first_seen_at).toISOString():null,
       volume_5m_usd:num(s.volume_5m_usd),liquidity_usd:num(s.liquidity_usd),
       buys_5m:num(s.buys_5m),sells_5m:num(s.sells_5m),market_cap_usd:num(s.market_cap_usd),
       safety:text(s.safety||'UNVERIFIED',40),paid_attention:s.paid_attention===true,
       url:'https://gmgn.ai/sol/token/'+s.address,source_status:'OBSERVED'
     });
-    if(signals.length===60)break;
+    if(signals.length===100)break;
   }
   const source_states={};
   for(const k of ['trenches','trending','radar','tape']){
@@ -50,11 +52,9 @@ export async function readMarketSnapshot(store,{now=Date.now(),staleAfterMs=180_
     status:'NO_SNAPSHOT',research_only:true};
   const safe=sanitizeMarketSnapshot({signals:row.signals,source_states:row.source_states},now);
   const written=Date.parse(row.updated_at||row.observed_at||'');
-  const times=safe.signals.map(item=>Date.parse(item.source_observed_at||'')).filter(Number.isFinite);
-  const newest=times.length?Math.max(...times):NaN;
-  // A new Supabase write is not proof that its underlying provider observed fresh data.
-  const stale=!Number.isFinite(written)||now-written>staleAfterMs||now<written-60_000||
-    !Number.isFinite(newest)||now-newest>staleAfterMs||newest>now+60_000;
+  const sourceTimes=safe.signals.map(s=>Date.parse(s.source_observed_at||'')).filter(Number.isFinite);
+  const sourceStale=!sourceTimes.length||(now-Math.max(...sourceTimes)>staleAfterMs||Math.max(...sourceTimes)>now+60_000);
+  const stale=sourceStale||Object.values(safe.source_states).every(s=>s!=='OK')||!Number.isFinite(written)||now-written>staleAfterMs||now<written-60_000;
   return {...safe,last_checked_at:Number.isFinite(written)?new Date(written).toISOString():null,
     stale,status:stale?'STALE':'LIVE',research_only:true};
 }

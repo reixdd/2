@@ -1,8 +1,10 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
   const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js');
-  const {chooseVisibleSignals}=await import('./market-view.js');
   const {mountControlRoom,updateControlRoom}=await import('./control-room.js');
+  const {MarketFeed}=await import('./market-feed.js');
+  const marketFeed=new MarketFeed(document.getElementById('dit-live-evidence'));
+  document.getElementById('dit-live-filter').addEventListener('change',()=>renderLiveMarket());
   const $ = id => document.getElementById(id);
   const hero=document.getElementById('stage'),controls=document.querySelector('.bottom-bar');
   if(hero&&controls)hero.insertAdjacentElement('afterend',controls); // keep original audio/FX directly below artwork
@@ -30,8 +32,8 @@
   activateTab(location.hash==='#dit-live-transmission-section'?'activity':'radar');
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
   let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[],treasury=null;
-  let marketStructureKey='',activityStructureKey='',conceptStructureKey='',lastActivityTime=0;
-  for(const [id,title] of [['dit-live-evidence-section','NEW PAIRS // EVIDENCE'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // APPROVED CONCEPTS']]){
+  let activityStructureKey='',conceptStructureKey='',lastActivityTime=0;
+  for(const [id,title] of [['dit-live-evidence-section','MARKET OBSERVATIONS'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // APPROVED CONCEPTS']]){
     const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
   }
   // Same HTML reference, new information architecture: MEME RADAR before ACTIVITY.
@@ -48,22 +50,10 @@
   const artTile=(c,cls)=>{const a=conceptArtwork(c,liveMarket?.signals||[]);
     return '<div class="'+cls+'">'+(a.url?'<img src="'+esc(a.url)+'" alt="'+esc(a.label)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span class="terminal-art-fallback" hidden>_ IMAGE UNAVAILABLE</span>':'<span>_ ORIGINAL ART PENDING</span>')+
     '<small>'+esc(a.label)+'</small></div>';};
-  const loadedArtwork=new Map(),failedArtwork=new Set();
-  document.addEventListener('load',event=>{
-    const img=event.target;
-    if(img instanceof HTMLImageElement&&img.closest('.market-card-image')&&img.naturalWidth>0)
-      loadedArtwork.set(img.dataset.contract,img.currentSrc||img.src);
-  },true);
   document.addEventListener('error',event=>{
     const img=event.target;
     if(!(img instanceof HTMLImageElement))return;
-    if(img.closest('.market-card-image')){
-      failedArtwork.add(String(img.dataset.contract)+'|'+img.src);
-      img.hidden=true;
-      const missing=img.parentElement?.querySelector('.market-image-error');
-      if(missing)missing.hidden=false;
-      return;
-    }
+    if(img.closest('.market-card-image'))return;
     if(!img.closest('.terminal-concept-image,.terminal-concept-art'))return;
     img.hidden=true;
     const placeholder=img.parentElement?.querySelector('.terminal-art-fallback');
@@ -175,9 +165,11 @@
         '<div><span class="terminal-prompt">_ '+esc(id)+' / '+esc(a?.presence||'offline')+'</span><p>LAST OBSERVED: '+esc(when(a?.last_run?.finished_at))+'</p></div></div>'+
         '<h3>_ RECENT DECISIONS &amp; EVENTS</h3>'+
         (recent.map(ev=>'<p class="terminal-detail-line">_ '+esc(ev.title)+'<small>'+esc(when(ev.at))+' / '+esc(ev.status)+'</small></p>').join('')||'<p>_ No recorded events</p>')+
-        '<h3>_ MEME HOOKS</h3>'+(
+        '<h3>RESEARCH FINDINGS</h3>'+(
         history.map(r=>'<p class="terminal-detail-line">_ '+esc(researchHook(r.answer)||'Research completed; no validated concise hook')+
           '<small>'+esc(when(r.finished_at))+'</small></p>').join('')||'<p>_ No completed meme hooks</p>')+
+        '<h3>SUPPORTING EVIDENCE</h3>'+((d.observations||[]).slice(0,4).map(o=>'<p>'+link(o.url,o.title)+'<small> / '+esc(when(o.observed_at))+'</small></p>').join('')||'<p>No recorded evidence.</p>')+
+        '<details><summary>Errors and full research logs</summary>'+((d.research_runs||[]).slice(0,8).map(r=>'<h4>'+esc(r.status)+' / '+esc(when(r.finished_at||r.started_at))+'</h4><p>'+esc(r.error||r.answer||'No output recorded')+'</p>').join('')||'<p>No runs recorded.</p>')+'</details>'+
         '<a class="terminal-action" href="/operator">OPEN PRIVATE OPERATOR / FULL TRACE ↗</a>';
     }catch{$('dit-live-modal-body').textContent='Agent data is currently unavailable.'}
   }
@@ -197,7 +189,7 @@
     if(b?.dataset.liveEvent){const event=events.find(x=>String(x.id)===b.dataset.liveEvent);if(event){
       const ev=formatActivity(event);open('_ '+ev.agent_id+' / '+ev.status,
         '<div class="terminal-modal-head">'+portrait(ev.agent_id)+'<div><h2>'+esc(ev.title)+'</h2><p>'+esc(when(ev.at))+'</p></div></div>'+
-        '<h3>_ RECORDED EVENT</h3><p>'+esc(ev.detail||'No additional detail recorded')+'</p><button data-live-agent="'+esc(ev.agent_id)+'">AGENT TIMELINE ↗</button>');}}});
+        '<h3>_ RECORDED EVENT</h3><p>'+esc(event.detail||'No additional detail recorded')+'</p>'+link(event.payload?.url||event.source_url,'Evidence trace')+'<p>Event '+esc(event.id)+'</p><button data-live-agent="'+esc(ev.agent_id)+'">AGENT TIMELINE ↗</button>');}}});
   document.addEventListener('click',e=>{
     const b=e.target.closest('.stage [data-view],.stage [data-vote],.panel [data-modal-vote]');if(!b)return;
     const view=b.dataset.view;
@@ -231,13 +223,6 @@
         panel._ditPulseTimeout=setTimeout(()=>{panel.dataset.transmitting='false'},1500);
       }
       activityStructureKey=key;
-      const shell=document.querySelector('.dit-live');
-      if(shell){
-        let backdrop=shell.querySelector('.terminal-ghost-lines');
-        if(!backdrop){backdrop=document.createElement('div');backdrop.className='terminal-ghost-lines';backdrop.setAttribute('aria-hidden','true');shell.insertBefore(backdrop,shell.firstChild);}
-        backdrop.innerHTML=realEvents.slice(0,14).map((ev,i)=>'<span style="animation-delay:-'+(i*0.7).toFixed(1)+'s">_ '+esc(ev.agent_id)+
-          ' :: '+esc(ev.title)+'</span>').join('');
-      }
       const lines=realEvents.map((ev,i)=>'<button type="button" class="terminal-event" data-live-event="'+esc(ev.id)+'">'+
         portrait(ev.agent_id)+
         '<span class="terminal-event-copy"><small>_ '+esc(ev.agent_id)+' / '+esc(ev.status)+' / '+esc(when(ev.at))+'</small>'+
@@ -282,75 +267,7 @@
   }
 
   const money=x=>typeof x==='number'&&Number.isFinite(x)?('$'+(x>=1000?(x/1000).toFixed(1)+'k':Math.round(x).toLocaleString())):'—';
-  const artworkFor=s=>{
-    const known=loadedArtwork.get(s.address);
-    const url=known||safeArtUrl(s.image_url);
-    return url&&!failedArtwork.has(s.address+'|'+url)?url:null;
-  };
-  const marketImage=s=>artworkFor(s)
-    ?'<img data-contract="'+esc(s.address)+'" loading="lazy" decoding="async" src="'+esc(artworkFor(s))+'" alt="'+esc((s.name||s.symbol||'Token')+' artwork')+'"><span class="market-image-error" hidden>_ IMAGE UNAVAILABLE</span>'
-    :'<div class="market-art-empty" aria-label="No available token artwork">◈ '+esc((s.symbol||'?').slice(0,6))+'</div>';
-  function renderLiveMarket(){
-    const feed=$('dit-live-evidence');
-    if(!feed)return;
-    if(!liveMarket?.signals?.length){
-      marketStructureKey='';
-      const sources=Object.entries(liveMarket?.source_states||{}).map(([k,v])=>k.toUpperCase()+': '+String(v)).join(' / ');
-      const checked=liveMarket?.last_checked_at&&Number.isFinite(Date.parse(liveMarket.last_checked_at))?new Date(liveMarket.last_checked_at).toLocaleString():'NEVER';
-      const key=JSON.stringify([sources,checked,liveMarket?.status||'']);
-      if(feed.dataset.marketEmpty!==key){
-        feed.dataset.marketEmpty=key;
-        feed.innerHTML='<div class="market-source-warning" role="status"><strong>MARKET SOURCE UNAVAILABLE</strong>'+
-          '<p>No actual token pairs are in the current verified snapshot. Cultural research headlines are not market pairs.</p>'+
-          '<small>SOURCES: '+esc(sources||'NO PROVIDER OBSERVATIONS')+'</small>'+
-          '<small>LAST CHECK: '+esc(checked)+'</small>'+
-          '<a href="/operator">OPEN OPERATOR / MARKET DIAGNOSTICS ↗</a></div>';
-      }
-      return;
-    }
-    delete feed.dataset.marketEmpty;
-    const stream=$('dit-live-filter')?.value||'new';
-    const signals=chooseVisibleSignals(liveMarket.signals,stream).slice(0,12);
-    // Do not recreate image elements at 1Hz: GIFs must keep playing.
-    const structure=JSON.stringify(signals.map(s=>[s.address,s.symbol,s.kind]));
-    if(structure!==marketStructureKey){
-      marketStructureKey=structure;
-      const cards=signals.map(s=>'<article class="market-card" data-market-index="'+signals.indexOf(s)+'"><div class="market-card-image">'+marketImage(s)+'</div>'+
-        '<div class="market-card-body"><div class="market-card-title"><b>'+esc(s.symbol||'???')+'</b><span>_ '+esc(s.kind||'PAIR')+'</span></div>'+
-        '<p class="market-card-name terminal-type">'+esc(s.name||'Unnamed Solana token')+'</p>'+
-        '<div class="market-card-stats"><span>5M VOL<strong data-stat="vol">'+money(s.volume_5m_usd)+'</strong></span><span>LIQUIDITY<strong data-stat="liq">'+money(s.liquidity_usd)+'</strong></span>'+
-        '<span>BUYS / SELLS<strong data-stat="txns">'+esc(s.buys_5m??'—')+' / '+esc(s.sells_5m??'—')+'</strong></span>'+
-        '<span>MCAP<strong data-stat="mc">'+money(s.market_cap_usd)+'</strong></span>'+
-        '<span>PAIR AGE<strong data-stat="age">'+(s.pair_created_at?esc(new Date(s.pair_created_at).toLocaleString()):'UNVERIFIED')+'</strong></span></div>'+
-        '<div class="market-card-foot"><small>'+esc(s.provider||'JARVIS')+' · <time class="market-age" data-time="'+esc(s.source_observed_at||'')+'"></time></small>'+
-        '<a href="'+esc(valid(s.url)||'#')+'" target="_blank" rel="noopener noreferrer">VIEW SOURCE ↗</a></div>'+
-        '<small class="market-card-disclaimer">Safety: '+esc(s.safety||'UNVERIFIED')+(s.paid_attention?' · PAID ATTENTION':'')+'</small></div></article>').join('');
-      feed.innerHTML='<div class="market-feed-meta"><span>_ '+esc(stream.toUpperCase())+' / JARVIS MARKET TAPE · '+signals.length+' SHOWN</span>'+
-        '<span>OBSERVED <time id="market-last-observed"></time></span></div>'+
-        '<div class="market-grid">'+cards+'</div>';
-    }
-    const age=x=>{const t=Date.parse(x||'');return Number.isFinite(t)?Math.max(0,Math.floor((Date.now()-t)/1000))+'s ago':'unknown'};
-    feed.querySelectorAll('.market-card').forEach(card=>{
-      const token=signals[Number(card.dataset.marketIndex)];if(!token)return;
-      const put=(sel,value)=>{const el=card.querySelector(sel);if(el&&el.textContent!==value)el.textContent=value};
-      put('[data-stat="vol"]',money(token.volume_5m_usd));
-      put('[data-stat="liq"]',money(token.liquidity_usd));
-      put('[data-stat="txns"]',String(token.buys_5m??'—')+' / '+String(token.sells_5m??'—'));
-      put('[data-stat="mc"]',money(token.market_cap_usd));
-      put('[data-stat="age"]',token.pair_created_at?age(token.pair_created_at):'UNVERIFIED');
-      // Reconcile image nodes independently: do not restart successful artwork at 1 Hz.
-      const imageBox=card.querySelector('.market-card-image');
-      const selectedArt=artworkFor(token);
-      const existingImage=imageBox?.querySelector('img');
-      if(imageBox&&selectedArt&&!existingImage)imageBox.innerHTML=marketImage(token);
-      else if(imageBox&&existingImage&&existingImage.hidden&&selectedArt&&existingImage.src!==selectedArt)
-        imageBox.innerHTML=marketImage(token);
-      const tick=card.querySelector('.market-age');if(tick){tick.dataset.time=token.source_observed_at||'';tick.textContent=token.source_observed_at?age(token.source_observed_at):'RECEIVED ONLY / SOURCE TIME UNKNOWN'}
-    });
-    const updated=feed.querySelector('#market-last-observed');
-    if(updated)updated.textContent=age(liveMarket.last_checked_at)+(liveMarket.stale?' / LAST VERIFIED — UPDATES DELAYED':liveMarket.refreshing?' / REFRESHING':'');
-  }
-  $('dit-live-filter')?.addEventListener('change',renderLiveMarket);
+  function renderLiveMarket(){marketFeed.render(liveMarket,$('dit-live-filter')?.value||'all');}
   async function refreshPrivateDrafts(){
     if(!['localhost','127.0.0.1'].includes(location.hostname)||document.hidden)return;
     try{
@@ -404,8 +321,8 @@
       render();
     }finally{busy=false}
   }
-  refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();refreshTreasury();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);setInterval(refreshPrivateDrafts,15000);setInterval(refreshTreasury,60000);
-  setInterval(refreshActivity,5000);setInterval(()=>{if(liveMarket)renderLiveMarket()},1000);
+  refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();refreshTreasury();setInterval(refresh,30000);setInterval(refreshLiveMarket,['localhost','127.0.0.1'].includes(location.hostname)?1000:10000);setInterval(refreshPrivateDrafts,15000);setInterval(refreshTreasury,60000);
+  setInterval(refreshActivity,5000);setInterval(()=>{if(liveMarket&&!document.hidden)renderLiveMarket()},1000);
   if(typeof EventSource!=='undefined'&&['localhost','127.0.0.1'].includes(location.hostname)){const channel=new EventSource('/api/stream');channel.onmessage=()=>{refreshActivity();refreshPrivateDrafts()};}
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();refreshLiveMarket()}});
+  document.addEventListener('visibilitychange',()=>{document.body.classList.toggle('dit-page-hidden',document.hidden);if(!document.hidden){refresh();refreshLiveMarket()}});
 })();
