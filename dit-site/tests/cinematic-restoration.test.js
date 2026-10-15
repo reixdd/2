@@ -126,3 +126,13 @@ test('front page actual token cards have missing-image and pair-age states',()=>
  assert.match(live,/data-stat="mc"/);
  assert.match(live,/data-stat="age"/);
 });
+
+test('transmissions are a compact telemetry ribbon and obsolete gold CSS patch is removed',()=>{
+ const css=read('../dist/control-room.css');
+ const js=read('../dist/control-room.js');
+ assert.doesNotMatch(css,/CINEMATIC COMMAND DECK v2/);
+ assert.match(css,/\.dit-transmission-ribbon/);
+ assert.match(css,/\.dit-transmission-ribbon\s+time/);
+ assert.match(js,/document\.createElement\('time'\)/);
+ assert.match(js,/data-live-event/);
+});
