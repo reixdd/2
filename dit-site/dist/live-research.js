@@ -253,13 +253,15 @@
       agents:(world?.agents||[]).map(a=>({id:a.id,state:['OBSERVING','THINKING','CREATING'].includes(String(a.presence).toUpperCase())?String(a.presence).toUpperCase():'IDLE'}))
     }}));
     updateControlRoom(world,liveMarket,events,treasury);
-    older.hidden=!archiveOpen?allIdeas.length<=3:!conceptBefore&&allIdeas.length<=archiveShow;
-    older.textContent=archiveOpen?'LOAD MORE AGENT IDEAS':'BROWSE IDEA ARCHIVE';
+
+
     // Primary Radar: newest actual research idea per agent. History is opt-in.
     const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,8);
     const allIdeas=[...concepts.map(c=>({...c,_private:false})),
       ...liveDrafts.filter(c=>!concepts.some(p=>p.id===c.id)).map(c=>({...c,_private:true}))];
     const present=archiveOpen?allIdeas.slice(0,archiveShow):featuredAgentIdeas(allIdeas);
+    older.hidden=!archiveOpen?allIdeas.length<=3:!conceptBefore&&allIdeas.length<=archiveShow;
+    older.textContent=archiveOpen?'LOAD MORE AGENT IDEAS':'BROWSE IDEA ARCHIVE';
     const conceptKey=JSON.stringify([archiveOpen,archiveShow,...present.map(c=>[c.id,c.status,c.updated_at,
       c.content?.name,c.content?.hook,c.content?.image_url,c.agent_id])]);
     if(conceptKey!==conceptStructureKey){
