@@ -101,3 +101,13 @@ test('terminal retains backend failure evidence and handles exhausted cycle atte
  const sch=read('../worker/scheduler.js');
  assert.match(sch,/maxAttempts/);
 });
+
+test('reference VOTE controls use authenticated backend vote endpoint, not a dead placeholder',()=>{
+ const room=read('../dist/control-room.js');
+ const live=read('../dist/live-research.js');
+ assert.match(room,/data-vote/);
+ assert.match(live,/\/api\/vote/);
+ assert.match(live,/dit:vote-identity/);
+ assert.match(live,/authorization:\s*['"]Bearer ['"]/);
+ assert.match(live,/identity-email/);
+});
