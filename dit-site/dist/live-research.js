@@ -350,6 +350,7 @@
     const updated=feed.querySelector('#market-last-observed');
     if(updated)updated.textContent=age(liveMarket.last_checked_at)+(liveMarket.stale?' / LAST VERIFIED — UPDATES DELAYED':liveMarket.refreshing?' / REFRESHING':'');
   }
+  $('dit-live-filter')?.addEventListener('change',renderLiveMarket);
   async function refreshPrivateDrafts(){
     if(!['localhost','127.0.0.1'].includes(location.hostname)||document.hidden)return;
     try{
