@@ -136,3 +136,11 @@ test('transmissions are a compact telemetry ribbon and obsolete gold CSS patch i
  assert.match(js,/document\.createElement\('time'\)/);
  assert.match(js,/button\.dataset\.liveEvent/);
 });
+
+test('HD cutouts and the animated city load without expensive WebGL until GFX is requested',()=>{
+ const room=read('../dist/control-room.js'),live=read('../dist/live-research.js');
+ assert.match(room,/classList\.add\('dit-functional-stage','dit-gfx-off'\)/);
+ assert.match(room,/id="dit-gfx-toggle" aria-pressed="false">GFX OFF/);
+ assert.match(live,/dit:gfx/);
+ assert.match(live,/if\(e\.detail\?\.enabled\)/);
+});
