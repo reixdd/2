@@ -47,6 +47,8 @@ try{
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base,{waitUntil:'domcontentloaded'});
  await page.locator('.dit-room').waitFor({timeout:25000});
+ await page.locator('.market-source-warning').waitFor({timeout:20000});
+ assert.equal(await page.locator('#dit-live-evidence .live-row').count(),0,'source research headlines cannot impersonate market pairs');
  assert.equal(await page.locator('.dit-entity').count(),3,'three original HD character controls');
  assert.equal(await page.locator('#dit-room-pairs').count(),1);
  assert.equal(await page.locator('#dit-treasury-target').count(),1);
