@@ -26,6 +26,7 @@ on:
       - 'dit-site/dist/operator.js'
       - 'dit-site/tests/market-bridge.test.js'
       - 'dit-site/Update-JARVIS-DIT.ps1'
+      - 'dit-site/UPDATE-DIT-LOCAL.ps1'
       - 'dit-site/supabase/functions/dit-cultural-evidence/index.ts'
       - 'dit-site/worker/provider-bridge.js'
       - 'dit-site/tests/operator-bridge.test.js'
