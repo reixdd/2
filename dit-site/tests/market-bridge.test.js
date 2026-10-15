@@ -19,3 +19,13 @@ test('stale JARVIS watched history cannot be presented as a fresh new pair',()=>
  const data=normalizeMarketResponses({radar:{ok:true,data:{items:[{identity_key:'sol:'+address+':-',address,live_eligible:false,symbol:'OLD'}]}}},{now:Date.UTC(2026,9,14)});
  assert.equal(data.signals.length,0);
 });
+
+test('real token imagery is preserved while unsafe URLs are discarded',()=>{
+ const address='So11111111111111111111111111111111111111112';
+ const data=normalizeMarketResponses({trenches:{ok:true,data:{data:{new_creation:[
+  {address,symbol:'PHOTO',logo:'https://cdn.dexscreener.com/token.png'},
+  {address:'11111111111111111111111111111111',symbol:'BAD',logo:'javascript:alert(1)'}
+ ]}}}},{now:Date.UTC(2026,9,14)});
+ assert.equal(data.signals.find(x=>x.symbol==='PHOTO')?.image_url,'https://cdn.dexscreener.com/token.png');
+ assert.equal(data.signals.find(x=>x.symbol==='BAD')?.image_url,null);
+});
