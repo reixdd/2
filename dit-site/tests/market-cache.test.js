@@ -34,3 +34,14 @@ test('after the 20s discovery snapshot, a new 1s market tick reads tape only',as
  assert.equal(requested.length,first+1,'only one additional request for fast updates');
  assert.match(requested.at(-1),/\/api\/tape\?limit=/);
 });
+
+test('dashboard does not report a just-refreshed wrapper as live when actual source observation is old',()=>{
+ const operator=new Operator({store:{},env:{},port:4173,configFile:'/tmp/dit-nonexistent-market-settings.json'});
+ const ago=new Date(Date.now()-4*60_000).toISOString();
+ operator.marketAt=Date.now();
+ operator.marketSnapshot={observed_at:new Date().toISOString(),signals:[{
+  address:'So11111111111111111111111111111111111111112',source_observed_at:ago,observed_at:ago
+ }]};
+ const status=operator.marketStatus();
+ assert.equal(status.stale,true,'fresh HTTP wrapper is not proof of fresh market observations');
+});
