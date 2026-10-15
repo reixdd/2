@@ -101,7 +101,7 @@
   },true);
   function render(){
     const completedRecently=runs.some(r=>r.status==='completed'&&r.finished_at&&Date.now()-Date.parse(r.finished_at)<20*60_000);
-    $('dit-live-status').textContent=world?.researcher?.online?(completedRecently?'RECENT RESEARCH RECORDED':'RESEARCH WORKER CONNECTED / INFERENCE UNVERIFIED'):'RESEARCH WORKER OFFLINE OR STALE';
+    $('dit-live-status').textContent=world?.researcher?.online?(completedRecently?'RECENT RESEARCH RECORDED':'RESEARCH WORKER CONNECTED / INFERENCE UNVERIFIED'):'RESEARCH WORKER OFFLINE / LAST OBSERVATION RETAINED';
     $('dit-live-metrics').textContent='CULTURAL COLLECTOR '+(world?.collector?.online?'ONLINE':'OFFLINE')+' / LAST HEARTBEAT '+when(world?.researcher?.last_seen_at);
     if($('health'))$('health').textContent=world?.researcher?.online?'WORKER HEARTBEAT RECEIVED':'OFFLINE';
     $('dit-live-network').innerHTML=world?ids.map(id=>{
@@ -209,7 +209,7 @@
       const tick=card.querySelector('.market-age');if(tick){tick.dataset.time=token.observed_at;tick.textContent=age(token.observed_at)}
     });
     const updated=feed.querySelector('#market-last-observed');
-    if(updated)updated.textContent=age(liveMarket.last_checked_at)+(liveMarket.stale?' / STALE — LAST VALID SNAPSHOT':liveMarket.refreshing?' / REFRESHING':'');
+    if(updated)updated.textContent=age(liveMarket.last_checked_at)+(liveMarket.stale?' / LAST VERIFIED — UPDATES DELAYED':liveMarket.refreshing?' / REFRESHING':'');
   }
   async function refreshPrivateDrafts(){
     if(!['localhost','127.0.0.1'].includes(location.hostname)||document.hidden)return;
