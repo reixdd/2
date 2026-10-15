@@ -18,7 +18,8 @@ function normalize(row,kind,now,freshnessMs){
  const observed=str(first(row.last_observed_at,row.observed_at),40);
  const seen=observed&&!Number.isNaN(Date.parse(observed))?observed:new Date(now).toISOString();
  const age=now-Date.parse(seen);
- const fresh=age>=0&&age<=freshnessMs&&!(kind==='radar'&&row.live_eligible===false);
+ const recordedAge=num(row.observation_age_seconds);
+ const fresh=age>=0&&age<=freshnessMs&&!(kind==='radar'&&(row.live_eligible===false||(recordedAge!==null&&recordedAge>freshnessMs/1000)));
  const rawCreated=num(first(row.creation_timestamp,row.created_timestamp,row.created_at,row.pairCreatedAt,row.launch_at));
  const created_at=rawCreated&&rawCreated>1e9?new Date(rawCreated<1e12?rawCreated*1000:rawCreated).toISOString():null;
  const provider=kind==='radar'?'JARVIS · DexScreener/GeckoTerminal':'GMGN via JARVIS';
