@@ -36,3 +36,34 @@ test('every illustrated study is image data with unique artwork and safely escap
  assert.match(a,/^data:image\/svg\+xml/);assert.match(decodeURIComponent(a.split(',')[1]),/<path/);
  assert.doesNotMatch(decodeURIComponent(a.split(',')[1]),/<script>/);assert.notEqual(a,b);
 });
+
+test('Radar prefers supplied real artwork and exact-contract source imagery before vector fallback',()=>{
+ const now=new Date().toISOString(),address='So11111111111111111111111111111111111111112';
+ const src={address,image_url:'https://cdn.example.org/source-token.png',url:'https://gmgn.ai/sol/token/'+address};
+ const rows=[
+ {id:'ghost-latest',agent_id:'GHOST_001',status:'review',created_at:now,content:{name:'Latest, vector only'}},
+ {id:'ghost-with-picture',agent_id:'GHOST_001',status:'review',created_at:'2026-10-14T23:00:00Z',content:{name:'Approved picture',image_url:'https://cdn.example.org/original.png'}},
+ {id:'null-latest',agent_id:'NULL_ENTITY',status:'review',created_at:now,content:{name:'Latest no image'}},
+ {id:'null-source',agent_id:'NULL_ENTITY',status:'review',created_at:'2026-10-14T23:00:00Z',content:{name:'Source image'},source_refs:[{address}]},
+ {id:'echo',agent_id:'ECHO.exe',status:'review',created_at:now,content:{name:'Vector fallback'}}
+ ];
+ const out=featuredAgentIdeas(rows,[src]);
+ assert.deepEqual(out.map(x=>x.id),['ghost-with-picture','null-source','echo']);
+});
+
+
+test('pair metadata enrichment still retrieves token social X accounts when pool age was already verified',async()=>{
+ const addr='So11111111111111111111111111111111111111112';
+ let requests=0;
+ const original={address:addr,chain:'sol',kind:'trenches',pair_time_verified:true,pair_created_at:new Date(at-60_000).toISOString(),image_url:null};
+ const out=await enrichVerifiedPairs({signals:[original],source_states:{}},{now:at,fetchImpl:async()=>{
+  requests++;
+  return Response.json([{chainId:'solana',baseToken:{address:addr},pairCreatedAt:at-70_000,info:{
+   socials:[{platform:'twitter',handle:'OfficialToken'}],imageUrl:'https://cdn.example.org/live-token.png'
+  }}]);
+ }});
+ assert.equal(requests,1);
+ assert.equal(out.signals[0].twitter_url,'https://x.com/OfficialToken');
+ assert.equal(out.signals[0].image_url,'https://cdn.example.org/live-token.png');
+ assert.equal(out.signals[0].pair_created_at,original.pair_created_at,'existing verified age is retained');
+});
