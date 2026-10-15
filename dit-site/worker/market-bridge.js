@@ -3,6 +3,7 @@ const SOL=/^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const str=(v,n=100)=>String(v??'').replace(/[\r\n\t]+/g,' ').trim().slice(0,n);
 const num=v=>v==null||v===''||!Number.isFinite(Number(v))?null:Number(v);
 const first=(...xs)=>xs.find(x=>x!==undefined&&x!==null&&x!=='')??null;
+const imageUrl=raw=>{try{if(typeof raw!=='string')return null;const u=new URL(raw);return u.protocol==='https:'&&!u.username&&!u.password&&raw.length<400?u.href:null}catch{return null}};
 const rows=(payload,kind)=>{
  const data=payload?.data??payload;
  if(Array.isArray(data))return data;
@@ -25,6 +26,7 @@ function normalize(row,kind,now,freshnessMs){
  const provider=kind==='radar'?'JARVIS · DexScreener/GeckoTerminal':'GMGN via JARVIS';
  return {chain:'sol',address,name:str(first(a.name,a.token_name,row.name),90),symbol:str(first(a.symbol,a.token_symbol,row.symbol),20),
  kind,provider,providers:[provider],observed_at:seen,created_at,freshness:fresh?'FRESH':'STALE',
+ image_url:imageUrl(first(a.logo,a.image_url,a.imageUrl,a.icon,a.logoURI,a.image?.url,row.image_url,row.info?.imageUrl)),
  market_cap_usd:num(first(row.market_cap,row.marketcap,row.marketCap)),
  liquidity_usd:num(first(row.liquidity,row.liquidity_usd,row.liquidity?.usd)),
  volume_5m_usd:num(first(row.volume_5m,row.volume?.m5)),
