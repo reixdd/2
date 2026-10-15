@@ -52,9 +52,9 @@ const UNIQUE = {
   token_proposals: [], verified_tokens: [['mint'], ['signature']], circuit_events: [['source', 'external_id']],
   fee_receipts: [['source', 'external_id']], treasury_allocations: [['receipt_id'], ['transfer_signature']],
   treasury_ledger: [['idempotency_key']], worker_heartbeats: [['worker_id']], agent_research_runs: [['id']],
-  research_schedules: [['agent_id']], fictional_concepts: [['id'], ['run_id']]
+  research_schedules: [['agent_id']], fictional_concepts: [['id'], ['run_id']], dit_market_snapshots: [['id']]
 };
-const IDENTITY = { agents: 'id', agent_profiles: 'agent_id', agent_vote_counts: 'agent_id', research_sources: 'id', verified_tokens: 'mint', worker_heartbeats: 'worker_id', agent_votes: 'user_id', research_schedules: 'agent_id', fictional_concepts: 'id' };
+const IDENTITY = { agents: 'id', agent_profiles: 'agent_id', agent_vote_counts: 'agent_id', research_sources: 'id', verified_tokens: 'mint', worker_heartbeats: 'worker_id', agent_votes: 'user_id', research_schedules: 'agent_id', fictional_concepts: 'id', dit_market_snapshots: 'id' };
 const SERIAL = new Set(['activity_events', 'audit_logs', 'treasury_ledger', 'vote_changes']);
 const DEFAULTS = {
   agents: { state: 'IDLE', current_stage: null, state_since: nowIso, last_active_at: null, is_active: true },
