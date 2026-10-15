@@ -9,7 +9,7 @@
   const link=(x,label)=>valid(x)?'<a rel="noopener noreferrer" target="_blank" href="'+esc(valid(x))+'">'+esc(label||x)+' ↗</a>':esc(label||'Source unavailable');
   const api=async path=>{const r=await fetch(path,{cache:'no-store',signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('HTTP '+r.status);return r.json()};
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
-  let world=null,observations=[],runs=[],concepts=[],busy=false,liveMarket=null,marketAvailable=true,marketBusy=false;
+  let world=null,observations=[],runs=[],concepts=[],busy=false,liveMarket=null,marketAvailable=true,marketBusy=false,localDrafts=[];
   for(const [id,title] of [['dit-live-evidence-section','NEW PAIRS // EVIDENCE'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // APPROVED CONCEPTS']]){
     const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
   }
@@ -65,7 +65,8 @@
     $('dit-live-evidence').innerHTML=rows.length?rows.map(o=>'<article class="live-row"><div><span class="byline">'+esc(o.agent_id)+' / '+esc(o.source_id)+'</span><time>'+when(o.observed_at)+'</time></div><div><h3>'+link(o.url,o.title)+'</h3><p>'+esc(o.evidence?.summary||'Source recorded, claims not independently established.')+'</p></div></article>').join(''):'<p class="live-empty">No recent market observations recorded. General news is hidden.</p>';
     $('dit-live-transmissions').innerHTML=runs.length?runs.slice(0,10).map(r=>'<article class="live-row"><div><span class="byline">'+esc(r.agent_id)+' / '+esc(r.model||'unknown model')+'</span><time>'+when(r.finished_at||r.started_at)+'</time></div><div><h3>'+esc(r.status==='completed'?'CONCEPT RESEARCH COMPLETE':r.status==='running'?'SCANNING':'RESEARCH '+r.status.toUpperCase())+'</h3><p>'+esc(r.status==='completed'?teaser(r.answer)||'Model response saved.':r.status==='running'?'Waiting for local inference.':'See private operator diagnostics.')+'</p>'+((r.source_refs||[]).slice(0,2).map(s=>'<small>'+link(s.url,s.title)+'</small>').join(''))+'</div></article>').join(''):'<p class="live-empty">No research runs yet.</p>';
     renderLiveMarket();
-    $('dit-live-concepts').innerHTML=concepts.length?concepts.map(c=>'<article class="live-concept"><div class="live-ticker">'+esc(c.content?.ticker)+'</div><div><span class="byline">'+esc(c.agent_id)+'</span><h3>'+esc(c.content?.name)+'</h3><p>'+esc(c.content?.hook||c.content?.narrative?.slice(0,100))+'</p><small>'+esc(buzz(c.content?.buzzwords))+'</small><p>'+esc(c.content?.narrative?.slice(0,160))+'</p><button data-live-concept="'+esc(c.id)+'">VIEW ATTENTION ANATOMY ↗</button></div></article>').join(''):'<p class="live-empty">No human-reviewed fictional concepts are published yet.</p>';
+    const privateCards=localDrafts.filter(c=>c.status==='review').slice(0,12).map(c=>'<article class="live-concept"><div class="live-ticker">'+esc(c.content?.ticker||'?')+'</div><div><span class="byline">PRIVATE DRAFT / '+esc(c.agent_id)+' / REQUIRES APPROVAL</span><h3>'+esc(c.content?.name)+'</h3><p>'+esc(c.content?.hook||c.content?.narrative?.slice(0,130))+'</p><small>'+esc(buzz(c.content?.buzzwords))+'</small><a href="/operator">OPEN PRIVATE REVIEW ↗</a></div></article>').join('');
+    $('dit-live-concepts').innerHTML=privateCards+(concepts.length?concepts.map(c=>'<article class="live-concept"><div class="live-ticker">'+esc(c.content?.ticker)+'</div><div><span class="byline">'+esc(c.agent_id)+'</span><h3>'+esc(c.content?.name)+'</h3><p>'+esc(c.content?.hook||c.content?.narrative?.slice(0,100))+'</p><small>'+esc(buzz(c.content?.buzzwords))+'</small><p>'+esc(c.content?.narrative?.slice(0,160))+'</p><button data-live-concept="'+esc(c.id)+'">VIEW ATTENTION ANATOMY ↗</button></div></article>').join(''):(!privateCards?'<p class="live-empty">No private drafts or approved concepts yet. Models remain in research mode until evidence supports a candidate.</p>':''));
   }
 
   const money=x=>typeof x==='number'&&Number.isFinite(x)?('$'+(x>=1000?(x/1000).toFixed(1)+'k':Math.round(x).toLocaleString())):'—';
@@ -88,6 +89,13 @@
     feed.innerHTML='<div class="market-feed-meta"><span>◉ LIVE LOCAL CACHE · DISPLAY 1S · NO EXTRA PROVIDER CALLS</span>'+
       '<span>JARVIS OBSERVED '+esc(ms(liveMarket.last_checked_at))+(liveMarket.refreshing?' · UPDATING…':'')+'</span></div>'+
       '<div class="market-grid">'+cards+'</div>';
+  }
+  async function refreshPrivateDrafts(){
+    if(!marketAvailable||document.hidden)return;
+    try{
+      const r=await fetch('/operator/api/concepts',{cache:'no-store',signal:AbortSignal.timeout(3000)});
+      if(r.ok){const data=await r.json();localDrafts=Array.isArray(data.concepts)?data.concepts:[];render();}
+    }catch{/* Hosted site has no private review endpoint. */}
   }
   async function refreshLiveMarket(){
     if(!marketAvailable||marketBusy||document.hidden)return;
@@ -112,6 +120,6 @@
       render();
     }finally{busy=false}
   }
-  refresh();refreshLiveMarket();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);
+  refresh();refreshLiveMarket();refreshPrivateDrafts();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);setInterval(refreshPrivateDrafts,15000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();refreshLiveMarket()}});
 })();
