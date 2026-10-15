@@ -14,6 +14,8 @@ on:
       - 'dit-site/supabase/migrations/0010_readonly_market_snapshots.sql'
       - 'dit-site/dist/index.html'
       - 'dit-site/dist/control-room.js'
+      - 'dit-site/dist/stage.js'
+      - 'dit-site/dist/stage-quality.js'
       - 'dit-site/dist/control-room.css'
       - 'dit-site/tests/control-room.test.js'
       - 'dit-site/tests/cinematic-restoration.test.js'
@@ -60,6 +62,6 @@ jobs:
       - name: Run existing source regression tests
         run: npm test
       - name: Check live browser module
-        run: node --check dist/live-research.js && node --check dist/control-room.js && node --check dist/terminal-ui.js && node --check dist/operator-review.js
+        run: node --check dist/live-research.js && node --check dist/control-room.js && node --check dist/stage.js && node --check dist/terminal-ui.js && node --check dist/operator-review.js
       - name: Check host worker build
         run: npm run build
