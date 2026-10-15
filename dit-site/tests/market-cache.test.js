@@ -69,3 +69,39 @@ test('timestamped tape metrics supersede earlier undated discovery metrics for t
  assert.equal(op.marketStatus().signals[0].buys_5m,30);
  assert.equal(op.marketStatus().signals[0].sells_5m,12);
 });
+
+test('60 market refresh cycles preserve 40 real source-artwork URLs and verified launch timestamps',async()=>{
+ const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+ const addresses=Array.from({length:60},(_,i)=>'123456789ABCDEFGHJKLMNPQRSTUVWXYZ'+alphabet[Math.floor(i/58)]+alphabet[i%58]);
+ const launch=new Date(Date.now()-42_000).toISOString();
+ let tick=0;
+ const op=new Operator({store:{},env:{DIT_JARVIS_URL:'http://127.0.0.1:8768'},port:4173,
+ configFile:'/tmp/dit-nonexistent-market-settings.json',
+ fetchImpl:async url=>{
+  if(String(url).includes('trenches'))return Response.json({data:{new_creation:addresses.map((address,i)=>({
+   address,symbol:'COIN'+i,pair_created_at:launch,
+   image_url:i<40?'https://cdn.example.org/token-'+i+'.png':null
+  }))}});
+  if(String(url).includes('/api/tape'))return Response.json({items:addresses.map((address,i)=>({
+   address,chain:'sol',observed_at:(Date.now()-500)/1000,
+   volume_5m:i+tick,buys_5m:tick+1,sells_5m:tick
+  }))});
+  return Response.json({items:[]});
+ }});
+ await op.refreshMarket();
+ const initial=Object.fromEntries(op.marketStatus().signals.map(x=>[x.address,x]));
+ assert.equal(Object.keys(initial).length,60);
+ for(tick=1;tick<=60;tick++){
+   op.marketAt=Date.now()-1500;
+   if(tick%10===0)op.discoveryAt=Date.now()-25000;
+   await op.refreshMarket();
+ }
+ const final=op.marketStatus().signals;
+ assert.equal(final.length,60);
+ assert.equal(final.filter(x=>x.image_url?.startsWith('https://cdn.example.org/')).length,40);
+ assert.equal(final.filter(x=>x.image_url===null).length,20);
+ for(const token of final){
+   assert.equal(token.pair_created_at,launch);
+   assert.equal(token.first_seen_at,initial[token.address].first_seen_at);
+ }
+});
