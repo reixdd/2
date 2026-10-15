@@ -30,13 +30,49 @@ export class AutonomousResearch {
     this.nextAt=Object.fromEntries(IDENTITIES.map(id=>[id,0]));
     this.last=Object.fromEntries(IDENTITIES.map(id=>[id,{status:'waiting'}]));
     this.ticking=false;this.timer=null;this.pausedReason=null;
-    this.startedAt=null;this.lastHeartbeat=0;this.lastCpu=null;
+    this.startedAt=null;this.lastHeartbeat=0;this.lastCpu=null;this.initialized=false;this.schedules={};this.resources={};
+  }
+  async initialize(){
+    if(this.initialized)return;
+    if(typeof this.operator.store?.upsert!=='function'){this.initialized=true;return;}
+    for(const id of IDENTITIES){
+      let [row]=await this.operator.store.select('research_schedules',{filters:[['agent_id','eq',id]],limit:1});
+      if(!row){
+        try{row=await this.operator.store.insert('research_schedules',{agent_id:id,enabled:true,interval_minutes:this.intervalMs/MINUTE,next_due_at:new Date(this.clock()).toISOString(),status:'waiting'});}
+        catch(e){[row]=await this.operator.store.select('research_schedules',{filters:[['agent_id','eq',id]],limit:1});if(!row)throw e;}
+      }
+      this.schedules[id]=row;
+      this.nextAt[id]=Date.parse(row.next_due_at)||this.clock();
+    }
+    this.initialized=true;
+  }
+  async setSchedule({agent_id,revision,enabled,interval_minutes}={}){
+    if(!IDENTITIES.includes(agent_id))throw Error('Invalid agent');
+    await this.initialize();
+    const [row]=await this.operator.store.select('research_schedules',{filters:[['agent_id','eq',agent_id]],limit:1});
+    if(!row||row.revision!==Number(revision))throw Error('Schedule changed; reload');
+    const interval=Number(interval_minutes);
+    if(!Number.isInteger(interval)||interval<10||interval>240)throw Error('Interval must be 10–240 minutes');
+    const now=new Date(this.clock()).toISOString();
+    const changed=await this.operator.store.update('research_schedules',[['agent_id','eq',agent_id],['revision','eq',row.revision]],{
+      enabled:!!enabled,interval_minutes:interval,next_due_at:now,revision:row.revision+1,
+      status:enabled?'waiting':'paused',updated_at:now
+    });
+    if(!changed?.length)throw Error('Schedule changed concurrently');
+    this.schedules[agent_id]=changed[0];this.nextAt[agent_id]=this.clock();
+    return {schedule:changed[0]};
+  }
+  async #saveSchedule(id,patch){
+    if(!this.schedules[id])return;
+    const rows=await this.operator.store.update('research_schedules',[['agent_id','eq',id]],{...patch,updated_at:new Date(this.clock()).toISOString()});
+    if(rows?.length)this.schedules[id]=rows[0];
   }
   snapshot(){
     return {enabled:this.enabled,startedAt:this.startedAt,pausedReason:this.pausedReason,
       intervalMinutes:this.intervalMs/MINUTE,maxConcurrent:this.operator.maxConcurrent,
       minFreeRamGB:this.minRamBytes/ONE_GB,maxLoadedVramGB:this.maxVramBytes/ONE_GB,
       active:[...this.operator.running.keys()],
+      schedules:IDENTITIES.map(id=>this.schedules[id]).filter(Boolean),resources:this.resources,
       agents:IDENTITIES.map(id=>({agent_id:id,nextDueAt:this.nextAt[id]?new Date(this.nextAt[id]).toISOString():null,...this.last[id]}))};
   }
   #cpuPressure(){
@@ -54,13 +90,13 @@ export class AutonomousResearch {
       await this.operator.store.upsert('worker_heartbeats',{
         worker_id:'dit-autonomous-local',started_at:this.startedAt||new Date(now).toISOString(),last_seen_at:new Date(now).toISOString(),
         version:'three-agent-concurrent-1',info:{kind:'local_autonomous_research',agent_ids:IDENTITIES,limit:this.operator.maxConcurrent,
-          active:[...this.operator.running.keys()],paused_reason:this.pausedReason||null,model_route:'jarvis',store:this.operator.store.kind}
+          active:[...this.operator.running.keys()],paused_reason:this.pausedReason||null,resources:this.resources,model_route:'jarvis',store:this.operator.store.kind}
       },{onConflict:'worker_id'});
     }catch(e){this.log('[DIT autonomous heartbeat]',cut(e.message));}
   }
   async #healthyMemory(){
     const busy=this.#cpuPressure();if(busy)return busy;
-    const free = this.freeRam();
+    const free = this.freeRam();this.resources.freeRamGB=Number((free/ONE_GB).toFixed(2));
     if(free < this.minRamBytes) return 'Low free system memory; automatic inference postponed';
     // No AMD GPU-temperature control is claimed. Ollama reports loaded model memory.
     try {
@@ -68,6 +104,7 @@ export class AutonomousResearch {
       if(r.ok){
         const j=await r.json();
         const bytes=(j.models||[]).reduce((a,m)=>a+(Number(m.size_vram)||0),0);
+        this.resources.loadedVramGB=Number((bytes/ONE_GB).toFixed(2));
         if(bytes > this.maxVramBytes) return 'Loaded Ollama GPU models exceed configured VRAM threshold';
       }
     }catch{}
@@ -89,13 +126,14 @@ export class AutonomousResearch {
     if(!this.enabled||this.ticking)return this.snapshot();
     this.ticking=true;
     try {
+      await this.initialize();
       const now=this.clock();
-      const due=IDENTITIES.filter(id=>this.nextAt[id]<=now&&!this.operator.running.has(id));
+      const due=IDENTITIES.filter(id=>this.schedules[id]?.enabled!==false&&this.nextAt[id]<=now&&!this.operator.running.has(id));
       if(!due.length){this.pausedReason=null;await this.#heartbeat(now);return this.snapshot();}
       const pressure=await this.#healthyMemory();
       if(pressure){
         this.pausedReason=pressure;
-        for(const id of due){this.last[id]={status:'paused_for_resources',detail:pressure};this.nextAt[id]=now+MINUTE;}
+        for(const id of due){this.last[id]={status:'paused_for_resources',detail:pressure};this.nextAt[id]=now+MINUTE;await this.#saveSchedule(id,{status:'resource_pause',detail:pressure,next_due_at:new Date(this.nextAt[id]).toISOString()});}
         await this.#heartbeat(now);
         return this.snapshot();
       }
@@ -110,7 +148,8 @@ export class AutonomousResearch {
           const body=await response.json();
           if(response.status===202){
             this.last[id]={status:'submitted',runId:body.id,submittedAt:new Date(now).toISOString()};
-            this.nextAt[id]=now+this.intervalMs;
+            this.nextAt[id]=now+(this.schedules[id]?.interval_minutes||this.intervalMs/MINUTE)*MINUTE;
+            await this.#saveSchedule(id,{status:'running',attempts:0,detail:null,last_run_id:body.id,next_due_at:new Date(this.nextAt[id]).toISOString()});
           } else {
             this.last[id]={status:'retry_wait',detail:cut(body.error),httpStatus:response.status};
             this.nextAt[id]=now+2*MINUTE;
