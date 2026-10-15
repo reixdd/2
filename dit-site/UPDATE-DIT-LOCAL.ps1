@@ -28,6 +28,7 @@ $manifest = @(
   @{repo='1'; scope='jarvis'; path='src/jarvis/web/app.js'; branch='main'},
   @{repo='1'; scope='jarvis'; path='src/jarvis/web/styles.css'; branch='main'},
   @{repo='2'; scope='dit'; path='dit-site/dist/live-research.js'; branch='dit-3d-assets'},
+  @{repo='2'; scope='dit'; path='dit-site/dist/terminal-ui.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/live-research.css'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/operator.html'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/operator.js'; branch='dit-3d-assets'},
