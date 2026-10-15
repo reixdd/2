@@ -31,3 +31,11 @@ test('untrusted image protocols are rejected and model hook is short',()=>{
  assert.equal(safeArtUrl('https://example.com/animated.gif'),'https://example.com/animated.gif');
  assert.equal(researchHook('HOOK: The world logged out.\nSOURCE: https://example.com'),'The world logged out.');
 });
+
+test('exhausted worker jobs retain status and diagnostic error without claiming future cycles ended',()=>{
+ const a=formatActivity({id:99,agent_id:'NULL_ENTITY',event_type:'job_dead',title:'NULL_ENTITY cycle failed permanently',detail:'source provider returned 429',created_at:'2026-10-15T18:00:00Z'});
+ assert.equal(a.status,'job_dead');
+ assert.doesNotMatch(a.title,/failed permanently/i);
+ assert.match(a.title,/retry|attempt|operator/i);
+ assert.match(a.detail,/429/);
+});
