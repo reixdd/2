@@ -94,6 +94,20 @@ export class AutonomousResearch {
       },{onConflict:'worker_id'});
     }catch(e){this.log('[DIT autonomous heartbeat]',cut(e.message));}
   }
+  // Completion feedback from the real research run, not merely queue submission.
+  async onFinished(id,runId,{status,error=null}={}){
+    if(!IDENTITIES.includes(id)||!this.initialized)return;
+    const schedule=this.schedules[id];
+    if(!schedule||schedule.last_run_id!==runId)return;
+    const now=this.clock();
+    const ok=status==='completed';
+    const attempts=ok?0:Math.min(6,(schedule.attempts||0)+1);
+    const backoff=Math.min((schedule.interval_minutes||20)*MINUTE,2*MINUTE*2**Math.max(0,attempts-1));
+    this.nextAt[id]=now+(ok?(schedule.interval_minutes||20)*MINUTE:backoff);
+    this.last[id]={status:ok?'completed':'retry_wait',runId,detail:ok?null:cut(error),finishedAt:new Date(now).toISOString()};
+    try{await this.#saveSchedule(id,{status:ok?'waiting':'retry_wait',attempts,detail:ok?null:cut(error),next_due_at:new Date(this.nextAt[id]).toISOString()});}
+    catch(e){this.log('[DIT schedule completion]',id,cut(e.message));}
+  }
   async #healthyMemory(){
     const busy=this.#cpuPressure();if(busy)return busy;
     const free = this.freeRam();this.resources.freeRamGB=Number((free/ONE_GB).toFixed(2));
@@ -157,10 +171,12 @@ export class AutonomousResearch {
           } else {
             this.last[id]={status:'retry_wait',detail:cut(body.error),httpStatus:response.status};
             this.nextAt[id]=now+2*MINUTE;
+            await this.#saveSchedule(id,{status:'retry_wait',detail:cut(body.error),next_due_at:new Date(this.nextAt[id]).toISOString()});
           }
         }catch(error){
           this.last[id]={status:'retry_wait',detail:cut(error.message)};
           this.nextAt[id]=now+2*MINUTE;
+          await this.#saveSchedule(id,{status:'retry_wait',detail:cut(error.message),next_due_at:new Date(this.nextAt[id]).toISOString()});
         }
       }
       await this.#heartbeat(now);
