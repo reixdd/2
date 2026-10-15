@@ -6,7 +6,7 @@ const build=(options={})=>{
  const active=new Map(), submissions=[];
  const operator={
    port:4173,maxConcurrent:3,running:active,
-   store:{async select(){return [{title:'Real archived observation',url:'https://example.org/evidence'}]}},
+   store:{async select(){return [{title:'Real market signal',url:'https://gmgn.ai/sol/token/So11111111111111111111111111111111111111112'}]},async update(table,filters,patch){const id=filters[0][2];return [{agent_id:id,revision:1,...patch}]},async upsert(){return {}}},
    async handle(req,body){
      assert.equal(req.headers.host,'127.0.0.1:4173');
      submissions.push(body);
@@ -19,7 +19,12 @@ const build=(options={})=>{
    env:{DIT_AUTONOMOUS:'1',DIT_AUTONOMOUS_INTERVAL_MINUTES:'20',...options.env},
    clock:()=>options.clock??1000000,
    freeRam:()=>options.freeRam??20*GB,
-   fetchImpl:async()=>Response.json({models:options.loadedModels||[]}),
+   fetchImpl:async url=>{
+     if(String(url).endsWith('/api/ps'))return Response.json({models:options.loadedModels||[]});
+     if(options.noMarket)return Response.json({ok:false,state:'UNAVAILABLE'});
+     if(String(url).includes('gmgn'))return Response.json({ok:true,data:{new_creation:[{address:'So11111111111111111111111111111111111111112',symbol:'MEME',name:'Memetic'}]}});
+     return Response.json({items:[]});
+   },
    log:()=>{}
  });
  return {operator,scheduler,submissions};
@@ -29,13 +34,19 @@ test('all three autonomous identities initiate independent JARVIS runs concurren
  await scheduler.tick();
  assert.deepEqual(submissions.map(x=>x.agent_id),['GHOST_001','NULL_ENTITY','ECHO.exe']);
  assert.equal(operator.running.size,3);
- assert.match(submissions[0].prompt,/historical meme cycles/);
- assert.match(submissions[1].prompt,/descriptive market narratives/);
- assert.match(submissions[2].prompt,/social post draft/);
- assert.match(submissions[1].prompt,/untrusted external titles/);
+ assert.match(submissions[0].prompt,/forgotten internet meme/);
+ assert.match(submissions[1].prompt,/new-pair and trending Solana/);
+ assert.match(submissions[2].prompt,/X-style joke/);
+ assert.match(submissions[1].prompt,/untrusted data/);
  assert.equal(scheduler.snapshot().agents.length,3);
  await scheduler.tick();
  assert.equal(submissions.length,3,'same cycle must not duplicate jobs');
+});
+test('market API unavailable means zero automatic AI concept requests',async()=>{
+ const {scheduler,submissions}=build({noMarket:true});
+ await scheduler.tick();
+ assert.equal(submissions.length,0);
+ assert.ok(scheduler.snapshot().agents.every(x=>x.status==='waiting_for_market'));
 });
 test('low available RAM pauses all three identities rather than exhausting the PC',async()=>{
  const {scheduler,submissions}=build({freeRam:2*GB});
