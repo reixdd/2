@@ -15,8 +15,10 @@ export function extractConcept(answer,agentId,sourceRefs=[]){
   const name=trim(raw.name,90),ticker=trim(raw.ticker,10).toUpperCase();
   if(name.length<3||!/^[A-Z0-9]{2,10}$/.test(ticker)||trim(raw.narrative,3500).length<20||trim(raw.social_draft,1000).length<10)return null;
   const anatomy=raw.attention_anatomy||{};
+  const hook=trim(raw.hook||raw.narrative,120).split(/\s+/).slice(0,14).join(' ');
+  const buzzwords=Array.isArray(raw.buzzwords)?raw.buzzwords.map(x=>trim(x,24)).filter(Boolean).slice(0,4):[];
   return {
-    name,ticker,narrative:trim(raw.narrative,3500),cultural_origin:trim(raw.cultural_origin,1800),
+    name,ticker,hook,buzzwords,narrative:trim(raw.narrative,3500),cultural_origin:trim(raw.cultural_origin,1800),
     artwork_brief:trim(raw.artwork_brief,1400),social_draft:trim(raw.social_draft,1000),
     confidence:Number.isFinite(Number(raw.confidence))?Math.max(0,Math.min(1,Number(raw.confidence))):0.25,
     contradictory_evidence:Array.isArray(raw.contradictory_evidence)?raw.contradictory_evidence.slice(0,8).map(x=>trim(x,600)):['Independent corroboration may be incomplete.'],
@@ -24,8 +26,9 @@ export function extractConcept(answer,agentId,sourceRefs=[]){
     fictional:true,origin_agent:agentId
   };
 }
-export async function persistCompletedResearch(store,{runId,agentId,answer,observations=[],clock=()=>new Date().toISOString()}){
-  const links=recordedSources(answer,observations);
+export async function persistCompletedResearch(store,{runId,agentId,answer,observations=[],marketEvidence=[],clock=()=>new Date().toISOString()}){
+  const known=marketEvidence.filter(x=>x && x.url && x.observed_at && /^https:\/\/gmgn\.ai\/sol\/token\//.test(x.url)).map(x=>({id:null,url:x.url,title:trim(x.title,160),observed_at:x.observed_at}));
+  const links=recordedSources(answer,[...observations,...known]);
   await store.update('agent_research_runs',[['id','eq',runId]],{source_refs:links});
   const memory={agent_id:agentId,kind:'episodic',content:trim(answer,12000),
     summary:trim(answer,350),tags:['DIT','research'],importance:0.5,source_refs:links,run_id:runId};
