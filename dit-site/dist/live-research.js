@@ -1,6 +1,7 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
   const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js');
+  const {mountControlRoom,updateControlRoom}=await import('./control-room.js');
   const $ = id => document.getElementById(id);
   const hero=document.getElementById('stage'),controls=document.querySelector('.bottom-bar');
   if(hero&&controls)hero.insertAdjacentElement('afterend',controls); // keep original audio/FX directly below artwork
@@ -9,6 +10,16 @@
   const valid = x => {try{const u=new URL(x);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:null}catch{return null}};
   const link=(x,label)=>valid(x)?'<a rel="noopener noreferrer" target="_blank" href="'+esc(valid(x))+'">'+esc(label||x)+' ↗</a>':esc(label||'Source unavailable');
   const api=async path=>{const r=await fetch(path,{cache:'no-store',signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('HTTP '+r.status);return r.json()};
+  function activateTab(which){
+    const selected=which==='activity'?'activity':'radar';
+    const radar=$('dit-live-concept-section'),activity=$('dit-live-transmission-section');
+    if(radar)radar.hidden=selected!=='radar';
+    if(activity)activity.hidden=selected!=='activity';
+    document.querySelectorAll('[data-dit-tab]').forEach(btn=>btn.setAttribute('aria-selected',String(btn.dataset.ditTab===selected)));
+    const state=$('dit-tab-state');if(state)state.textContent=selected==='radar'?'_ ORIGINAL CONCEPTS / HUMAN REVIEW':'_ VERIFIED OBSERVATIONS / DECISION FLOW';
+  }
+  mountControlRoom({openAgent:id=>detail(id),activateTab});
+  activateTab(location.hash==='#dit-live-transmission-section'?'activity':'radar');
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
   let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[];
   let marketStructureKey='',activityStructureKey='',conceptStructureKey='',lastActivityTime=0;
@@ -96,6 +107,13 @@
     const realEvents=events.map(formatActivity).filter(Boolean).slice(0,20);
     const key=realEvents.map(e=>e.id+'|'+e.status+'|'+e.title).join(';');
     if(key!==activityStructureKey){
+      const previous=activityStructureKey;
+      const panel=document.querySelector('.dit-knowledge-flow');
+      if(panel&&previous&&realEvents.length){
+        panel.dataset.transmitting='true';
+        clearTimeout(panel._ditPulseTimeout);
+        panel._ditPulseTimeout=setTimeout(()=>{panel.dataset.transmitting='false'},1500);
+      }
       activityStructureKey=key;
       const shell=document.querySelector('.dit-live');
       if(shell){
@@ -119,8 +137,9 @@
       }
     }
     renderLiveMarket();
-    const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,12);
-    const present=[...liveDrafts.map(c=>({...c,_private:true})),...concepts.map(c=>({...c,_private:false}))];
+    updateControlRoom(world,liveMarket,events);
+    const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,8);
+    const present=[...liveDrafts.map(c=>({...c,_private:true})),...concepts.slice(0,8).map(c=>({...c,_private:false}))];
     const conceptKey=JSON.stringify(present.map(c=>[c.id,c.status,c.updated_at,c.content?.name,c.content?.hook,
       c.content?.image_url,c.source_refs?.map(x=>x.url), (liveMarket?.signals||[]).filter(s=>(c.source_refs||[]).some(r=>r.url===s.url)).map(s=>s.image_url)]));
     if(conceptKey!==conceptStructureKey){
@@ -128,7 +147,8 @@
       $('dit-live-concepts').innerHTML=present.length?present.map(c=>{
       const x=c.content||{},label=c._private?'DRAFT // REQUIRES HUMAN REVIEW':'APPROVED CONCEPT';
       return '<article class="terminal-concept-card">'+artTile(c,'terminal-concept-image')+
-        '<div class="terminal-concept-copy"><small>_ '+esc(c.agent_id)+' / '+label+'</small>'+
+        '<div class="dit-creator-credit">'+portrait(c.agent_id,'dit-creator-avatar')+'<span>'+esc(c.agent_id)+'</span></div>'+
+        '<div class="terminal-concept-copy"><small>_ '+label+'</small>'+
         '<h3>'+esc(x.name||'Untitled')+' <span>$'+esc(x.ticker||'?')+'</span></h3>'+
         '<p class="terminal-type">'+esc(compact(x.hook||x.narrative).slice(0,135))+'</p>'+
         '<small>'+esc(buzz(x.buzzwords))+'</small>'+
@@ -201,6 +221,7 @@
         liveMarket={...liveMarket,stale:true,source_states:incoming.source_states||liveMarket.source_states};
       }else liveMarket=incoming;
       renderLiveMarket();
+      updateControlRoom(world,liveMarket,events);
     }catch{
       if(liveMarket)liveMarket.stale=true;
       renderLiveMarket();
