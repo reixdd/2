@@ -14,8 +14,10 @@ export function sanitizeMarketSnapshot(data, now=Date.now()){
     if(!Number.isFinite(stamp)||stamp>now+60_000)continue;
     signals.push({
       chain:'sol',address:s.address,name:text(s.name,90),symbol:text(s.symbol,20),
-      kind:['trenches','trending','radar'].includes(s.kind)?s.kind:'radar',
+      kind:['trenches','trending','radar','tape'].includes(s.kind)?s.kind:'radar',
       provider:text(s.provider,65),observed_at:new Date(stamp).toISOString(),
+      source_observed_at:Number.isFinite(Date.parse(s.source_observed_at||''))?new Date(s.source_observed_at).toISOString():null,
+      received_at:Number.isFinite(Date.parse(s.received_at||''))?new Date(s.received_at).toISOString():null,
       image_url:https(s.image_url),created_at:Number.isFinite(Date.parse(s.created_at||''))?new Date(s.created_at).toISOString():null,
       volume_5m_usd:num(s.volume_5m_usd),liquidity_usd:num(s.liquidity_usd),
       buys_5m:num(s.buys_5m),sells_5m:num(s.sells_5m),market_cap_usd:num(s.market_cap_usd),
@@ -25,7 +27,7 @@ export function sanitizeMarketSnapshot(data, now=Date.now()){
     if(signals.length===12)break;
   }
   const source_states={};
-  for(const k of ['trenches','trending','radar']){
+  for(const k of ['trenches','trending','radar','tape']){
     const status=String(data?.source_states?.[k]??'UNAVAILABLE');
     source_states[k]=status==='OK'?'OK':/^HTTP \d{3}$/.test(status)?status:'UNAVAILABLE';
   }
