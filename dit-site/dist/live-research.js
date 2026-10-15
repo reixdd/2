@@ -3,6 +3,8 @@
   const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=launch-final-3');
   const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=launch-final-3');
   const {MarketFeed}=await import('./market-feed.js?v=launch-final-3');
+  const {featuredAgentIdeas}=await import('./concept-feature.js?v=launch-final-4');
+  const {conceptStudyArtwork}=await import('./concept-art.js?v=launch-final-4');
   const marketFeed=new MarketFeed(document.getElementById('dit-live-evidence'));
   document.getElementById('dit-live-filter').addEventListener('change',()=>renderLiveMarket());
   const $ = id => document.getElementById(id);
@@ -31,7 +33,7 @@
   });
   activateTab(location.hash==='#dit-live-transmission-section'?'activity':'radar');
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
-  let conceptBefore=null,conceptArchive=[],conceptPaging=false;
+  let conceptBefore=null,conceptArchive=[],conceptPaging=false,archiveOpen=false,archiveShow=9;
   let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[],treasury=null;
   let activityStructureKey='',conceptStructureKey='',lastActivityTime=0;
   for(const [id,title] of [['dit-live-evidence-section','MARKET OBSERVATIONS'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // AGENT IDEAS']]){
@@ -48,9 +50,15 @@
     if(conceptLink&&activityLink)nav.insertBefore(conceptLink,activityLink);}
     const buzz=x=>Array.isArray(x)?x.slice(0,4).map(y=>'#'+String(y).replace(/^#/,'')).join(' · '):'';
   const portrait=(id,cls='terminal-avatar')=>agentPortrait(id)?'<img class="'+cls+'" src="'+esc(agentPortrait(id))+'" alt="'+esc(id)+' portrait" loading="lazy">':'';
-  const artTile=(c,cls)=>{const a=conceptArtwork(c,liveMarket?.signals||[]);
-    return '<div class="'+cls+'">'+(a.url?'<img src="'+esc(a.url)+'" alt="'+esc(a.label)+'" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span class="terminal-art-fallback" hidden>_ IMAGE UNAVAILABLE</span>':'<span>_ ORIGINAL ART PENDING</span>')+
-    '<small>'+esc(a.label)+'</small></div>';};
+  const artTile=(c,cls)=>{
+    // A verified concept image belongs to this idea; source token icons do not.
+    const saved=conceptArtwork(c,[]),actual=saved.kind==='concept'&&saved.url;
+    const url=actual?saved.url:conceptStudyArtwork(c);
+    const label=actual?'ORIGINAL CONCEPT ART':'AGENT CONCEPT STUDY / VECTOR PREVIEW';
+    return '<div class="'+cls+'"><img src="'+esc(url)+'" alt="'+esc((c.content?.name||'Agent idea')+' illustrated concept')+'" loading="lazy" decoding="async"'+
+      (actual?' referrerpolicy="no-referrer"':'')+'><span class="terminal-art-fallback" hidden>_ CONCEPT ART UNAVAILABLE</span>'+
+      '<small>'+esc(label)+'</small></div>';
+  };
   document.addEventListener('error',event=>{
     const img=event.target;
     if(!(img instanceof HTMLImageElement))return;
@@ -245,11 +253,15 @@
       agents:(world?.agents||[]).map(a=>({id:a.id,state:['OBSERVING','THINKING','CREATING'].includes(String(a.presence).toUpperCase())?String(a.presence).toUpperCase():'IDLE'}))
     }}));
     updateControlRoom(world,liveMarket,events,treasury);
-    older.hidden=!conceptBefore;
+    older.hidden=!archiveOpen?allIdeas.length<=3:!conceptBefore&&allIdeas.length<=archiveShow;
+    older.textContent=archiveOpen?'LOAD MORE AGENT IDEAS':'BROWSE IDEA ARCHIVE';
+    // Primary Radar: newest actual research idea per agent. History is opt-in.
     const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,8);
-    const present=[...concepts.map(c=>({...c,_private:false})),...liveDrafts.filter(c=>!concepts.some(p=>p.id===c.id)).map(c=>({...c,_private:true}))];
-    const conceptKey=JSON.stringify(present.map(c=>[c.id,c.status,c.updated_at,c.content?.name,c.content?.hook,
-      c.content?.image_url,c.source_refs?.map(x=>[x.url,x.address,x.mint]), conceptArtwork(c,liveMarket?.signals||[]).url]));
+    const allIdeas=[...concepts.map(c=>({...c,_private:false})),
+      ...liveDrafts.filter(c=>!concepts.some(p=>p.id===c.id)).map(c=>({...c,_private:true}))];
+    const present=archiveOpen?allIdeas.slice(0,archiveShow):featuredAgentIdeas(allIdeas);
+    const conceptKey=JSON.stringify([archiveOpen,archiveShow,...present.map(c=>[c.id,c.status,c.updated_at,
+      c.content?.name,c.content?.hook,c.content?.image_url,c.agent_id])]);
     if(conceptKey!==conceptStructureKey){
       conceptStructureKey=conceptKey;
       $('dit-live-concepts').innerHTML=present.length?present.map(c=>{
@@ -269,7 +281,18 @@
   }
 
   const older=document.createElement('button');older.type='button';older.textContent='LOAD OLDER AGENT IDEAS';$('dit-live-concepts').after(older);older.hidden=true;
-  older.addEventListener('click',async()=>{if(!conceptBefore||conceptPaging)return;conceptPaging=true;older.disabled=true;try{const page=await api('/api/concepts?before='+encodeURIComponent(conceptBefore));conceptArchive=[...conceptArchive,...(page.concepts||[])];conceptBefore=page.next_before;concepts=[...concepts,...(page.concepts||[]).filter(c=>!concepts.some(n=>n.id===c.id))];render();}catch{older.textContent='RETRY LOADING OLDER IDEAS';}finally{conceptPaging=false;older.disabled=false;}});
+  older.addEventListener('click',async()=>{
+    if(conceptPaging)return;
+    if(!archiveOpen){archiveOpen=true;archiveShow=9;render();return;}
+    if(archiveShow<concepts.length+localDrafts.length){archiveShow+=9;render();return;}
+    if(!conceptBefore)return;
+    conceptPaging=true;older.disabled=true;
+    try{const page=await api('/api/concepts?limit=24&before='+encodeURIComponent(conceptBefore));
+      conceptArchive=[...conceptArchive,...(page.concepts||[])];conceptBefore=page.next_before;
+      concepts=[...concepts,...conceptArchive.filter(c=>!concepts.some(n=>n.id===c.id))];
+      archiveShow+=9;render();
+    }catch{older.textContent='RETRY IDEA ARCHIVE';}finally{conceptPaging=false;older.disabled=false;}
+  });
   const money=x=>typeof x==='number'&&Number.isFinite(x)?('$'+(x>=1000?(x/1000).toFixed(1)+'k':Math.round(x).toLocaleString())):'—';
   function renderLiveMarket(){marketFeed.render(liveMarket,$('dit-live-filter')?.value||'all');}
   async function refreshPrivateDrafts(){
@@ -282,7 +305,7 @@
   async function refreshLiveMarket(){
     if(marketBusy||document.hidden)return;
     marketBusy=true;
-    const previousArtwork=JSON.stringify((liveMarket?.signals||[]).map(s=>[s.address,s.image_url]));
+    // Market updates must not reconstruct independent agent-concept artwork.
     try{
       // Private local operator for fast source access; hosted clients read the
       // sanitized shared snapshot instead of attempting Windows localhost.
@@ -299,7 +322,7 @@
       }else liveMarket=incoming;
       renderLiveMarket();
       updateControlRoom(world,liveMarket,events,treasury);
-      if(previousArtwork!==JSON.stringify((liveMarket?.signals||[]).map(s=>[s.address,s.image_url]))&&(localDrafts.length||concepts.length))render();
+      // Ideas only re-render when their own persisted content changes.
     }catch{
       if(liveMarket)liveMarket.stale=true;
       renderLiveMarket();
@@ -317,7 +340,7 @@
   async function refresh(){
     if(busy||document.hidden)return;busy=true;
     try{
-      const out=await Promise.allSettled([api('/api/observatory'),api('/api/observations?limit=60'),api('/api/results?limit=40'),api('/api/concepts')]);
+      const out=await Promise.allSettled([api('/api/observatory'),api('/api/observations?limit=60'),api('/api/results?limit=40'),api('/api/concepts?limit=24')]);
       world=out[0].status==='fulfilled'?out[0].value:null;
       if(out[1].status==='fulfilled')observations=out[1].value.observations||[];
       if(out[2].status==='fulfilled')runs=out[2].value.runs||[];

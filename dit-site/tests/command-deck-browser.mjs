@@ -138,6 +138,30 @@ try{
  assert.equal(await page.locator('.market-card').count(),1,'old actively traded token is not newly created');
  await page.screenshot({path:path.join(output,'populated-market-with-artwork.png'),fullPage:false});
 
+ // Final Radar acceptance: three authentic agent ideas with actual decoded SVG illustrations.
+ await page.route(url=>url.pathname==='/api/concepts'&&url.searchParams.get('limit')==='24',route=>route.fulfill({json:{
+  concepts:[
+   ...['GHOST_001','NULL_ENTITY','ECHO.exe'].map((agent_id,i)=>({
+    id:'featured-'+i,agent_id,status:'review',created_at:new Date(Date.now()-i*1000).toISOString(),
+    content:{name:['GHOST01','VOIDPAY','DEADNET'][i],ticker:['GSTM','VPAY','DNET'][i],
+     artwork_brief:['glowing hooded ghost','void bank account','broken internet signal'][i],hook:'Agent research concept'}
+   })),
+   {id:'older',agent_id:'GHOST_001',status:'review',created_at:new Date(Date.now()-20000).toISOString(),
+    content:{name:'ARCHIVED GHOST',ticker:'OLD'}}
+  ],next_before:null
+ }}));
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('.terminal-concept-card').first().waitFor({timeout:15000});
+ assert.equal(await page.locator('.terminal-concept-card').count(),3,'one featured recorded idea per research agent');
+ await page.waitForFunction(()=>[...document.querySelectorAll('.terminal-concept-image img')].length===3&&
+  [...document.querySelectorAll('.terminal-concept-image img')].every(img=>img.complete&&img.naturalWidth>0),null,{timeout:12000});
+ assert.equal(await page.locator('.terminal-concept-image img[src^="data:image/svg+xml"]').count(),3,
+  'illustrated concept studies render as decoded images');
+ await page.locator('#dit-live-concept-section').scrollIntoViewIfNeeded();
+ await page.screenshot({path:path.join(output,'curated-agent-radar.png'),fullPage:false});
+ await page.getByText('BROWSE IDEA ARCHIVE',{exact:true}).click();
+ assert.equal(await page.locator('.terminal-concept-card').count(),4,'history loads only after explicit archive click');
+
  assert.deepEqual(errors,[],'no page-level script errors');
  console.log('[command-deck] Browser acceptance PASSED; renderer='+mode);
 }finally{

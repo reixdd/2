@@ -36,7 +36,7 @@ export class Operator {
       try{
         const current=await collectJarvisMarkets({
           baseUrl:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',
-          fetchImpl:this.fetchImpl,tapeOnly:!full
+          fetchImpl:this.fetchImpl,tapeOnly:!full,enrichPairs:full
         });
         const previous=this.marketSnapshot;
         const source_states={...(previous?.source_states||{}),...(current.source_states||{})};

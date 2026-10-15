@@ -1,4 +1,5 @@
 import {timestamp,artworkCandidates,mergeMarketRows} from '../dist/market-data.js';
+import {enrichVerifiedPairs} from './pair-metadata.js';
 // Read-only JARVIS market bridge. No direct credentials, wallets, trades or extra schedulers.
 const SOL=/^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const str=(v,n=100)=>String(v??'').replace(/[\r\n\t]+/g,' ').trim().slice(0,n);
@@ -59,7 +60,7 @@ export function normalizeMarketResponses(responses={}, {now=Date.now(),freshness
  return {observed_at:new Date(now).toISOString(),signals:[...map.values()].filter(s=>s.freshness==='FRESH').sort((a,b)=>Number(!!(b.source_observed_at||b.provider_response_at))-Number(!!(a.source_observed_at||a.provider_response_at))).slice(0,100),
   source_states:Object.fromEntries(Object.entries(responses).map(([k,v])=>[k,v?.ok?'OK':str(v?.error||'UNAVAILABLE',120)])),research_only:true};
 }
-export async function collectJarvisMarkets({baseUrl='http://127.0.0.1:8768',fetchImpl=fetch,now=Date.now(),signal,tapeOnly=false}={}){
+export async function collectJarvisMarkets({baseUrl='http://127.0.0.1:8768',fetchImpl=fetch,now=Date.now(),signal,tapeOnly=false,enrichPairs=false}={}){
  const u=new URL(baseUrl);
  if(u.protocol!=='http:'||!['127.0.0.1','localhost','[::1]'].includes(u.hostname)||u.username||u.password||u.search||u.hash||u.pathname!=='/')
   throw Error('JARVIS market bridge accepts loopback origin only');
@@ -76,7 +77,8 @@ export async function collectJarvisMarkets({baseUrl='http://127.0.0.1:8768',fetc
    output[kind]=data?.ok===false?{ok:false,error:str(data.error||data.state||'GMGN unavailable')}:{ok:true,data};
   }catch(e){output[kind]={ok:false,error:str(e.message)}}
  }));
- return normalizeMarketResponses(output,{now});
+ const normalized=normalizeMarketResponses(output,{now});
+ return enrichPairs&&!tapeOnly?enrichVerifiedPairs(normalized,{now,fetchImpl,signal}):normalized;
 }
 export function marketPromptEvidence(signals=[]){
  return signals.filter(x=>x.freshness==='FRESH').slice(0,6).map(x=>({

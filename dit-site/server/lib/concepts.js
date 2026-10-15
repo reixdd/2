@@ -44,9 +44,9 @@ export async function persistCompletedResearch(store,{runId,agentId,answer,obser
   }
   return {source_refs:links,concept_saved:!!concept};
 }
-export async function publicConcepts(store,id=null,before=null){
+export async function publicConcepts(store,id=null,before=null,pageSize=200){
   const filters=[['status','in',['review','published']]];if(id)filters.push(['id','eq',id]);else if(before&&Number.isFinite(Date.parse(before)))filters.push(['created_at','lt',new Date(before).toISOString()]);
-  return store.select('fictional_concepts',{filters,order:['created_at','desc'],limit:id?1:201});
+  return store.select('fictional_concepts',{filters,order:['created_at','desc'],limit:id?1:Math.min(201,Math.max(1,Number(pageSize)||200)+1)});
 }
 export async function reviewConcept(store,{id,revision,status,content}){
   if(!['review','published','rejected','archived'].includes(status))throw Error('Invalid review status');

@@ -17,7 +17,7 @@ test('second-by-second dashboard queries use a bounded single-flight JARVIS cach
  assert.equal(before.research_only,true);
  await operator.refreshMarket();
  const results=await Promise.all(Array.from({length:10},()=>operator.handle(req).then(r=>r.json())));
- assert.equal(calls,4,'initial source load reads three discovery routes plus one tape route');
+ assert.equal(calls,5,'discovery reads three JARVIS routes, tape, and one bounded pair-metadata lookup');
  assert.equal(results[0].signals[0].address,address);
  assert.equal(results.every(x=>x.signals.length===1),true);
 });
