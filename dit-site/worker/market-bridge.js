@@ -43,7 +43,16 @@ export function normalizeMarketResponses(responses={}, {now=Date.now(),freshness
   for(const row of rows(payload,kind)){
    const s=normalize(row,kind,now,freshnessMs);if(!s)continue;
    const old=map.get(s.address);
-   if(old){old.providers=[...new Set([...old.providers,s.provider])];if(s.freshness==='FRESH'&&old.freshness==='STALE')Object.assign(old,{...s,providers:old.providers});}
+   if(old){
+    old.providers=[...new Set([...old.providers,s.provider])];
+    // Join GMGN discovery with existing JARVIS DexScreener/GeckoTerminal
+    // token metrics; never turn missing 5m values into invented zeroes.
+    for(const field of ['volume_5m_usd','liquidity_usd','buys_5m','sells_5m','market_cap_usd']){
+      if(old[field]===null&&s[field]!==null)old[field]=s[field];
+    }
+    if(!old.image_url&&s.image_url)old.image_url=s.image_url;
+    if(s.freshness==='FRESH'&&old.freshness==='STALE')old.freshness='FRESH';
+   }
    else map.set(s.address,s);
   }
  }
