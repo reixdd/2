@@ -23,7 +23,7 @@
   try{await import('./stage.js')}catch(err){console.warn('[DIT] cinematic fallback:',err)}
   activateTab(location.hash==='#dit-live-transmission-section'?'activity':'radar');
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
-  let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[];
+  let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[],treasury=null;
   let marketStructureKey='',activityStructureKey='',conceptStructureKey='',lastActivityTime=0;
   for(const [id,title] of [['dit-live-evidence-section','NEW PAIRS // EVIDENCE'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // APPROVED CONCEPTS']]){
     const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
@@ -55,6 +55,25 @@
   const open=(title,html)=>{$('dit-live-modal-title').textContent=title;$('dit-live-modal-body').innerHTML=html;if(!dlg.open)dlg.showModal()};
   $('dit-live-close').onclick=()=>dlg.close();
   const agent=id=>world?.agents?.find(x=>x.id===id);
+  // Treasury values are shown only when the existing ledger API returns valid data.
+  const lamportsSol=n=>Number.isFinite(Number(n))&&Number(n)>=0?(Number(n)/1e9).toLocaleString(undefined,{maximumFractionDigits:6})+' SOL':'—';
+  async function refreshTreasury(){
+    try{const v=await api('/api/treasury');treasury=v?.totals&&Number.isFinite(Number(v.target_percent))?v:null;}
+    catch{treasury=null;}
+    updateControlRoom(world,liveMarket,events,treasury);
+  }
+  window.addEventListener('dit:open-treasury',()=>{
+    if(!treasury)return open('TREASURY / NO VERIFIED LEDGER',
+     '<p>The existing ledger is unavailable. No creator-fee balance or transfer is being assumed.</p><a class="terminal-action" href="/operator">OPEN OPERATOR ↗</a>');
+    const t=treasury.totals||{};
+    open('TREASURY / VERIFIED LEDGER',
+      '<p>Creator-fee allocation target: '+esc(treasury.target_percent)+'% (configuration, not guaranteed transfer)</p>'+
+      '<p>Confirmed on chain: '+esc(lamportsSol(t.confirmed_lamports))+'</p>'+
+      '<p>Pending allocation: '+esc(lamportsSol(t.pending_treasury_lamports))+'</p>'+
+      '<p>Observed but unverified: '+esc(lamportsSol(t.observed_lamports))+'</p>'+
+      '<p>'+esc(treasury.transfer?.limitation||'Any transfer requires an independently validated record.')+'</p>'+
+      '<a class="terminal-action" href="/operator">OPEN OPERATOR ↗</a>');
+  });
   async function detail(id){
     open(id,'<p>_ RETRIEVING VERIFIED AGENT ACTIVITY...</p>');
     try{
@@ -151,7 +170,7 @@
       unavailable:!world,workerAlive:!!world?.researcher?.online,
       agents:(world?.agents||[]).map(a=>({id:a.id,state:['OBSERVING','THINKING','CREATING'].includes(String(a.presence).toUpperCase())?String(a.presence).toUpperCase():'IDLE'}))
     }}));
-    updateControlRoom(world,liveMarket,events);
+    updateControlRoom(world,liveMarket,events,treasury);
     const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,8);
     const present=[...liveDrafts.map(c=>({...c,_private:true})),...concepts.slice(0,8).map(c=>({...c,_private:false}))];
     const conceptKey=JSON.stringify(present.map(c=>[c.id,c.status,c.updated_at,c.content?.name,c.content?.hook,
@@ -237,7 +256,7 @@
         liveMarket={...liveMarket,stale:true,source_states:incoming.source_states||liveMarket.source_states};
       }else liveMarket=incoming;
       renderLiveMarket();
-      updateControlRoom(world,liveMarket,events);
+      updateControlRoom(world,liveMarket,events,treasury);
       if(previousArtwork!==JSON.stringify((liveMarket?.signals||[]).map(s=>[s.address,s.image_url]))&&(localDrafts.length||concepts.length))render();
     }catch{
       if(liveMarket)liveMarket.stale=true;
@@ -264,7 +283,7 @@
       render();
     }finally{busy=false}
   }
-  refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);setInterval(refreshPrivateDrafts,15000);
+  refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();refreshTreasury();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);setInterval(refreshPrivateDrafts,15000);setInterval(refreshTreasury,60000);
   setInterval(refreshActivity,5000);setInterval(()=>{if(liveMarket)renderLiveMarket()},1000);
   if(typeof EventSource!=='undefined'&&['localhost','127.0.0.1'].includes(location.hostname)){const channel=new EventSource('/api/stream');channel.onmessage=()=>{refreshActivity();refreshPrivateDrafts()};}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();refreshLiveMarket()}});
