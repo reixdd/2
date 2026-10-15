@@ -73,3 +73,15 @@ test('hosted snapshot preserves 40 source artwork URLs, 20 explicit gaps and pai
  assert.equal(data.signals[0].token_created_at,token);
  assert.equal(data.signals[0].first_seen_at,new Date(now).toISOString());
 });
+
+test('hosted public market rejects a freshly persisted wrapper around five-minute-old source observations',async()=>{
+ const db=new MemoryStore();
+ const sourceTime=new Date(now-310_000).toISOString();
+ await persistMarketSnapshot(db,{signals:[{address,symbol:'OLD',
+  observed_at:sourceTime,source_observed_at:sourceTime,
+  pair_created_at:new Date(now-900_000).toISOString()}]},{now});
+ const result=await readMarketSnapshot(db,{now:now+1000});
+ assert.equal(result.signals.length,1);
+ assert.equal(result.stale,true);
+ assert.equal(result.status,'STALE');
+});
