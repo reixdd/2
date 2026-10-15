@@ -27,7 +27,6 @@ $manifest = @(
   @{repo='1'; scope='jarvis'; path='src/jarvis/web/index.html'; branch='main'},
   @{repo='1'; scope='jarvis'; path='src/jarvis/web/app.js'; branch='main'},
   @{repo='1'; scope='jarvis'; path='src/jarvis/web/styles.css'; branch='main'},
-  @{repo='2'; scope='dit'; path='dit-site/dist/index.html'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/live-research.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/live-research.css'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/operator.html'; branch='dit-3d-assets'},
@@ -59,9 +58,9 @@ try {
     Invoke-WebRequest -Uri $url -UseBasicParsing -OutFile $target -TimeoutSec 60
     if ((Get-Item -LiteralPath $target).Length -lt 20) { throw "Downloaded file was unexpectedly empty: $($entry.path)" }
   }
-  $stagedIndex = Join-Path $stage 'dit\dist\index.html'
+  $stagedIndex = Join-Path $DitRoot 'dist\index.html'
   if (-not (Select-String -LiteralPath $stagedIndex -Pattern 'DIT // TERMINAL DECAY' -Quiet)) {
-    throw 'The staged HTML is not the requested DIT reference design.'
+    throw 'The existing local HTML is not the DIT reference; keep your original site intact and inspect the folder.'
   }
   if (-not (Select-String -LiteralPath (Join-Path $stage 'jarvis\src\jarvis\app.py') -Pattern 'dit_stream_protocol' -Quiet)) {
     throw 'The downloaded JARVIS version does not contain the updated DIT stream protocol.'
