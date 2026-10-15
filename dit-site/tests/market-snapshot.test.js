@@ -6,7 +6,7 @@ import {handleBackendApi} from '../server/lib/routes.js';
 const now=Date.parse('2026-10-15T15:15:00Z');
 const address='So11111111111111111111111111111111111111112';
 const source=()=>({signals:[{address,chain:'sol',symbol:'ARCH',name:'Archive',kind:'trenches',
-  observed_at:new Date(now-2000).toISOString(),liquidity_usd:999,volume_5m_usd:100,
+  observed_at:new Date(now-2000).toISOString(),source_observed_at:new Date(now-2000).toISOString(),liquidity_usd:999,volume_5m_usd:100,
   image_url:'https://assets.example.test/image.gif',model_token:'do-not-publish',
   url:'http://127.0.0.1:8768/admin'}],
   source_states:{trenches:'OK',radar:'http://127.0.0.1:8768/secret?token=abc'}});
