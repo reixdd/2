@@ -260,7 +260,7 @@
     const allIdeas=[...concepts.map(c=>({...c,_private:false})),
       ...liveDrafts.filter(c=>!concepts.some(p=>p.id===c.id)).map(c=>({...c,_private:true}))];
     const present=archiveOpen?allIdeas.slice(0,archiveShow):featuredAgentIdeas(allIdeas);
-    older.hidden=!archiveOpen?allIdeas.length<=3:!conceptBefore&&allIdeas.length<=archiveShow;
+    older.hidden=!archiveOpen?allIdeas.length<=3&&!conceptBefore:!conceptBefore&&allIdeas.length<=archiveShow;
     older.textContent=archiveOpen?'LOAD MORE AGENT IDEAS':'BROWSE IDEA ARCHIVE';
     const conceptKey=JSON.stringify([archiveOpen,archiveShow,...present.map(c=>[c.id,c.status,c.updated_at,
       c.content?.name,c.content?.hook,c.content?.image_url,c.agent_id])]);
