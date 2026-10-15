@@ -5,6 +5,18 @@ These are TWO existing projects, not duplicate services:
 - **DIT:** https://github.com/reixdd/2 on branch **dit-3d-assets**, inside `dit-site`.
 - Supabase project **dndlvvdzzucmdrrerahj** already has public source research from its independent Edge Function. Do not remove it.
 
+## Updating an existing Windows installation without re-extracting ZIPs
+
+A source-only refresh utility is included as `UPDATE-DIT-LOCAL.ps1`. From your existing `dit-site` folder, stop JARVIS and DIT, then run:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\UPDATE-DIT-LOCAL.ps1"
+```
+
+It stages and checks all GitHub downloads before copying them, backs up the old copies under `dit-site/.data/source-backups/`, and changes only a fixed manifest of JARVIS and DIT **source files**. It never touches `.env`, `.venv`, `data`, `history`, or installed Ollama weights. If the updater is not in the older extracted directory, download just `dit-site/UPDATE-DIT-LOCAL.ps1` from branch `dit-3d-assets` into that existing folder first. Then run `START-DIT-WITH-JARVIS.cmd`.
+
+The GitHub source already contains the original uploaded `vbs8nw7.html` artwork and the live-research adapter; no new artwork or separate project is required.
+
 ## Start the recovered Astra integration on Windows (October 14, 2026)
 
 1. Download **reixdd/2 → dit-3d-assets → Code → Download ZIP** and extract a **new** `dit-site` folder. Copy only your existing private `.env` into the new folder. Do not upload or commit that file.
