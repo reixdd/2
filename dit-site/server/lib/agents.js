@@ -16,7 +16,7 @@ export const AGENTS = {
     voiceLine: 'I remember the rooms you left. The lights are still on. Nobody answers.',
     memoryFocus: 'Cultural context and historical comparisons.',
     // sources it reads; weight = how much the observation counts when choosing a topic
-    sources: [{ id: 'wikipedia_trending', weight: 1.0 }, { id: 'wikipedia_onthisday', weight: 1.3 }, { id: 'dexscreener_search', weight: 0.3 }],
+    sources: [{ id: 'dexscreener_profiles', weight: 1.0 }, { id: 'dexscreener_search', weight: 0.8 }],
     categoryWeights: { forgotten_web: 1.6, folklore: 1.5, remix: 0.9, attention_cycle: 0.7, viral_humor: 0.6, early_pattern: 0.6, market_anomaly: 0.4, general: 0.8 },
     // retrieval: which memory kinds / tags get boosted when it recalls
     memoryWeights: { kinds: { episodic: 1.0, semantic: 1.4, lesson: 1.2, outcome: 0.8 }, tags: { history: 1.5, folklore: 1.5, context: 1.3 }, recencyHalfLifeDays: 90 },
@@ -32,7 +32,7 @@ export const AGENTS = {
     personality: 'Analytical, calculating, curious. Reports numbers, base rates and its own error history.',
     voiceLine: 'Every query returns an absence. I am searching for the first transaction.',
     memoryFocus: 'Quantitative evidence, false positives and timing.',
-    sources: [{ id: 'dexscreener_profiles', weight: 1.2 }, { id: 'dexscreener_boosts', weight: 0.8 }, { id: 'solana_network', weight: 0.6 }, { id: 'hackernews', weight: 0.5 }],
+    sources: [{ id: 'dexscreener_profiles', weight: 1.2 }, { id: 'dexscreener_boosts', weight: 0.8 }, { id: 'solana_network', weight: 0.6 }, { id: 'dexscreener_search', weight: 0.5 }],
     categoryWeights: { market_anomaly: 1.6, early_pattern: 1.5, attention_cycle: 1.0, viral_humor: 0.6, remix: 0.5, folklore: 0.3, forgotten_web: 0.3, general: 0.7 },
     memoryWeights: { kinds: { episodic: 0.8, semantic: 1.0, lesson: 1.5, outcome: 1.6 }, tags: { quantitative: 1.5, false_positive: 1.6, timing: 1.4 }, recencyHalfLifeDays: 21 },
     rubric: { evidence: 0.35, novelty: 0.15, personaFit: 0.10, historicalDepth: 0.0, longevity: 0.05, timing: 0.35 },
@@ -46,7 +46,7 @@ export const AGENTS = {
     personality: 'Chaotic, witty, unpredictable. Loops jokes back on themselves.',
     voiceLine: 'A million voices. A single loop. I keep watching after the authors disappear.',
     memoryFocus: 'Community reactions and narrative longevity.',
-    sources: [{ id: 'hackernews', weight: 1.1 }, { id: 'reddit', weight: 1.4 }, { id: 'dexscreener_search', weight: 0.8 }, { id: 'dexscreener_profiles', weight: 0.4 }],
+    sources: [{ id: 'reddit', weight: 1.2 }, { id: 'dexscreener_search', weight: 0.8 }, { id: 'dexscreener_profiles', weight: 0.4 }],
     categoryWeights: { viral_humor: 1.6, remix: 1.5, attention_cycle: 1.4, folklore: 0.6, early_pattern: 0.7, market_anomaly: 0.5, forgotten_web: 0.4, general: 0.9 },
     memoryWeights: { kinds: { episodic: 1.2, semantic: 0.8, lesson: 1.0, outcome: 1.3 }, tags: { reaction: 1.6, longevity: 1.5, remix: 1.3 }, recencyHalfLifeDays: 10 },
     rubric: { evidence: 0.15, novelty: 0.30, personaFit: 0.20, historicalDepth: 0.0, longevity: 0.25, timing: 0.10 },
