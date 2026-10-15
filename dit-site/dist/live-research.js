@@ -10,6 +10,11 @@
   const api=async path=>{const r=await fetch(path,{cache:'no-store',signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('HTTP '+r.status);return r.json()};
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
   let world=null,observations=[],runs=[],concepts=[],busy=false;
+  for(const [id,title] of [['dit-live-evidence-section','NEW PAIRS // EVIDENCE'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // APPROVED CONCEPTS']]){
+    const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
+  }
+  const buzz=x=>Array.isArray(x)?x.slice(0,4).map(y=>'#'+String(y).replace(/^#/,'')).join(' · '):'';
+  const teaser=x=>String(x||'').split('CONCEPT_JSON')[0].split('```')[0].replace(/\s+/g,' ').trim().slice(0,180);
   const dlg=$('dit-live-dialog');
   const open=(title,html)=>{$('dit-live-modal-title').textContent=title;$('dit-live-modal-body').innerHTML=html;if(!dlg.open)dlg.showModal()};
   $('dit-live-close').onclick=()=>dlg.close();
@@ -19,7 +24,7 @@
     try{
       const d=await api('/api/agents/'+encodeURIComponent(id)),a=agent(id);
       $('dit-live-modal-body').innerHTML='<p>Presence: '+esc(a?.presence||'offline')+'</p><h3>RECENT RESEARCH</h3>'+
-        ((d.research_runs||[]).slice(0,4).map(r=>'<p>'+esc(r.status)+' / '+esc(when(r.finished_at))+'<br>'+esc((r.answer||r.error||'No answer').slice(0,1000))+'</p>').join('')||'<p>No runs yet.</p>')+
+        ((d.research_runs||[]).slice(0,4).map(r=>'<p>'+esc(r.status)+' / '+esc(when(r.finished_at))+'<br>'+esc(teaser(r.answer)||'Details are available in the local operator console.')+'</p>').join('')||'<p>No runs yet.</p>')+
         '<h3>INDEPENDENT MEMORY</h3>'+((d.memories||[]).slice(0,6).map(m=>'<p>'+esc(m.summary||m.content)+'</p>').join('')||'<p>No memory records yet.</p>');
     }catch{$('dit-live-modal-body').textContent='Agent research is temporarily unavailable.'}
   }
@@ -29,7 +34,7 @@
       const c=(await api('/api/concepts/'+encodeURIComponent(id))).concept,x=c.content||{},a=x.attention_anatomy||{};
       $('dit-live-modal-body').innerHTML='<span class="live-signal">FICTIONAL CONCEPT // NO FINANCIAL ASSET</span><h2>'+esc(x.name)+' / '+esc(x.ticker)+'</h2><p>'+esc(x.narrative)+'</p>'+
         '<h3>ATTENTION ANATOMY</h3><dl>'+Object.entries({spread:'SPREAD',references:'CULTURAL REFERENCES',evidence:'WHAT THE EVIDENCE PROVES',synthetic_distortion:'ARTIFICIAL AMPLIFICATION',uncertainty:'UNKNOWN FACTORS'}).map(([k,v])=>'<dt>'+v+'</dt><dd>'+esc(a[k]||'Not established')+'</dd>').join('')+'</dl>'+
-        '<h3>SOURCES</h3>'+((c.source_refs||[]).map(s=>'<p>'+link(s.url,s.title)+'</p>').join('')||'<p>No listed sources</p>')+
+        '<p class="live-contrast">'+esc(x.hook||'')+'</p><p>'+esc(buzz(x.buzzwords))+'</p><h3>SOURCES</h3>'+((c.source_refs||[]).map(s=>'<p>'+link(s.url,s.title)+'</p>').join('')||'<p>No listed sources</p>')+
         '<h3>SOCIAL DRAFT (NOT POSTED)</h3><blockquote>'+esc(x.social_draft)+'</blockquote>';
     }catch{$('dit-live-modal-body').textContent='Concept not currently published.'}
   }
@@ -54,10 +59,10 @@
       return '<article class="live-agent"><span class="agent-name">'+esc(id)+'</span><span class="live-state" data-state="'+esc(presence)+'">'+esc(presence)+'</span><small>LAST RUN '+esc(r.status||'none')+' / '+when(r.finished_at||r.started_at)+'</small><small>NEXT DUE '+(world.researcher.online?when(a?.next_due_at):'Local server offline')+'</small><button data-live-agent="'+esc(id)+'">VIEW DOSSIER ↗</button></article>';
     }).join(''):'<p class="live-empty">Unable to verify local agent status.</p>';
     const selected=$('dit-live-filter')?.value||'';
-    const rows=observations.filter(o=>!selected||o.agent_id===selected).slice(0,18);
-    $('dit-live-evidence').innerHTML=rows.length?rows.map(o=>'<article class="live-row"><div><span class="byline">'+esc(o.agent_id)+' / '+esc(o.source_id)+'</span><time>'+when(o.observed_at)+'</time></div><div><h3>'+link(o.url,o.title)+'</h3><p>'+esc(o.evidence?.summary||'Source recorded, claims not independently established.')+'</p></div></article>').join(''):'<p class="live-empty">No source observations recorded for this selection.</p>';
-    $('dit-live-transmissions').innerHTML=runs.length?runs.slice(0,10).map(r=>'<article class="live-row"><div><span class="byline">'+esc(r.agent_id)+' / '+esc(r.model||'unknown model')+'</span><time>'+when(r.finished_at||r.started_at)+'</time></div><div><h3>'+esc(r.status)+'</h3><p>'+esc((r.status==='completed'?r.answer:r.error)||'Research pending').slice(0,700)+'</p></div></article>').join(''):'<p class="live-empty">No research runs yet.</p>';
-    $('dit-live-concepts').innerHTML=concepts.length?concepts.map(c=>'<article class="live-concept"><div class="live-ticker">'+esc(c.content?.ticker)+'</div><div><span class="byline">'+esc(c.agent_id)+'</span><h3>'+esc(c.content?.name)+'</h3><p>'+esc(c.content?.narrative)+'</p><button data-live-concept="'+esc(c.id)+'">VIEW ATTENTION ANATOMY ↗</button></div></article>').join(''):'<p class="live-empty">No human-reviewed fictional concepts are published yet.</p>';
+    const rows=observations.filter(o=>(!selected||o.agent_id===selected)&&/dex|gecko|gmgn|solana/i.test(o.source_id||'')).slice(0,12);
+    $('dit-live-evidence').innerHTML=rows.length?rows.map(o=>'<article class="live-row"><div><span class="byline">'+esc(o.agent_id)+' / '+esc(o.source_id)+'</span><time>'+when(o.observed_at)+'</time></div><div><h3>'+link(o.url,o.title)+'</h3><p>'+esc(o.evidence?.summary||'Source recorded, claims not independently established.')+'</p></div></article>').join(''):'<p class="live-empty">No recent market observations recorded. General news is hidden.</p>';
+    $('dit-live-transmissions').innerHTML=runs.length?runs.slice(0,10).map(r=>'<article class="live-row"><div><span class="byline">'+esc(r.agent_id)+' / '+esc(r.model||'unknown model')+'</span><time>'+when(r.finished_at||r.started_at)+'</time></div><div><h3>'+esc(r.status==='completed'?'CONCEPT RESEARCH COMPLETE':r.status==='running'?'SCANNING':'RESEARCH '+r.status.toUpperCase())+'</h3><p>'+esc(r.status==='completed'?teaser(r.answer)||'Model response saved.':r.status==='running'?'Waiting for local inference.':'See private operator diagnostics.')+'</p>'+((r.source_refs||[]).slice(0,2).map(s=>'<small>'+link(s.url,s.title)+'</small>').join(''))+'</div></article>').join(''):'<p class="live-empty">No research runs yet.</p>';
+    $('dit-live-concepts').innerHTML=concepts.length?concepts.map(c=>'<article class="live-concept"><div class="live-ticker">'+esc(c.content?.ticker)+'</div><div><span class="byline">'+esc(c.agent_id)+'</span><h3>'+esc(c.content?.name)+'</h3><p>'+esc(c.content?.hook||c.content?.narrative?.slice(0,100))+'</p><small>'+esc(buzz(c.content?.buzzwords))+'</small><p>'+esc(c.content?.narrative?.slice(0,160))+'</p><button data-live-concept="'+esc(c.id)+'">VIEW ATTENTION ANATOMY ↗</button></div></article>').join(''):'<p class="live-empty">No human-reviewed fictional concepts are published yet.</p>';
   }
   $('dit-live-filter').onchange=render;
   async function refresh(){
