@@ -21,8 +21,9 @@ test('concept card uses exact GIF evidence image, never passes source artwork of
  assert.equal(img.kind,'evidence');
  assert.match(img.label,/NOT CONCEPT ART/);
  const fallback=conceptArtwork(sample,[]);
- assert.equal(fallback.url,'assets/cutouts/echo_exe.png');
- assert.match(fallback.label,/AGENT PORTRAIT/);
+ assert.equal(fallback.url,null);
+ assert.equal(fallback.kind,'missing');
+ assert.match(fallback.label,/CONCEPT ART PENDING/);
 });
 test('untrusted image protocols are rejected and model hook is short',()=>{
  assert.equal(safeArtUrl('javascript:alert(1)'),null);
