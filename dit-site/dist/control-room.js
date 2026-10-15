@@ -8,6 +8,17 @@ const fmtSol=lamports=>lamports!=null&&Number.isFinite(Number(lamports))&&Number
 const shortEvent=e=>e?.event_type==='job_dead'?'RUN FAILED — OPEN OPERATOR FOR ERROR':String(e?.title||'NO RECORDED SIGNAL');
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const el=id=>document.getElementById(id);
+let tickerEvents=[],tickerCurrent='',tickerIndex=0;
+const tickerText=e=>'_ LAST RESEARCH EVENT / '+e.agent_id+' // '+shortEvent(e).slice(0,116);
+function showRecordedTicker(e){
+ const node=el('dit-room-ticker');if(!node||!e)return;
+ const label=tickerText(e);
+ if(node.textContent===label)return;
+ node.textContent=label;node.classList.remove('dit-type-in');
+ if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  void node.offsetWidth;node.classList.add('dit-type-in');
+ }
+}
 export function roomSummary(world,market,events=[]){
  const configured=Array.isArray(world?.agents)?world.agents.length:null;
  const rows=Array.isArray(market?.signals)?market.signals:null;
@@ -68,6 +79,15 @@ export function mountControlRoom({openAgent,activateTab}={}){
  shell.querySelector('.dit-entity-stage')?.prepend(cinematic.firstElementChild);
  stage.appendChild(shell);
  mountTerminalMotion(shell);
+ // Cycle only stored real transmissions; visual rotation is not new activity.
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ setInterval(()=>{
+  if(document.hidden||reduced.matches||tickerEvents.length<2)return;
+  tickerIndex=(tickerIndex+1)%tickerEvents.length;
+  showRecordedTicker(tickerEvents[tickerIndex]);
+  document.querySelectorAll('#dit-transmission-ribbon>button').forEach((button,index)=>
+   button.classList.toggle('dit-active-trace',index===tickerIndex));
+ },6800);
  stage.addEventListener('click',e=>{const btn=e.target.closest('[data-room-agent]');if(btn){e.preventDefault();openAgent?.(btn.dataset.roomAgent)}});
  const system=el('dit-hud-system');const toggleSystem=()=>{const showing=system.hidden;system.hidden=!showing;
    el('dit-nav-system').setAttribute('aria-expanded',String(showing));el('dit-hud-expand').setAttribute('aria-expanded',String(showing));};
@@ -104,7 +124,13 @@ export function mountControlRoom({openAgent,activateTab}={}){
 export function updateControlRoom(world,market,events=[],treasury=null){
  if(!el('dit-room-pairs'))return;
  const v=roomSummary(world,market,events);
- const put=(id,value)=>{const n=el(id);if(n&&n.textContent!==String(value))n.textContent=String(value)};
+ const put=(id,value)=>{const n=el(id);if(n&&n.textContent!==String(value)){
+  n.textContent=String(value);
+  if(['dit-room-pairs','dit-room-agents','dit-room-events','dit-room-freshness'].includes(id)){
+   n.classList.remove('dit-type-in');
+   if(!matchMedia('(prefers-reduced-motion: reduce)').matches){void n.offsetWidth;n.classList.add('dit-type-in');}
+  }
+ }};
  put('dit-room-pairs',v.pairs??'—');put('dit-room-agents',v.agents??'—');
  put('dit-room-events',v.events);put('dit-room-freshness',v.status);
  const checked=Date.parse(v.checked||'');
@@ -121,10 +147,14 @@ export function updateControlRoom(world,market,events=[],treasury=null){
  });
  const recent=events.find(e=>e?.title&&IDS.includes(e.agent_id));
  put('dit-flow-status',recent?'_ '+recent.agent_id+' / '+String(recent.title).slice(0,125):'_ WAITING FOR RECORDED EVENTS');
- put('dit-room-ticker',recent?'_ LAST RESEARCH EVENT / '+recent.agent_id+' // '+shortEvent(recent).slice(0,116):'_ AWAITING VERIFIED RESEARCH EVENTS / NEVER SIMULATED');
+ if(!recent)put('dit-room-ticker','_ AWAITING VERIFIED RESEARCH EVENTS / NEVER SIMULATED');
+ else if(String(recent.id||recent.created_at)!==tickerCurrent){
+  tickerCurrent=String(recent.id||recent.created_at);tickerIndex=0;showRecordedTicker(recent);
+ }
  const stat=el('dit-transmission-ribbon');
  const recentEvents=(Array.isArray(events)?events:[]).filter(e=>e?.title&&IDS.includes(e.agent_id)).slice(0,5);
  typeRecordedEvents(recentEvents);
+ tickerEvents=recentEvents;
  const ribbonKey=recentEvents.map(e=>String(e.id)+'|'+String(e.title)+'|'+String(e.created_at)).join(';');
  if(stat&&stat.dataset.events!==ribbonKey){
   const arrival=!!stat.dataset.events;stat.classList.toggle('dit-arrival',arrival);
@@ -138,6 +168,10 @@ export function updateControlRoom(world,market,events=[],treasury=null){
    const stamp=ev.created_at||ev.at||ev.occurred_at;
    if(stamp&&Number.isFinite(Date.parse(stamp))){time.dateTime=new Date(stamp).toISOString();time.textContent='LOG_'+ev.id+' · '+new Date(stamp).toLocaleTimeString();}
    else time.textContent='TIME UNAVAILABLE';
+   if(arrival&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+    button.classList.add('dit-type-in');
+    button.style.animationDelay=(stat.childElementCount*85)+'ms';
+   }
    button.append(small,headline,time);stat.append(button);}
  }
  const percent=Number(treasury?.target_percent);

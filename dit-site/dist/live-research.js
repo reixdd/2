@@ -36,7 +36,7 @@
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
   let conceptBefore=null,conceptArchive=[],conceptPaging=false,archiveOpen=false,archiveShow=9;
   let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[],treasury=null;
-  let activityStructureKey='',conceptStructureKey='',lastActivityTime=0;
+  let activityStructureKey='',conceptStructureKey='',lastActivityTime=0,conceptArtContextKey='';
   for(const [id,title] of [['dit-live-evidence-section','MARKET OBSERVATIONS'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // AGENT IDEAS']]){
     const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
   }
@@ -53,11 +53,14 @@
   const portrait=(id,cls='terminal-avatar')=>agentPortrait(id)?'<img class="'+cls+'" src="'+esc(agentPortrait(id))+'" alt="'+esc(id)+' portrait" loading="lazy">':'';
   const artTile=(c,cls)=>{
     // A verified concept image belongs to this idea; source token icons do not.
-    const saved=conceptArtwork(c,[]),actual=saved.kind==='concept'&&saved.url;
-    const url=actual?saved.url:conceptStudyArtwork(c);
-    const label=actual?'ORIGINAL CONCEPT ART':'AGENT CONCEPT STUDY / VECTOR PREVIEW';
-    return '<div class="'+cls+'"><img src="'+esc(url)+'" alt="'+esc((c.content?.name||'Agent idea')+' illustrated concept')+'" loading="lazy" decoding="async"'+
-      (actual?' referrerpolicy="no-referrer"':'')+'><span class="terminal-art-fallback" hidden>_ CONCEPT ART UNAVAILABLE</span>'+
+    const saved=conceptArtwork(c,liveMarket?.signals||[]),actual=!!saved.url;
+    const fallback=conceptStudyArtwork(c);
+    const url=actual?saved.url:fallback;
+    const label=saved.kind==='concept'?'ORIGINAL ART / PROVIDED':
+      saved.kind==='evidence'?'COIN ART / CONTRACT-LINKED SOURCE':'VECTOR CONCEPT STUDY / FALLBACK';
+    return '<div class="'+cls+'"><img src="'+esc(url)+'" data-fallback-study="'+esc(fallback)+'" alt="'+
+      esc((c.content?.name||'Agent idea')+' artwork')+'" loading="lazy" decoding="async"'+
+      (actual?' referrerpolicy="no-referrer"':'')+'><span class="terminal-art-fallback" hidden>_ ARTWORK UNAVAILABLE</span>'+
       '<small>'+esc(label)+'</small></div>';
   };
   document.addEventListener('error',event=>{
@@ -65,6 +68,14 @@
     if(!(img instanceof HTMLImageElement))return;
     if(img.closest('.market-card-image'))return;
     if(!img.closest('.terminal-concept-image,.terminal-concept-art'))return;
+    const study=img.dataset.fallbackStudy;
+    if(study&&!img.dataset.failedOriginal&&img.src!==study){
+      img.dataset.failedOriginal='true';
+      const label=img.parentElement?.querySelector('small');
+      if(label)label.textContent='VECTOR STUDY / ORIGINAL IMAGE UNAVAILABLE';
+      img.src=study;
+      return;
+    }
     img.hidden=true;
     const placeholder=img.parentElement?.querySelector('.terminal-art-fallback');
     if(placeholder)placeholder.hidden=false;
@@ -178,7 +189,7 @@
         '<h3>RESEARCH FINDINGS</h3>'+(
         history.map(r=>'<p class="terminal-detail-line">_ '+esc(researchHook(r.answer)||'Research completed; no validated concise hook')+
           '<small>'+esc(when(r.finished_at))+'</small></p>').join('')||'<p>_ No completed meme hooks</p>')+
-        '<h3>COIN-LINKED X / TWITTER</h3>'+(linkedCoinXEvidence(d.observations||[],liveMarket?.signals||[]).map(o=>'<p>'+link(o.url,(o.symbol?'$'+o.symbol+' / ':'')+'COIN SOURCE ON X')+'<small> / '+esc(o.origin)+' / '+esc(o.address.slice(0,6))+'…</small></p>').join('')||'<p>_ NO CONTRACT-LINKED X ACCOUNT PROVIDED BY COIN SOURCES.</p>')+
+        '<h3>COIN-LINKED X / TWITTER</h3>'+(linkedCoinXEvidence([...(d.observations||[]),...(d.research_runs||[]).flatMap(r=>r.source_refs||[])],liveMarket?.signals||[]).map(o=>'<p>'+link(o.url,(o.symbol?'$'+o.symbol+' / ':'')+'COIN SOURCE ON X')+'<small> / '+esc(o.origin)+' / '+esc(o.address.slice(0,6))+'…</small></p>').join('')||'<p>_ NO CONTRACT-LINKED X ACCOUNT PROVIDED BY COIN SOURCES.</p>')+
         '<details><summary>Errors and full research logs</summary>'+((d.research_runs||[]).slice(0,8).map(r=>'<h4>'+esc(r.status)+' / '+esc(when(r.finished_at||r.started_at))+'</h4><p>'+esc(r.error||r.answer||'No output recorded')+'</p>').join('')||'<p>No runs recorded.</p>')+'</details>'+
         '<a class="terminal-action" href="/operator">OPEN PRIVATE OPERATOR / FULL TRACE ↗</a>';
     }catch{$('dit-live-modal-body').textContent='Agent data is currently unavailable.'}
@@ -260,11 +271,12 @@
     const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,8);
     const allIdeas=[...concepts.map(c=>({...c,_private:false})),
       ...liveDrafts.filter(c=>!concepts.some(p=>p.id===c.id)).map(c=>({...c,_private:true}))];
-    const present=archiveOpen?allIdeas.slice(0,archiveShow):featuredAgentIdeas(allIdeas);
+    const present=archiveOpen?allIdeas.slice(0,archiveShow):featuredAgentIdeas(allIdeas,liveMarket?.signals||[]);
     older.hidden=!archiveOpen?allIdeas.length<=3&&!conceptBefore:!conceptBefore&&allIdeas.length<=archiveShow;
     older.textContent=archiveOpen?'LOAD MORE AGENT IDEAS':'BROWSE IDEA ARCHIVE';
     const conceptKey=JSON.stringify([archiveOpen,archiveShow,...present.map(c=>[c.id,c.status,c.updated_at,
-      c.content?.name,c.content?.hook,c.content?.image_url,c.agent_id])]);
+      c.content?.name,c.content?.hook,c.content?.image_url,
+      conceptArtwork(c,liveMarket?.signals||[]).url,c.agent_id])]);
     if(conceptKey!==conceptStructureKey){
       conceptStructureKey=conceptKey;
       $('dit-live-concepts').innerHTML=present.length?present.map(c=>{
@@ -323,7 +335,11 @@
         // Preserve the last valid snapshot during outages or empty refreshes.
         liveMarket={...liveMarket,stale:true,source_states:incoming.source_states||liveMarket.source_states};
       }else liveMarket=incoming;
-      renderLiveMarket();
+      const nextArtContext=JSON.stringify((liveMarket?.signals||[]).map(s=>[s.address,s.image_url]));
+      if(nextArtContext!==conceptArtContextKey){
+        conceptArtContextKey=nextArtContext;
+        render(); // featured ideas update only when actual market art changes
+      }else renderLiveMarket();
       updateControlRoom(world,liveMarket,events,treasury);
       // Ideas only re-render when their own persisted content changes.
     }catch{
