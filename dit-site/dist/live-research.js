@@ -10,7 +10,7 @@
   const link=(x,label)=>valid(x)?'<a rel="noopener noreferrer" target="_blank" href="'+esc(valid(x))+'">'+esc(label||x)+' ↗</a>':esc(label||'Source unavailable');
   const api=async path=>{const r=await fetch(path,{cache:'no-store',signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('HTTP '+r.status);return r.json()};
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
-  let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketAvailable=true,marketBusy=false,localDrafts=[];
+  let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[];
   let marketStructureKey='',activityStructureKey='',conceptStructureKey='',lastActivityTime=0;
   for(const [id,title] of [['dit-live-evidence-section','NEW PAIRS // EVIDENCE'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // APPROVED CONCEPTS']]){
     const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
@@ -81,9 +81,9 @@
   },true);
   function render(){
     const completedRecently=runs.some(r=>r.status==='completed'&&r.finished_at&&Date.now()-Date.parse(r.finished_at)<20*60_000);
-    $('dit-live-status').textContent=world?.researcher?.online?(completedRecently?'LOCAL JARVIS RESEARCH VERIFIED':'JARVIS REACHABLE / INFERENCE UNVERIFIED'):'LOCAL RESEARCH OFFLINE OR STALE';
+    $('dit-live-status').textContent=world?.researcher?.online?(completedRecently?'RECENT RESEARCH RECORDED':'RESEARCH WORKER CONNECTED / INFERENCE UNVERIFIED'):'RESEARCH WORKER OFFLINE OR STALE';
     $('dit-live-metrics').textContent='CULTURAL COLLECTOR '+(world?.collector?.online?'ONLINE':'OFFLINE')+' / LAST HEARTBEAT '+when(world?.researcher?.last_seen_at);
-    if($('health'))$('health').textContent=world?.researcher?.online?'JARVIS REACHABLE':'OFFLINE';
+    if($('health'))$('health').textContent=world?.researcher?.online?'WORKER HEARTBEAT RECEIVED':'OFFLINE';
     $('dit-live-network').innerHTML=world?ids.map(id=>{
       const a=agent(id),r=a?.last_run||{},presence=a?.presence||'offline';
       return '<article class="live-agent"><span class="agent-name">'+esc(id)+'</span><span class="live-state" data-state="'+esc(presence)+'">'+esc(presence)+'</span><small>LAST RUN '+esc(r.status||'none')+' / '+when(r.finished_at||r.started_at)+'</small><small>NEXT DUE '+(world.researcher.online?when(a?.next_due_at):'Local server offline')+'</small><button data-live-agent="'+esc(id)+'">VIEW DOSSIER ↗</button></article>';
@@ -91,7 +91,7 @@
     const selected=$('dit-live-filter')?.value||'';
     const marketRefs=runs.flatMap(r=>(r.source_refs||[]).map(s=>({agent_id:r.agent_id,source_id:'GMGN via JARVIS',observed_at:s.observed_at,title:s.title,url:s.url,evidence:{summary:'Market context cited by the local researcher.'}})));
     const rows=[...observations.filter(o=>/dex|gecko|gmgn|solana/i.test(o.source_id||'')),...marketRefs].filter(o=>!selected||o.agent_id===selected).sort((a,b)=>Date.parse(b.observed_at||0)-Date.parse(a.observed_at||0)).slice(0,12);
-    $('dit-live-evidence').innerHTML=rows.length?rows.map(o=>'<article class="live-row"><div><span class="byline">'+esc(o.agent_id)+' / '+esc(o.source_id)+'</span><time>'+when(o.observed_at)+'</time></div><div><h3>'+link(o.url,o.title)+'</h3><p>'+esc(o.evidence?.summary||'Source recorded, claims not independently established.')+'</p></div></article>').join(''):'<p class="live-empty">No recent market observations recorded. General news is hidden.</p>';
+    if(!liveMarket?.signals?.length)$('dit-live-evidence').innerHTML=rows.length?rows.map(o=>'<article class="live-row"><div><span class="byline">'+esc(o.agent_id)+' / '+esc(o.source_id)+'</span><time>'+when(o.observed_at)+'</time></div><div><h3>'+link(o.url,o.title)+'</h3><p>'+esc(o.evidence?.summary||'Source recorded, claims not independently established.')+'</p></div></article>').join(''):'<p class="live-empty">No recent market observations recorded. General news is hidden.</p>';
     // Activity comes from persisted activity_events, not from old model answer dumps.
     const realEvents=events.map(formatActivity).filter(Boolean).slice(0,20);
     const key=realEvents.map(e=>e.id+'|'+e.status+'|'+e.title).join(';');
@@ -174,26 +174,37 @@
       const tick=card.querySelector('.market-age');if(tick){tick.dataset.time=token.observed_at;tick.textContent=age(token.observed_at)}
     });
     const updated=feed.querySelector('#market-last-observed');
-    if(updated)updated.textContent=age(liveMarket.last_checked_at)+(liveMarket.refreshing?' / REFRESHING':'');
+    if(updated)updated.textContent=age(liveMarket.last_checked_at)+(liveMarket.stale?' / STALE — LAST VALID SNAPSHOT':liveMarket.refreshing?' / REFRESHING':'');
   }
   async function refreshPrivateDrafts(){
-    if(!marketAvailable||document.hidden)return;
+    if(!['localhost','127.0.0.1'].includes(location.hostname)||document.hidden)return;
     try{
       const r=await fetch('/operator/api/concepts',{cache:'no-store',signal:AbortSignal.timeout(3000)});
       if(r.ok){const data=await r.json();localDrafts=Array.isArray(data.concepts)?data.concepts:[];render();}
     }catch{/* Hosted site has no private review endpoint. */}
   }
   async function refreshLiveMarket(){
-    if(!marketAvailable||marketBusy||document.hidden)return;
+    if(marketBusy||document.hidden)return;
     marketBusy=true;
     try{
-      const r=await fetch('/operator/api/market',{cache:'no-store',signal:AbortSignal.timeout(2500)});
-      if(r.status===403||r.status===404){marketAvailable=false;return;}
-      if(!r.ok)return;
-      liveMarket=await r.json();
+      // Private local operator for fast source access; hosted clients read the
+      // sanitized shared snapshot instead of attempting Windows localhost.
+      const local=['localhost','127.0.0.1'].includes(location.hostname);
+      let r=local?await fetch('/operator/api/market',{cache:'no-store',signal:AbortSignal.timeout(4000)}):null;
+      if(!r||r.status===403||r.status===404)r=await fetch('/api/market',{cache:'no-store',signal:AbortSignal.timeout(5000)});
+      if(!r.ok){if(liveMarket)liveMarket.stale=true;renderLiveMarket();return;}
+      const incoming=await r.json();
+      if(Array.isArray(incoming.signals)&&incoming.signals.length){
+        liveMarket=incoming;
+      }else if(liveMarket?.signals?.length){
+        // Preserve the last valid snapshot during outages or empty refreshes.
+        liveMarket={...liveMarket,stale:true,source_states:incoming.source_states||liveMarket.source_states};
+      }else liveMarket=incoming;
       renderLiveMarket();
-    }catch{/* Local companion not reachable; keep public evidence visible. */}
-    finally{marketBusy=false}
+    }catch{
+      if(liveMarket)liveMarket.stale=true;
+      renderLiveMarket();
+    }finally{marketBusy=false}
   }
   async function refreshActivity(){
     if(document.hidden)return;
