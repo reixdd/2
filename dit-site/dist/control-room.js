@@ -128,10 +128,14 @@ export function updateControlRoom(world,market,events=[],treasury=null){
   stat.dataset.events=ribbonKey;
   stat.replaceChildren();
   if(!recentEvents.length){const span=document.createElement('span');span.textContent='AWAITING RECORDED AGENT EVENTS';stat.append(span);}
-  for(const ev of recentEvents){const button=document.createElement('button');button.type='button';button.dataset.liveEvent=String(ev.id);
+  for(const ev of recentEvents){const button=document.createElement('button');button.type='button';button.dataset.liveEvent=String(ev.id);button.dataset.agent=ev.agent_id;
    const small=document.createElement('small');small.textContent=ev.agent_id+' / '+String(ev.event_type||'EVENT').toUpperCase();
    const headline=document.createElement('strong');headline.textContent=shortEvent(ev).slice(0,95);
-   button.append(small,headline);stat.append(button);}
+   const time=document.createElement('time');
+   const stamp=ev.created_at||ev.at||ev.occurred_at;
+   if(stamp&&Number.isFinite(Date.parse(stamp))){time.dateTime=new Date(stamp).toISOString();time.textContent=new Date(stamp).toLocaleTimeString();}
+   else time.textContent='TIME UNAVAILABLE';
+   button.append(small,headline,time);stat.append(button);}
  }
  const percent=Number(treasury?.target_percent);
  const known=treasury&&treasury.totals&&Number.isFinite(percent)&&percent>=0&&percent<=100;
