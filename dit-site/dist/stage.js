@@ -299,7 +299,7 @@ async function buildStage(THREE, canvas, live, section, ambient=false) {
   // render, so an offscreen/reduced-motion resize never leaves an empty canvas.
   const resizeObserver = new ResizeObserver(()=>{needsResize=true;requestRender();}); resizeObserver.observe(canvas);
 
-  const clock = new THREE.Clock(); let visible = true, raf = 0, pending = false;
+  const clock = new THREE.Clock(); let visible = true, raf = 0, pending = false, gfxEnabled = true;
   const visibilityObserver = new IntersectionObserver(es => { visible = es[0].isIntersecting; lastFrame=0; if (visible) requestRender(); }); visibilityObserver.observe(canvas);
   const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -336,13 +336,16 @@ async function buildStage(THREE, canvas, live, section, ambient=false) {
   function render() { renderer.render(scene, camera); }
   function frame(now) {
     raf = 0; pending = false;
-    if (!visible || document.hidden || disposed || lost) { lastFrame=0; return; }
+    if (!visible || document.hidden || disposed || lost || !gfxEnabled || section.dataset.performance === 'slow') { lastFrame=0; return; }
     if (needsResize) { resize(); needsResize=false; }
     if(lastFrame && ambient && guard.sample(now-lastFrame)){
       section.dataset.performance = 'slow';
       section.dataset.renderer = 'fallback';
       section.dataset.motion = 'css-environment';
       canvas.hidden = true;
+      // Keep the original HD art visible; drop the frozen WebGL layer completely.
+      // The independent atmospheric city remains alive in CSS.
+      document.getElementById('stage')?.classList.add('dit-gpu-fallback');
       return;
     }
     if(lastFrame && !reduced && quality.sample(now-lastFrame)){renderer.setPixelRatio(ambient?Math.min(1,quality.dpr):quality.dpr); renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);}
@@ -354,14 +357,20 @@ async function buildStage(THREE, canvas, live, section, ambient=false) {
     else if (!quality.lowPower && Math.abs(cam.z - camTarget.z) > .01) requestRender();
   }
   function requestRender() {
-    if (raf || pending || disposed || lost) return; pending = true; raf = requestAnimationFrame(frame);
+    if (raf || pending || disposed || lost || !gfxEnabled || section.dataset.performance==='slow') return; pending = true; raf = requestAnimationFrame(frame);
   }
   const resume=()=>{lastFrame=0;quality.reset();if(!document.hidden)requestRender();};
   document.addEventListener('visibilitychange',resume);
   window.addEventListener('dit:motion',resume);
+  const onGfx=e=>{
+    gfxEnabled=!!e.detail?.enabled;
+    if(!gfxEnabled){cancelAnimationFrame(raf);raf=0;pending=false;canvas.hidden=true;}
+    else if(!lost&&section.dataset.performance!=='slow'){canvas.hidden=false;section.dataset.renderer='webgl';resume();}
+  };
+  window.addEventListener('dit:gfx',onGfx);
   canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); lost=true;cancelAnimationFrame(raf);raf=0;pending=false;canvas.hidden=true;section.querySelector('#dit-stage-still').hidden=false;section.dataset.renderer='fallback'; });
   canvas.addEventListener('webglcontextrestored', ()=>{lost=false;canvas.hidden=false;section.querySelector('#dit-stage-still').hidden=true;section.dataset.renderer='webgl';resume();});
-  window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;clearTimeout(zoom);cancelAnimationFrame(raf);resizeObserver.disconnect();visibilityObserver.disconnect();document.removeEventListener('visibilitychange',resume);window.removeEventListener('dit:motion',resume);const resources=new Set();scene.traverse(o=>{if(o.geometry)resources.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])resources.add(m);});resources.forEach(r=>r.dispose());textures.forEach(t=>t.dispose());glowTex.dispose();renderer.dispose();},{once:true});
+  window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;clearTimeout(zoom);cancelAnimationFrame(raf);resizeObserver.disconnect();visibilityObserver.disconnect();document.removeEventListener('visibilitychange',resume);window.removeEventListener('dit:motion',resume);window.removeEventListener('dit:gfx',onGfx);const resources=new Set();scene.traverse(o=>{if(o.geometry)resources.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])resources.add(m);});resources.forEach(r=>r.dispose());textures.forEach(t=>t.dispose());glowTex.dispose();renderer.dispose();},{once:true});
   const labelNote=document.getElementById('dit-stage-note');
   if(labelNote) labelNote.textContent = 'OBSERVATORY / 2.5D DEPTH';
   requestRender();
