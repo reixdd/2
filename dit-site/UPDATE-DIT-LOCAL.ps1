@@ -27,6 +27,9 @@ $manifest = @(
   @{repo='1'; scope='jarvis'; path='src/jarvis/web/index.html'; branch='main'},
   @{repo='1'; scope='jarvis'; path='src/jarvis/web/app.js'; branch='main'},
   @{repo='1'; scope='jarvis'; path='src/jarvis/web/styles.css'; branch='main'},
+  @{repo='2'; scope='dit'; path='dit-site/dist/index.html'; branch='dit-3d-assets'},
+  @{repo='2'; scope='dit'; path='dit-site/dist/control-room.js'; branch='dit-3d-assets'},
+  @{repo='2'; scope='dit'; path='dit-site/dist/control-room.css'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/live-research.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/terminal-ui.js'; branch='dit-3d-assets'},
   @{repo='2'; scope='dit'; path='dit-site/dist/live-research.css'; branch='dit-3d-assets'},
@@ -60,9 +63,12 @@ try {
     Invoke-WebRequest -Uri $url -UseBasicParsing -OutFile $target -TimeoutSec 60
     if ((Get-Item -LiteralPath $target).Length -lt 20) { throw "Downloaded file was unexpectedly empty: $($entry.path)" }
   }
-  $stagedIndex = Join-Path $DitRoot 'dist\index.html'
-  if (-not (Select-String -LiteralPath $stagedIndex -Pattern 'DIT // TERMINAL DECAY' -Quiet)) {
-    throw 'The existing local HTML is not the DIT reference; keep your original site intact and inspect the folder.'
+  $stagedIndex = Join-Path $stage 'dit\dist\index.html'
+  if (-not (Select-String -LiteralPath $stagedIndex -Pattern 'id="dit-live-evidence-section"' -Quiet)) {
+    throw 'The downloaded homepage lacks the live market component. No files have been replaced.'
+  }
+  if (-not (Select-String -LiteralPath (Join-Path $stage 'dit\dist\control-room.js') -Pattern 'mountControlRoom' -Quiet)) {
+    throw 'The interactive machine shell was not downloaded. No files have been replaced.'
   }
   if (-not (Select-String -LiteralPath (Join-Path $stage 'jarvis\src\jarvis\app.py') -Pattern 'dit_stream_protocol' -Quiet)) {
     throw 'The downloaded JARVIS version does not contain the updated DIT stream protocol.'
