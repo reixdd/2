@@ -4,7 +4,18 @@ const str=(v,n=100)=>String(v??'').replace(/[\r\n\t]+/g,' ').trim().slice(0,n);
 const num=v=>v==null||v===''||!Number.isFinite(Number(v))?null:Number(v);
 const first=(...xs)=>xs.find(x=>x!==undefined&&x!==null&&x!=='')??null;
 const stamp=value=>{const n=Number(value);const ms=typeof value==='number'||(typeof value==='string'&&/^\d+(?:\.\d+)?$/.test(value))?(n<1e11?n*1000:n):Date.parse(value||'');return Number.isFinite(ms)&&ms>0?new Date(ms).toISOString():null;};
-const imageUrl=raw=>{try{if(typeof raw!=='string')return null;const u=new URL(raw);return u.protocol==='https:'&&!u.username&&!u.password&&raw.length<400?u.href:null}catch{return null}};
+const imageUrl=raw=>{
+ if(typeof raw!=='string'||raw.length>400)return null;
+ if(raw.startsWith('ipfs://')){
+  const suffix=raw.slice(7).replace(/^ipfs\//,'');
+  const [cid,...path]=suffix.split('/');
+  const validCid=/^(?:Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7]{30,100})$/.test(cid);
+  const validPath=path.every(x=>/^[A-Za-z0-9._-]{1,120}$/.test(x)&&x!=='..');
+  if(validCid&&validPath)return 'https://ipfs.io/ipfs/'+suffix;
+  return null;
+ }
+ try{const u=new URL(raw);return u.protocol==='https:'&&!u.username&&!u.password?u.href:null}catch{return null}
+};
 const rows=(payload,kind)=>{
  const data=payload?.data??payload;
  if(Array.isArray(data))return data;
@@ -35,7 +46,7 @@ function normalize(row,kind,now,freshnessMs){
  const first_seen_at=new Date(now).toISOString();
  // Resolve candidates independently: an invalid logo must not mask real metadata art.
  const imageCandidates=[a.logo,a.image_url,a.imageUrl,a.icon,a.logoURI,a.image?.url,
-   row.image_url,row.imageUrl,row.info?.imageUrl,row.info?.image_url,row.baseToken?.logoURI];
+   row.image_url,row.imageUrl,row.info?.imageUrl,row.info?.image_url,a.metadata?.image,row.metadata?.image,row.baseToken?.logoURI];
  const image_url=imageCandidates.map(imageUrl).find(Boolean)||null;
  const provider=kind==='radar'?'JARVIS · DexScreener/GeckoTerminal':kind==='tape'?'JARVIS · SENSE / Market Tape':'GMGN via JARVIS';
  return {chain:'sol',address,name:str(first(a.name,a.token_name,row.name),90),symbol:str(first(a.symbol,a.token_symbol,row.symbol),20),
