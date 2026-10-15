@@ -39,3 +39,13 @@ test('decorative code fills both viewport sides, changes over time, and is never
  assert.notEqual(left,buildCodeWallpaper('left',1,65));
  assert.doesNotMatch(left,/BUY|SELL|FAKE PRICE/);
 });
+
+test('documented DexScreener pair info.socials platform and handle resolve to coin-linked X without guessing',()=>{
+ const pair={chainId:'solana',baseToken:{address:mint},info:{socials:[
+  {platform:'twitter',handle:'@AuthenticCoin'},
+  {platform:'telegram',handle:'unrelated'}
+ ]}};
+ assert.equal(coinXFromMetadata(pair),'https://x.com/AuthenticCoin');
+ assert.equal(coinXFromMetadata({info:{socials:[{platform:'twitter',handle:'not valid handle!'}]}}),null);
+ assert.equal(coinXFromMetadata({info:{socials:[{platform:'twitter',handle:'https://x.com/ActualCoin'}]}}),'https://x.com/ActualCoin');
+});
