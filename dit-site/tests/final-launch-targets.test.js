@@ -9,10 +9,12 @@ const at=Date.parse('2026-10-15T22:00:00Z');
 test('source-backed pool creation qualifies new pair, not a newly traded old pool',async()=>{
  let calls=0;const item=address=>({address,chain:'sol',pair_created_at:null,pair_time_verified:false});
  const out=await enrichVerifiedPairs({signals:[item(A),item(B)],source_states:{}},{now:at,fetchImpl:async url=>{
-  calls++;assert.match(url,/api\.dexscreener\.com\/tokens\/v1\/solana\//);
+  calls++;
+  if(String(url).includes('api.geckoterminal.com'))return Response.json({data:[]});
+  assert.match(url,/api\.dexscreener\.com\/tokens\/v1\/solana\//);
   return Response.json([{chainId:'solana',baseToken:{address:A},pairCreatedAt:at-60000,info:{imageUrl:'https://source.test/art.png'}},{chainId:'solana',baseToken:{address:B},pairCreatedAt:at-7200000}]);
  }});
- assert.equal(calls,1);assert.equal(out.signals[0].pair_time_verified,true);
+ assert.equal(calls,2,'DexScreener and one bounded GeckoTerminal fallback');assert.equal(out.signals[0].pair_time_verified,true);
  assert.equal(out.signals[0].pair_created_at,new Date(at-60000).toISOString());
  assert.equal(out.signals[1].pair_created_at,new Date(at-7200000).toISOString());
  assert.ok(out.signals[0].image_candidates.some(x=>x.url==='https://source.test/art.png'));
