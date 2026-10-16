@@ -123,6 +123,17 @@ export function mountControlRoom({openAgent,activateTab}={}){
   activity.insertBefore(flow,el('dit-live-transmissions'));
  }
 }
+// The ONLINE label always follows a fresh, verified DIT autonomous worker heartbeat.
+export function agentPresenceLabel(world,agent){
+ if(!agent)return 'UNKNOWN';
+ const presence=String(agent.presence||'offline').toLowerCase();
+ if(!world?.researcher?.online||presence==='offline')return 'OFFLINE';
+ if(presence==='researching')return 'ONLINE · RESEARCHING';
+ if(presence==='waiting')return 'ONLINE · WAITING';
+ if(presence==='paused')return 'ONLINE · PAUSED';
+ if(presence==='resource pause')return 'ONLINE · RESOURCE PAUSE';
+ return 'ONLINE · '+presence.toUpperCase();
+}
 export function updateControlRoom(world,market,events=[],treasury=null,simulation=null){
  if(!el('dit-room-pairs'))return;
  const v=roomSummary(world,market,events);
@@ -140,9 +151,12 @@ export function updateControlRoom(world,market,events=[],treasury=null,simulatio
  IDS.forEach((id,i)=>{
   const agent=world?.agents?.find(a=>a.id===id);
   const latest=events.find(e=>e.agent_id===id&&e.title);
-  put('dit-room-status-'+i,(agent?.presence||'UNKNOWN').toUpperCase());
+  const presenceLabel=agentPresenceLabel(world,agent);
+  put('dit-room-status-'+i,presenceLabel);
+  const statusNode=el('dit-room-status-'+i);
+  if(statusNode)statusNode.dataset.connected=presenceLabel.startsWith('ONLINE')?'true':'false';
   put('dit-room-recent-'+i,latest?'_ '+shortEvent(latest).slice(0,82):'_ NO RECORDED EVENTS');
-  put('dit-rail-state-'+i,(agent?.presence||'UNKNOWN').toUpperCase());
+  put('dit-rail-state-'+i,presenceLabel);
   const flow=document.querySelectorAll('.dit-flow-agent')[i];
   if(flow){flow.dataset.active=latest?'true':'false';const b=flow.querySelector('b');
    if(b)b.textContent=latest?String(latest.title).slice(0,75):'NO RECORDED SIGNAL';}
