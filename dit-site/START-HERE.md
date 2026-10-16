@@ -48,3 +48,9 @@ The large procedural podiums have been removed from the production scene, retain
 **Hosted backend:** `/api/config` reports the release and which server-side binding names are missing. In the hosted runtime both `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`) and `SUPABASE_SERVICE_ROLE_KEY` must be present. Do not send or commit secrets. A server must also reach the real Supabase tables with migrations `0001` through `0004` applied. A working source build does not validate the hosted provider configuration or the separately deployed research worker.
 
 **This interactive 2.5D build identifies itself as `v7-interactive-2_5d-20261014` in `/api/config`.** If the published Site reports an older release identifier, the latest ZIP/commit has not been deployed.
+
+## Safe local treasury + JARVIS research test (October 2026)
+
+For the separate local-only DIT test installation, open the latest `feat/dit-simulated-treasury` branch's `dit-site` directory and double-click `START-DIT-LOCAL-RESEARCH.cmd`. This new launcher reuses an existing `%USERPROFILE%\\JARVIS` installation (Python virtual environment in `.venv`), prompts for the existing test secret in hidden input when needed, and runs DIT on port 4173 with isolated `.data/dit-local-test.json` storage. It does not connect to the hosted site's Supabase database or change the previously deployed website. Existing DIT processes are stopped only after positive identification and confirmation; it never kills unrelated port owners or starts a duplicate healthy JARVIS. The original production `START-DIT-WITH-JARVIS.cmd` remains unchanged.
+
+Check `http://127.0.0.1:8768/health` for JARVIS, and `http://127.0.0.1:4173/api/observatory` for DIT's authenticated backend worker heartbeat. The live HUD only displays ONLINE when a real DIT autonomous heartbeat is received. Local research concepts remain separate from those on the deployed site.

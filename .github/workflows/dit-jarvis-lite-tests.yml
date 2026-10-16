@@ -49,6 +49,9 @@ on:
       - 'dit-site/supabase/functions/dit-cultural-evidence/index.ts'
       - 'dit-site/worker/provider-bridge.js'
       - 'dit-site/tests/operator-bridge.test.js'
+      - 'dit-site/START-DIT-LOCAL-RESEARCH.cmd'
+      - 'dit-site/scripts/Start-DIT-Local-Research.ps1'
+      - 'dit-site/tests/local-research-launcher.test.js'
       - '.github/workflows/dit-jarvis-lite-tests.yml'
   workflow_dispatch:
 permissions:
