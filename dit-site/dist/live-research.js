@@ -53,12 +53,12 @@
     const buzz=x=>Array.isArray(x)?x.slice(0,4).map(y=>'#'+String(y).replace(/^#/,'')).join(' · '):'';
   const portrait=(id,cls='terminal-avatar')=>agentPortrait(id)?'<img class="'+cls+'" src="'+esc(agentPortrait(id))+'" alt="'+esc(id)+' portrait" loading="lazy">':'';
   const artTile=(c,cls)=>{
-    // A verified concept image belongs to this idea; source token icons do not.
-    const saved=conceptArtwork(c,liveMarket?.signals||[]),actual=!!saved.url;
+    // Original source-linked meme images come first, created concept artwork second.
+    const saved=conceptArtwork(c,liveMarket?.signals||[],failedConceptArt),actual=!!saved.url;
     const fallback=conceptStudyArtwork(c);
     const url=actual?saved.url:fallback;
-    const label=saved.kind==='concept'?'ORIGINAL ART / PROVIDED':
-      saved.kind==='evidence'?'COIN ART / CONTRACT-LINKED SOURCE':'VECTOR CONCEPT STUDY / FALLBACK';
+    const label=saved.kind==='evidence'?'ORIGINAL MEME / SOURCE-LINKED IMAGE':
+      saved.kind==='concept'?'GENERATED / PROVIDED CONCEPT ART':'VECTOR CONCEPT STUDY / FALLBACK';
     return '<div class="'+cls+'"><img src="'+esc(url)+'" data-fallback-study="'+esc(fallback)+'" alt="'+
       esc((c.content?.name||'Agent idea')+' artwork')+'" loading="lazy" decoding="async"'+
       (actual?' referrerpolicy="no-referrer"':'')+'><span class="terminal-art-fallback" hidden>_ ARTWORK UNAVAILABLE</span>'+
@@ -274,7 +274,7 @@
     updateControlRoom(world,liveMarket,events,treasury,simTreasury);
 
 
-    // Primary Radar: newest actual research idea per agent. History is opt-in.
+    // Main Radar showcases source meme images first, then generated/provided concept artwork.
     const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,8);
     const allIdeas=[...concepts.map(c=>({...c,_private:false})),
       ...liveDrafts.filter(c=>!concepts.some(p=>p.id===c.id)).map(c=>({...c,_private:true}))];
@@ -283,7 +283,7 @@
     older.textContent=archiveOpen?'LOAD MORE AGENT IDEAS':'BROWSE IDEA ARCHIVE';
     const conceptKey=JSON.stringify([archiveOpen,archiveShow,...present.map(c=>[c.id,c.status,c.updated_at,
       c.content?.name,c.content?.hook,c.content?.image_url,c.source_refs,
-      conceptArtwork(c,liveMarket?.signals||[]).url,c.agent_id])]);
+      conceptArtwork(c,liveMarket?.signals||[],failedConceptArt).url,c.agent_id])]);
     if(conceptKey!==conceptStructureKey){
       conceptStructureKey=conceptKey;
       $('dit-live-concepts').innerHTML=present.length?present.map(c=>{
