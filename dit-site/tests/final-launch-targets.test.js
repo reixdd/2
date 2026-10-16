@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {enrichVerifiedPairs} from '../worker/pair-metadata.js';
 import {featuredAgentIdeas} from '../dist/concept-feature.js';
 import {conceptStudyArtwork} from '../dist/concept-art.js';
+import {conceptArtwork} from '../dist/terminal-ui.js';
 const A='So11111111111111111111111111111111111111112',B='11111111111111111111111111111111';
 const at=Date.parse('2026-10-15T22:00:00Z');
 test('source-backed pool creation qualifies new pair, not a newly traded old pool',async()=>{
@@ -37,7 +38,7 @@ test('every illustrated study is image data with unique artwork and safely escap
  assert.doesNotMatch(decodeURIComponent(a.split(',')[1]),/<script>/);assert.notEqual(a,b);
 });
 
-test('Radar prefers supplied real artwork and exact-contract source imagery before vector fallback',()=>{
+test('Radar prioritizes fresh ideas while preserving exact-source image attribution',()=>{
  const now=new Date().toISOString(),address='So11111111111111111111111111111111111111112';
  const src={address,image_url:'https://cdn.example.org/source-token.png',url:'https://gmgn.ai/sol/token/'+address};
  const rows=[
@@ -48,7 +49,9 @@ test('Radar prefers supplied real artwork and exact-contract source imagery befo
  {id:'echo',agent_id:'ECHO.exe',status:'review',created_at:now,content:{name:'Vector fallback'}}
  ];
  const out=featuredAgentIdeas(rows,[src]);
- assert.deepEqual(out.map(x=>x.id),['ghost-with-picture','null-source','echo']);
+ assert.deepEqual(out.map(x=>x.id),['ghost-latest','null-latest','echo']);
+  assert.equal(conceptArtwork(rows[1]).kind,'concept');
+  assert.equal(conceptArtwork(rows[3],[src]).kind,'evidence');
 });
 
 
