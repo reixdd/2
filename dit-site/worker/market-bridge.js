@@ -83,7 +83,7 @@ export async function collectJarvisMarkets({baseUrl='http://127.0.0.1:8768',fetc
 }
 export function marketPromptEvidence(signals=[]){
  return signals.filter(x=>x.freshness==='FRESH').slice(0,6).map(x=>({
-  url:x.url,title:(x.symbol||x.name||'Solana token')+' / '+x.kind+' / '+x.provider,
+  url:x.url,image_url:x.image_url||null,title:(x.symbol||x.name||'Solana token')+' / '+x.kind+' / '+x.provider,
   observed_at:x.observed_at,address:x.address,provider:x.provider,twitter_url:x.twitter_url||null,
   summary:(x.name||'Unnamed')+' ('+(x.symbol||'?')+') | 5m volume USD '+(x.volume_5m_usd??'unknown')+
   ' | liquidity USD '+(x.liquidity_usd??'unknown')+' | paid='+(x.paid_attention?'yes':'unknown/no reported boost')+' | safety='+x.safety

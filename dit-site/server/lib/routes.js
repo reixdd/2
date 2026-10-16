@@ -1,6 +1,7 @@
 import {enrichConceptSources} from './coin-metadata.js';
 import {publicConcepts} from './concepts.js';
 import {readMarketSnapshot} from './market-snapshot.js';
+import {lookupSourceImages} from './source-images.js';
 // Backend routes beyond the original read-only chain verifier. Returns a Response, or null when the path is not ours.
 import { AGENTS, AGENT_IDS } from './agents.js';
 import { createStore } from './store-core.js';
@@ -27,7 +28,7 @@ async function workerStatus(store) {
 
 export async function handleBackendApi(request, env, deps = {}) {
   const url = new URL(request.url); const path = url.pathname; const method = request.method;
-  const mine = (path === '/api/simulations/creator-fees' || path === '/api/simulations/reset') || path === '/api/market' || path === '/api/config' || path === '/api/health' || path === '/api/vote' || path === '/api/votes' || path === '/api/me/vote' || /^\/api\/(agents|activity|proposals|tokens|treasury|memories|observations|evidence|integrations|results|observatory|concepts)(\/|$)/.test(path);
+  const mine = (path === '/api/simulations/creator-fees' || path === '/api/simulations/reset') || path === '/api/market' || path === '/api/source-images' || path === '/api/config' || path === '/api/health' || path === '/api/vote' || path === '/api/votes' || path === '/api/me/vote' || /^\/api\/(agents|activity|proposals|tokens|treasury|memories|observations|evidence|integrations|results|observatory|concepts)(\/|$)/.test(path);
   if (!mine) return null;
   const allowedPost = path === '/api/vote' || path === '/api/integrations/circuit' || path === '/api/simulations/creator-fees' || path === '/api/simulations/reset';
   if (method !== 'GET' && !(method === 'POST' && allowedPost)) return json({ error: 'Read-only API. Token signing is never exposed to visitors.' }, 405);
@@ -41,6 +42,12 @@ export async function handleBackendApi(request, env, deps = {}) {
     if (path === '/api/config') return json({ backend: { configured: !!store, kind: store?.kind || null, missingBindings: store ? [] : missing }, auth: authMode, supabase: authMode === 'supabase' ? { url: publicUrl, anonKey } : null, treasuryTargetBps: Number(env.TREASURY_BPS || 2500), simulationOnly: true, release: 'dit-miami-signal-20261015' });
     if (!store) return json({ error: 'backend_not_configured', message: 'The database is not connected. Nothing below is live.' }, 503);
 
+    if(path==='/api/source-images'){
+      const requested=url.searchParams.get('mints')||'';
+      if(requested.length>1100)return json({error:'Too many source mint references'},400);
+      const result=await lookupSourceImages(requested,{fetchImpl:deps.fetchImpl||fetch});
+      return json(result,200,{'cache-control':'public, max-age=60'});
+    }
     if(path==='/api/market'){
       try{return json(await readMarketSnapshot(store))}
       catch{return json({signals:[],source_states:{},last_checked_at:null,stale:true,status:'SNAPSHOT_STORAGE_UNAVAILABLE',research_only:true},503)}

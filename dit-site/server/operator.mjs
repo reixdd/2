@@ -147,7 +147,10 @@ export class Operator {
               const observations=await this.store.select('observations',{filters:[['agent_id','eq',id]],order:['observed_at','desc'],limit:40});
               const trusted=this.autonomous?.marketCache?.market?.signals||[];
               const permitted=new Set(trusted.map(x=>x.url+'|'+x.observed_at));
-              const marketEvidence=(Array.isArray(body.evidence)?body.evidence:[]).filter(x=>permitted.has(x?.url+'|'+x?.observed_at));
+              const byVerifiedKey=new Map(trusted.map(x=>[x.url+'|'+x.observed_at,x]));
+               const marketEvidence=(Array.isArray(body.evidence)?body.evidence:[])
+                .filter(x=>permitted.has(x?.url+'|'+x?.observed_at))
+                .map(x=>({...x,image_url:byVerifiedKey.get(x.url+'|'+x.observed_at)?.image_url||null}));
               await persistCompletedResearch(this.store,{runId:run,agentId:id,answer:r.answer,observations,marketEvidence});
             } catch(persistError) {
               await this.store.insert('activity_events',{agent_id:id,event_type:'research_memory_retry_needed',severity:'warning',title:'Research saved, memory/concept pending',detail:tidy(persistError.message),payload:{run_id:run}}).catch(()=>{});

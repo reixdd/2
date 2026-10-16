@@ -15,7 +15,8 @@ export function conceptArtwork(concept, signals=[], failed=new Set()){
   safeArtUrl(body.original_artwork_url)||safeArtUrl(concept?.artwork_url);
  const refs=Array.isArray(concept?.source_refs)?concept.source_refs:[];
  // Never associate unrelated token art just because a concept has no source URL.
- const archived=refs.find(r=>r.social_source==='dexscreener_contract_metadata'&&
+ const archived=refs.find(r=>
+  (r.social_source==='dexscreener_contract_metadata'||(r.social_source==='coin_metadata'&&r.address))&&
   safeArtUrl(r.source_image_url)&&!failed.has(safeArtUrl(r.source_image_url)));
  const archivedUrl=archived?safeArtUrl(archived.source_image_url):null;
  const matching=archivedUrl?null:signals.find(s=>safeArtUrl(s?.image_url)&&
