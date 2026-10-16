@@ -49,7 +49,7 @@ test('Radar features source meme imagery above drawn concepts and newer text-onl
  {id:'echo',agent_id:'ECHO.exe',status:'review',created_at:now,content:{name:'Vector fallback'}}
  ];
  const out=featuredAgentIdeas(rows,[src]);
- assert.deepEqual(out.map(x=>x.id),['ghost-with-picture','null-source','echo']);
+ assert.deepEqual(out.map(x=>x.id),['null-source','ghost-with-picture','echo']);
   assert.equal(conceptArtwork(rows[1]).kind,'concept');
   assert.equal(conceptArtwork(rows[3],[src]).kind,'evidence');
   assert.equal(conceptArtwork({...rows[1],source_refs:[{address}]},[src]).kind,'evidence');
