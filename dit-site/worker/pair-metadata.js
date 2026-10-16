@@ -14,6 +14,7 @@ export async function enrichVerifiedPairs(snapshot,{fetchImpl=fetch,now=Date.now
  enrichmentCursor=start+candidates.length;
  if(!candidates.length)return snapshot;
  const byAddress=new Map(candidates.map(x=>[x.address,x]));
+ let dexError=null;
  try{
   const guard=signal?AbortSignal.any([signal,AbortSignal.timeout(4800)]):AbortSignal.timeout(4800);
   const url='https://api.dexscreener.com/tokens/v1/solana/'+candidates.map(x=>x.address).join(',');
@@ -46,8 +47,36 @@ export async function enrichVerifiedPairs(snapshot,{fetchImpl=fetch,now=Date.now
    row.image_candidates=artworkCandidates([...(row.image_candidates||[]),...more],row.provider);
    if(!row.image_url)row.image_url=row.image_candidates[0]?.url||null;
   }
-  return {...snapshot,source_states:{...(snapshot.source_states||{}),pair_metadata:'OK'},pair_metadata_checked_at:new Date(now).toISOString()};
  }catch(error){
-  return {...snapshot,source_states:{...(snapshot.source_states||{}),pair_metadata:'UNAVAILABLE'},pair_metadata_error:String(error?.message||error).slice(0,100)};
+  dexError=String(error?.message||error).slice(0,100);
  }
+ // A real market observation is not a source for its logo. Only accept token
+ // images returned for the exact mint from a named metadata provider.
+ // GeckoTerminal is a bounded fallback when DexScreener omits imagery; do not
+ // invent stock images or infer an image from a token name or ticker.
+ const withoutImage=candidates.filter(x=>!x.image_url);
+ let artworkState=withoutImage.length?'UNAVAILABLE':'NOT_REQUIRED';
+ if(withoutImage.length){
+  try{
+   const guard=signal?AbortSignal.any([signal,AbortSignal.timeout(4800)]):AbortSignal.timeout(4800);
+   const url='https://api.geckoterminal.com/api/v2/networks/solana/tokens/multi/'+withoutImage.map(x=>x.address).join(',');
+   const response=await fetchImpl(url,{signal:guard,headers:{accept:'application/json;version=20230203'}});
+   if(!response.ok)throw Error('HTTP '+response.status);
+   const body=await response.json();
+   if(!Array.isArray(body?.data))throw Error('Invalid token metadata response');
+   for(const item of body.data){
+    const addr=item?.attributes?.address||(
+      typeof item?.id==='string'&&item.id.startsWith('solana_')?item.id.slice(7):null);
+    const row=byAddress.get(addr);
+    if(!row||row.image_url)continue;
+    const image=artworkCandidates([item?.attributes?.image_url],'GeckoTerminal token metadata');
+    if(!image.length)continue;
+    row.image_candidates=artworkCandidates([...(row.image_candidates||[]),...image],row.provider);
+    row.image_url=row.image_candidates[0]?.url||null;
+   }
+   artworkState='OK';
+  }catch{artworkState='UNAVAILABLE';}
+ }
+ return {...snapshot,source_states:{...(snapshot.source_states||{}),pair_metadata:dexError?'UNAVAILABLE':'OK',token_image_metadata:artworkState},
+  ...(dexError?{pair_metadata_error:dexError}:{}),pair_metadata_checked_at:new Date(now).toISOString()};
 }

@@ -83,6 +83,8 @@ $env:DIT_AUTONOMOUS_INTERVAL_MINUTES='20'
 $env:DIT_START_SCHEDULER='0'
 $env:DIT_LLM_PROVIDER='off'
 $env:DIT_SIMULATION_ENABLED='1'
+# Display already-public hosted concepts and activity in the isolated local test, READ-ONLY.
+$env:DIT_READONLY_CONCEPT_MIRROR='1'
 Write-Host "Starting DIT on http://127.0.0.1:$Port with local-only research and your EXISTING simulation secret." -ForegroundColor Green
 Write-Host "Check http://127.0.0.1:$Port/api/observatory after 10 seconds for actual ONLINE status."
 Write-Host 'Ctrl+C stops DIT. JARVIS remains running independently. No hosted database changes.'

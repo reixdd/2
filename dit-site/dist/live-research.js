@@ -1,10 +1,10 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
-  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=treasury-1');
-  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=treasury-3');
-  const {MarketFeed}=await import('./market-feed.js?v=treasury-1');
-  const {featuredAgentIdeas}=await import('./concept-feature.js?v=treasury-3');
-  const {conceptStudyArtwork}=await import('./concept-art.js?v=treasury-1');
+  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=treasury-5');
+  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=treasury-5');
+  const {MarketFeed}=await import('./market-feed.js?v=treasury-5');
+  const {featuredAgentIdeas}=await import('./concept-feature.js?v=treasury-5');
+  const {conceptStudyArtwork}=await import('./concept-art.js?v=treasury-5');
   const {linkedCoinXEvidence}=await import('./coin-twitter.js?v=treasury-1');
   const marketFeed=new MarketFeed(document.getElementById('dit-live-evidence'));
   document.getElementById('dit-live-filter').addEventListener('change',()=>renderLiveMarket());
@@ -370,7 +370,10 @@
       world=out[0].status==='fulfilled'?out[0].value:null;
       if(out[1].status==='fulfilled')observations=out[1].value.observations||[];
       if(out[2].status==='fulfilled')runs=out[2].value.runs||[];
-      if(out[3].status==='fulfilled'){const latest=out[3].value.concepts||[];if(!conceptArchive.length)conceptBefore=out[3].value.next_before;concepts=[...latest,...conceptArchive.filter(c=>!latest.some(n=>n.id===c.id))];}
+      if(out[3].status==='fulfilled'){const latest=out[3].value.concepts||[];
+        const state=$('dit-tab-state');
+        if(state&&out[3].value.preview_source==='local_plus_hosted_public_read_only'&&state.textContent.includes('ORIGINAL CONCEPTS'))state.textContent='_ PUBLIC HOSTED RESEARCH ARCHIVE / READ-ONLY PREVIEW';
+        if(!conceptArchive.length)conceptBefore=out[3].value.next_before;concepts=[...latest,...conceptArchive.filter(c=>!latest.some(n=>n.id===c.id))];}
       render();
     }finally{busy=false}
   }
