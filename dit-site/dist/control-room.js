@@ -51,13 +51,13 @@ export function mountControlRoom({openAgent,activateTab}={}){
    '<div><strong id="dit-room-events">—</strong><span>RECORDED EVENTS</span></div>'+
    '<div><strong id="dit-room-agents">—</strong><span>CONFIGURED AGENTS</span></div>'+
    '<div><strong id="dit-room-freshness">UNAVAILABLE</strong><span>MARKET STATUS</span></div></div>'+
-   '<div class="dit-room-stage-wrap"><aside class="dit-ops-rail" id="dit-treasury"><span class="dit-rail-kicker">[ OPERATION TREASURY ]</span>'+
-   '<strong class="dit-ops-heading" id="dit-treasury-target">—</strong><p>CREATOR-FEE ALLOCATION TARGET</p>'+
-   '<div class="dit-treasury-meter"><span id="dit-treasury-bar"></span></div>'+
-   '<div><span>CONFIRMED FEES</span><b id="dit-treasury-confirmed">—</b></div>'+
-   '<div><span>PENDING ALLOCATION</span><b id="dit-treasury-pending">—</b></div>'+
-   '<div><span>OBSERVED / UNVERIFIED</span><b id="dit-treasury-observed">—</b></div>'+
-   '<small id="dit-treasury-status">WAITING FOR VERIFIED LEDGER</small>'+ 
+   '<div class="dit-room-stage-wrap"><aside class="dit-ops-rail" id="dit-treasury"><span class="dit-rail-kicker">[ TREASURY ]</span>'+
+   '<strong class="dit-ops-heading" id="dit-treasury-target">—</strong><p id="dit-treasury-label">CREATOR-FEE ALLOCATION TARGET</p>'+
+   '<div class="dit-treasury-meter dit-treasury-ledger-row"><span id="dit-treasury-bar"></span></div>'+
+   '<div class="dit-treasury-ledger-row"><span>CONFIRMED FEES</span><b id="dit-treasury-confirmed">—</b></div>'+
+   '<div class="dit-treasury-ledger-row"><span>PENDING ALLOCATION</span><b id="dit-treasury-pending">—</b></div>'+
+   '<div class="dit-treasury-ledger-row"><span>OBSERVED / UNVERIFIED</span><b id="dit-treasury-observed">—</b></div>'+
+   '<small id="dit-treasury-status">WAITING FOR VERIFIED LEDGER</small>'+
    '<div id="dit-simulation-treasury" class="dit-sim-preview" hidden></div>'+
    '<button type="button" id="dit-treasury-open">VIEW TREASURY ↗</button></aside>'+
    '<div class="dit-entity-stage">'+cards+'</div>'+
@@ -184,10 +184,19 @@ export function updateControlRoom(world,market,events=[],treasury=null,simulatio
  put('dit-treasury-pending',known?fmtSol(totals.pending_treasury_lamports):'—');
  put('dit-treasury-observed',known?fmtSol(totals.observed_lamports):'—');
  put('dit-treasury-status',known?'RECORDED LEDGER / TRANSFERS NOT ASSUMED':'LEDGER UNAVAILABLE / NO VALUES INFERRED');
+ // Prefer a single simulated allocation value when test mode is enabled.
+ // Never display pretend funds as confirmed or transferred.
  const simBox=el('dit-simulation-treasury');
- if(simBox){const active=simulation?.enabled===true&&simulation.simulated===true&&simulation.totals;simBox.hidden=!active;
-  if(active){const sum=simulation.totals;simBox.textContent='SIMULATED TREASURY · '+fmtSol(sum.treasury_lamports)+' (25%) · FEES '+fmtSol(sum.fee_lamports)+' · REMAINDER '+fmtSol(sum.other_lamports)+' (75%) · '+simulation.event_count+' EVENTS · NO TRANSFERS';}
+ const simulated=simulation?.enabled===true&&simulation.simulated===true&&simulation.totals&&
+   Number.isFinite(Number(simulation.totals.treasury_lamports))&&Number(simulation.totals.treasury_lamports)>=0;
+ if(simBox){
+  simBox.hidden=!simulated;
+  if(simulated)simBox.textContent='SIMULATED · NO REAL TRANSFERS';
  }
+ for(const row of document.querySelectorAll('#dit-treasury .dit-treasury-ledger-row'))row.hidden=!!simulated;
+ const status=el('dit-treasury-status');if(status)status.hidden=!!simulated;
+ put('dit-treasury-label',simulated?'SIMULATED SOL ALLOCATED (25%)':'CREATOR-FEE ALLOCATION TARGET');
+ if(simulated)put('dit-treasury-target',fmtSol(simulation.totals.treasury_lamports));
  if(el('dit-treasury-bar'))el('dit-treasury-bar').style.width=known?percent+'%':'0%';
  const failure=(Array.isArray(events)?events:[]).find(e=>e?.event_type==='job_dead');
  put('dit-system-summary','JARVIS: '+(world?.researcher?.online?'WORKER HEARTBEAT RECEIVED':'WORKER OFFLINE / UNVERIFIED'));
