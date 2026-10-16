@@ -198,6 +198,17 @@ try{
  await page.getByText('BROWSE IDEA ARCHIVE',{exact:true}).click();
  assert.equal(await page.locator('.terminal-concept-card').count(),4,'history loads only after explicit archive click');
 
+ await page.setViewportSize({width:1440,height:900});
+ const rail=page.locator('.terminal-code-bg--left');
+ const before=await rail.evaluate(el=>getComputedStyle(el).transform);
+ await page.waitForTimeout(250);
+ assert.notEqual(await rail.evaluate(el=>getComputedStyle(el).transform),before,'code rails move continuously');
+ const sound=page.locator('#dit-terminal-sound');
+ assert.equal(await sound.getAttribute('aria-pressed'),'true');
+ await sound.click();assert.equal(await sound.getAttribute('aria-pressed'),'false');
+ await sound.click();assert.equal(await sound.getAttribute('aria-pressed'),'true');
+ await page.emulateMedia({reducedMotion:'reduce'});
+ assert.equal(await rail.evaluate(el=>getComputedStyle(el).animationName),'none');
  assert.deepEqual(errors,[],'no page-level script errors');
  console.log('[command-deck] Browser acceptance PASSED; renderer='+mode);
 }finally{

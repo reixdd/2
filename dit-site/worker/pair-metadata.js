@@ -1,13 +1,17 @@
 import {timestamp,artworkCandidates} from '../dist/market-data.js';
 import {coinXFromMetadata} from '../dist/coin-twitter.js';
 // Targeted pool-age lookup of EXISTING JARVIS observations, never a second scanner.
+let enrichmentCursor=0;
 const SOL=/^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 export async function enrichVerifiedPairs(snapshot,{fetchImpl=fetch,now=Date.now(),signal}={}){
  const list=Array.isArray(snapshot?.signals)?snapshot.signals:[];
- const candidates=list.filter(x=>SOL.test(x.address||'')&&
+ const eligible=list.filter(x=>SOL.test(x.address||'')&&
    (x.pair_time_verified!==true||!x.twitter_url||!x.image_url))
    .sort((a,b)=>Number(b.kind==='trenches')-Number(a.kind==='trenches')||
-     (Date.parse(b.first_observed_at||b.observed_at||'')||0)-(Date.parse(a.first_observed_at||a.observed_at||'')||0)).slice(0,30);
+     (Date.parse(b.first_observed_at||b.observed_at||'')||0)-(Date.parse(a.first_observed_at||a.observed_at||'')||0));
+ const start=eligible.length?enrichmentCursor%eligible.length:0;
+ const candidates=[...eligible.slice(start),...eligible.slice(0,start)].slice(0,30);
+ enrichmentCursor=start+candidates.length;
  if(!candidates.length)return snapshot;
  const byAddress=new Map(candidates.map(x=>[x.address,x]));
  try{

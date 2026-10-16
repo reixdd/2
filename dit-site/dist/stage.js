@@ -3,8 +3,8 @@
 // Detailed, transparent 2.5D portraits share a camera and softly animated city backdrop.
 // Prototype GLBs remain in dit-assets for authoring; they are not the production characters.
 // Research activity always comes from the existing API. Idle motion is visual only.
-import { createQualityController, createFrameGuard, opaqueAt } from './stage-quality.js?v=launch-final-3';
-const THREE_URL = './vendor/three.module.js?v=launch-final-3';
+import { createQualityController, createFrameGuard, opaqueAt } from './stage-quality.js?v=launch-polish-7';
+const THREE_URL = './vendor/three.module.js?v=launch-polish-7';
 const AGENTS = [
   { id: 'GHOST_001', title: 'THE ARCHIVIST', model: 'ghost_001', accent: 0x66baff },
   { id: 'NULL_ENTITY', title: 'THE SIGNAL HUNTER', model: 'null_entity', accent: 0xb18aff },

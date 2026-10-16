@@ -7,6 +7,7 @@ export function canonicalCoinXUrl(input){
  try{
   const u=new URL(input);
   if(u.protocol!=='https:'||u.username||u.password||!['x.com','www.x.com','twitter.com','www.twitter.com','mobile.twitter.com'].includes(u.hostname.toLowerCase()))return null;
+  if(/^\/i\/communities\/\d{5,25}\/?$/.test(u.pathname))return 'https://x.com'+u.pathname.replace(/\/$/,'');
   const match=/^\/([A-Za-z0-9_]{1,15})(?:\/status\/(\d{5,25}))?\/?$/.exec(u.pathname);
   if(!match||blocked.has(match[1].toLowerCase()))return null;
   return 'https://x.com/'+match[1]+(match[2]?'/status/'+match[2]:'');
@@ -38,9 +39,10 @@ export function coinXFromMetadata(row){
  }
  return null;
 }
+export function sourceMint(url){try{const u=new URL(url);return u.protocol==='https:'&&u.hostname==='gmgn.ai'&&/^\/sol\/token\/[1-9A-HJ-NP-Za-km-z]{32,44}\/?$/.test(u.pathname)?u.pathname.split('/')[3]:null}catch{return null}}
 const getAddress=o=>o?.evidence?.token_address||o?.evidence?.mint||
  o?.metadata?.token_address||o?.token_address||o?.contract_address||
- o?.address||o?.mint;
+ o?.address||o?.mint||sourceMint(o?.url);
 export function linkedCoinXEvidence(observations=[],signals=[]){
  const byMint=new Map((Array.isArray(signals)?signals:[]).filter(s=>SOL.test(s?.address||'')&&
    canonicalCoinXUrl(s.twitter_url)).map(s=>[s.address,s]));
@@ -54,7 +56,8 @@ export function linkedCoinXEvidence(observations=[],signals=[]){
   // profile link, even when the coin is no longer in the live market cache.
   const profile=String(o?.external_id||'')==='dsp:'+address;
   const archived=profile?canonicalCoinXUrl(o?.evidence?.x_url):null;
-  const url=known||archived;
+  const retained=o?.social_source==='coin_metadata'&&sourceMint(o?.url)===address?canonicalCoinXUrl(o?.twitter_url):null;
+  const url=known||archived||retained;
   if(!url||found.has(address+'|'+url))continue;
   found.set(address+'|'+url,{address,url,symbol:market?.symbol||null,
     observed_at:o?.observed_at||null,origin:known?'Coin metadata':'Recorded DexScreener profile'});

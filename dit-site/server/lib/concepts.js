@@ -1,10 +1,11 @@
+import {sourceMint,canonicalCoinXUrl} from '../../dist/coin-twitter.js';
 // Shared browser-safe research and fictional concept persistence helpers.
 // Displays generated ideas without launching tokens; review status stays explicit.
 const trim=(v,n=4000)=>String(v??'').trim().slice(0,n);
 const URLS=/https?:\/\/[^\s<>"'\])}]+/g;
 export function recordedSources(answer,observations=[]){
   const mentioned=new Set((String(answer||'').match(URLS)||[]).map(x=>x.replace(/[.,;!?]+$/,'')));
-  return observations.filter(o=>o.url&&mentioned.has(o.url)).map(o=>({observation_id:o.id,url:o.url,title:o.title,observed_at:o.observed_at})).slice(0,8);
+  return observations.filter(o=>o.url&&mentioned.has(o.url)).map(o=>({observation_id:o.id,url:o.url,title:o.title,observed_at:o.observed_at,...(o.social_source==='coin_metadata'&&sourceMint(o.url)?{address:sourceMint(o.url),twitter_url:canonicalCoinXUrl(o.twitter_url),social_source:'coin_metadata'}:{})})).slice(0,8);
 }
 export function extractConcept(answer,agentId,sourceRefs=[]){
   if(!sourceRefs.length)return null;
@@ -27,7 +28,7 @@ export function extractConcept(answer,agentId,sourceRefs=[]){
   };
 }
 export async function persistCompletedResearch(store,{runId,agentId,answer,observations=[],marketEvidence=[],clock=()=>new Date().toISOString()}){
-  const known=marketEvidence.filter(x=>x && x.url && x.observed_at && /^https:\/\/gmgn\.ai\/sol\/token\//.test(x.url)).map(x=>({id:null,url:x.url,title:trim(x.title,160),observed_at:x.observed_at}));
+  const known=marketEvidence.filter(x=>x && x.url && x.observed_at && /^https:\/\/gmgn\.ai\/sol\/token\//.test(x.url)).map(x=>({id:null,url:x.url,title:trim(x.title,160),observed_at:x.observed_at,address:sourceMint(x.url),twitter_url:canonicalCoinXUrl(x.twitter_url),social_source:'coin_metadata'}));
   const links=recordedSources(answer,[...observations,...known]);
   await store.update('agent_research_runs',[['id','eq',runId]],{source_refs:links});
   const memory={agent_id:agentId,kind:'episodic',content:trim(answer,12000),

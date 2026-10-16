@@ -29,3 +29,18 @@
 .market-card-foot .market-x-link{color:var(--phosphor);text-decoration:underline;text-underline-offset:3px}
 .market-card-foot .market-x-link[hidden]{display:none!important}
 .terminal-concept-image img,.terminal-concept-art img{image-rendering:auto}
+
+/* Continuous ambient rails; no motion is presented as new backend work. */
+.terminal-code-bg{top:-180px;bottom:auto;height:calc(100vh + 360px);color:#a9ef90;animation:dit-code-drift 19s ease-in-out infinite alternate;will-change:transform;opacity:.27}
+.terminal-code-bg--right{animation-duration:24s;animation-direction:alternate-reverse}
+@keyframes dit-code-drift{from{transform:translateY(-115px)}to{transform:translateY(115px)}}
+.dit-command-output{position:relative;box-shadow:inset 3px 0 12px #a4bdb10c}
+.dit-command-output:before{content:'';position:absolute;left:0;right:0;height:2px;top:0;background:linear-gradient(90deg,transparent,#a4bdb155,transparent);animation:dit-scan-pass 6s linear infinite;pointer-events:none}
+@keyframes dit-scan-pass{to{transform:translateY(106px)}}
+button,a.terminal-action,select{transition:border-color .16s,box-shadow .16s,background-color .16s,transform .16s}
+button:hover,a.terminal-action:hover,select:hover,button:focus-visible,a:focus-visible{border-color:var(--phosphor);box-shadow:0 0 14px #e8ffb724,inset 0 0 15px #a4bdb110;outline-offset:4px}
+button:active,.dit-press{transform:translateY(1px);box-shadow:0 0 22px #e8ffb75c!important;border-color:var(--phosphor)!important}
+.terminal-concept-card{border-radius:3px 16px 3px 3px;border-top-color:#a4bdb155;transition:box-shadow .2s,border-color .2s}
+.terminal-concept-card:hover{border-top-color:var(--phosphor);box-shadow:inset 0 1px #e8ffb75c,0 -4px 18px #a4bdb10b}
+.dit-page-hidden .terminal-code-bg,.dit-page-hidden .dit-command-output:before{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.terminal-code-bg,.dit-command-output:before{animation:none!important;transform:none}button,a,select{transition:none!important}}

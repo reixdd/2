@@ -28,7 +28,7 @@ export function mountTerminalMotion(shell){
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
  let phase=0;
  const paint=()=>{
-  const rows=Math.ceil(innerHeight/14.5)+8;
+  const rows=Math.ceil(innerHeight/14.5)+40;
   left.textContent=buildCodeWallpaper('left',phase,rows);
   right.textContent=buildCodeWallpaper('right',phase+2,rows);
  };

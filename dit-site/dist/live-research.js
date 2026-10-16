@@ -1,11 +1,11 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
-  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=launch-final-6');
-  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=launch-final-6');
-  const {MarketFeed}=await import('./market-feed.js?v=launch-final-6');
-  const {featuredAgentIdeas}=await import('./concept-feature.js?v=launch-final-6');
-  const {conceptStudyArtwork}=await import('./concept-art.js?v=launch-final-4');
-  const {linkedCoinXEvidence}=await import('./coin-twitter.js?v=launch-final-6');
+  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=launch-polish-7');
+  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=launch-polish-7');
+  const {MarketFeed}=await import('./market-feed.js?v=launch-polish-7');
+  const {featuredAgentIdeas}=await import('./concept-feature.js?v=launch-polish-7');
+  const {conceptStudyArtwork}=await import('./concept-art.js?v=launch-polish-7');
+  const {linkedCoinXEvidence}=await import('./coin-twitter.js?v=launch-polish-7');
   const marketFeed=new MarketFeed(document.getElementById('dit-live-evidence'));
   document.getElementById('dit-live-filter').addEventListener('change',()=>renderLiveMarket());
   const $ = id => document.getElementById(id);
@@ -29,10 +29,11 @@
   // WebGL is optional and loads exactly once when the human enables GFX.
   window.addEventListener('dit:gfx',async e=>{
     if(e.detail?.enabled){
-      try{await import('./stage.js?v=launch-final-3')}catch(err){console.warn('[DIT] optional GPU effect unavailable:',err);}
+      try{await import('./stage.js?v=launch-polish-7')}catch(err){console.warn('[DIT] optional GPU effect unavailable:',err);}
     }
   });
   activateTab(location.hash==='#dit-live-transmission-section'?'activity':'radar');
+  const failedConceptArt=new Set();
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
   let conceptBefore=null,conceptArchive=[],conceptPaging=false,archiveOpen=false,archiveShow=9;
   let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[],treasury=null;
@@ -70,6 +71,8 @@
     if(!img.closest('.terminal-concept-image,.terminal-concept-art'))return;
     const study=img.dataset.fallbackStudy;
     if(study&&!img.dataset.failedOriginal&&img.src!==study){
+      failedConceptArt.add(img.getAttribute('src'));
+      setTimeout(()=>render(),0);
       img.dataset.failedOriginal='true';
       const label=img.parentElement?.querySelector('small');
       if(label)label.textContent='VECTOR STUDY / ORIGINAL IMAGE UNAVAILABLE';
@@ -271,7 +274,7 @@
     const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,8);
     const allIdeas=[...concepts.map(c=>({...c,_private:false})),
       ...liveDrafts.filter(c=>!concepts.some(p=>p.id===c.id)).map(c=>({...c,_private:true}))];
-    const present=archiveOpen?allIdeas.slice(0,archiveShow):featuredAgentIdeas(allIdeas,liveMarket?.signals||[]);
+    const present=archiveOpen?allIdeas.slice(0,archiveShow):featuredAgentIdeas(allIdeas,liveMarket?.signals||[],failedConceptArt);
     older.hidden=!archiveOpen?allIdeas.length<=3&&!conceptBefore:!conceptBefore&&allIdeas.length<=archiveShow;
     older.textContent=archiveOpen?'LOAD MORE AGENT IDEAS':'BROWSE IDEA ARCHIVE';
     const conceptKey=JSON.stringify([archiveOpen,archiveShow,...present.map(c=>[c.id,c.status,c.updated_at,
