@@ -1,5 +1,5 @@
-import {mountTerminalFeedback} from './terminal-feedback.js?v=launch-polish-8';
-import {mountTerminalMotion,typeRecordedEvents} from './terminal-motion.js?v=launch-polish-8';
+import {mountTerminalFeedback} from './terminal-feedback.js?v=treasury-1';
+import {mountTerminalMotion,typeRecordedEvents} from './terminal-motion.js?v=treasury-1';
 // Live cinematic machine composition. Real state comes only from JARVIS APIs.
 const IDS=['GHOST_001','NULL_ENTITY','ECHO.exe'];
 const ROLES=['THE ARCHIVIST','THE SIGNAL HUNTER','THE VIRAL MACHINE'];
@@ -186,7 +186,7 @@ export function updateControlRoom(world,market,events=[],treasury=null,simulatio
  put('dit-treasury-status',known?'RECORDED LEDGER / TRANSFERS NOT ASSUMED':'LEDGER UNAVAILABLE / NO VALUES INFERRED');
  const simBox=el('dit-simulation-treasury');
  if(simBox){const active=simulation?.enabled===true&&simulation.simulated===true&&simulation.totals;simBox.hidden=!active;
-  if(active){const sum=simulation.totals;simBox.textContent='TEST ONLY · '+fmtSol(sum.treasury_lamports)+' / 25% OF '+fmtSol(sum.fee_lamports)+' · '+simulation.event_count+' EVENTS · NO TRANSFERS';}
+  if(active){const sum=simulation.totals;simBox.textContent='SIMULATED TREASURY · '+fmtSol(sum.treasury_lamports)+' (25%) · FEES '+fmtSol(sum.fee_lamports)+' · REMAINDER '+fmtSol(sum.other_lamports)+' (75%) · '+simulation.event_count+' EVENTS · NO TRANSFERS';}
  }
  if(el('dit-treasury-bar'))el('dit-treasury-bar').style.width=known?percent+'%':'0%';
  const failure=(Array.isArray(events)?events:[]).find(e=>e?.event_type==='job_dead');

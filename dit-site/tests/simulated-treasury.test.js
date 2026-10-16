@@ -26,3 +26,26 @@ test('reject non-decimal, negative and malformed fee events',async()=>{
  for(const bad of [0.36,'-1','1e3','1.1234567890','0'])assert.throws(()=>parseSimulatedAmount(bad));
  assert.equal((await send(s,{event_id:'!',fee_amount_sol:'0.36'})).status,422);
 });
+
+test('distinct events accumulate while duplicate retries do not',async()=>{
+ const store=await freshStore();
+ await send(store,{event_id:'first',fee_amount_sol:'0.12'});
+ await send(store,{event_id:'second',fee_amount_sol:'0.24'});
+ await send(store,{event_id:'second',fee_amount_sol:'0.24'});
+ const {body}=await json(handleApi(req('/api/treasury/simulated'),env,{store}));
+ assert.equal(body.event_count,2);
+ assert.deepEqual(body.totals,{fee_lamports:360000000,treasury_lamports:90000000,other_lamports:270000000,transferred_lamports:0});
+});
+
+test('concurrent reuse of an event ID with a different amount conflicts',async()=>{
+ const store=await freshStore();
+ const select=store.select.bind(store);let reads=0,release;
+ const barrier=new Promise(resolve=>{release=resolve});
+ store.select=async(table,options)=>{
+  if(table==='circuit_events'&&reads++<2){if(reads===2)release();await barrier;return [];}
+  return select(table,options);
+ };
+ const results=await Promise.all([send(store,example),send(store,{...example,fee_amount_sol:'0.12'})]);
+ assert.deepEqual(results.map(r=>r.status).sort(),[200,409]);
+ assert.equal((await store.select('circuit_events')).length,1);
+});

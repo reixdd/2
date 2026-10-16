@@ -45,8 +45,15 @@ try{
  const page=await browser.newPage({viewport:{width:1440,height:900}});
  const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
+ let simulationFee=0;
+ await page.route('**/api/treasury/simulated',route=>route.fulfill({json:{enabled:true,simulated:true,event_count:simulationFee?1:0,totals:{fee_lamports:simulationFee,treasury_lamports:simulationFee/4,other_lamports:simulationFee*3/4,transferred_lamports:0}}}));
  await page.goto(base,{waitUntil:'domcontentloaded'});
  await page.locator('.dit-room').waitFor({timeout:25000});
+ await page.locator('#dit-simulation-treasury').waitFor({timeout:15000});
+ simulationFee=360000000;
+ await page.waitForFunction(()=>document.querySelector('#dit-simulation-treasury')?.textContent.includes('0.09 SOL'),{},{timeout:20000});
+ const simulationText=await page.locator('#dit-simulation-treasury').textContent();
+ for(const label of ['SIMULATED','0.36 SOL','0.27 SOL','NO TRANSFERS'])assert.ok(simulationText.includes(label),label);
  await page.locator('.market-source-warning').waitFor({timeout:20000});
  assert.equal(await page.locator('#dit-live-evidence .live-row').count(),0,'source research headlines cannot impersonate market pairs');
  assert.equal(await page.locator('.dit-entity').count(),3,'three original HD character controls');

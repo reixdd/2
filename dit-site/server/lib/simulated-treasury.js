@@ -23,7 +23,13 @@ export async function ingestSimulatedFee(store,body){
  const old=await store.select('circuit_events',{filters:[['source','eq',SOURCE],['external_id','eq',body.event_id]],limit:1});
  if(old.length)return old[0].payload?.fee_lamports===fee?{duplicate:true,event_id:body.event_id,simulated:true,...split,fee_lamports:fee}:{conflict:true};
  try{await store.insert('circuit_events',{source:SOURCE,external_id:body.event_id,event_type:'simulated_creator_fee',payload:{fee_lamports:fee,...split,simulated:true},signature_valid:false,status:'processed',processed_at:new Date().toISOString()})}
- catch(e){if(e instanceof StoreError&&e.code===PG.UNIQUE)return {duplicate:true,event_id:body.event_id,simulated:true,...split,fee_lamports:fee};throw e}
+ catch(e){
+  if(!(e instanceof StoreError)||e.code!==PG.UNIQUE)throw e;
+  // Another request may win after our initial read. Compare its persisted amount.
+  const winner=await store.select('circuit_events',{filters:[['source','eq',SOURCE],['external_id','eq',body.event_id]],limit:1});
+  if(!winner.length)throw e;
+  return winner[0].payload?.fee_lamports===fee?{duplicate:true,event_id:body.event_id,simulated:true,...split,fee_lamports:fee}:{conflict:true};
+ }
  return {created:true,event_id:body.event_id,simulated:true,...split,fee_lamports:fee};
 }
 export async function simulationAuthorized(req,env){

@@ -1,11 +1,11 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
-  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=launch-polish-8');
-  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=launch-polish-8');
-  const {MarketFeed}=await import('./market-feed.js?v=launch-polish-8');
-  const {featuredAgentIdeas}=await import('./concept-feature.js?v=launch-polish-8');
-  const {conceptStudyArtwork}=await import('./concept-art.js?v=launch-polish-8');
-  const {linkedCoinXEvidence}=await import('./coin-twitter.js?v=launch-polish-8');
+  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=treasury-1');
+  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=treasury-1');
+  const {MarketFeed}=await import('./market-feed.js?v=treasury-1');
+  const {featuredAgentIdeas}=await import('./concept-feature.js?v=treasury-1');
+  const {conceptStudyArtwork}=await import('./concept-art.js?v=treasury-1');
+  const {linkedCoinXEvidence}=await import('./coin-twitter.js?v=treasury-1');
   const marketFeed=new MarketFeed(document.getElementById('dit-live-evidence'));
   document.getElementById('dit-live-filter').addEventListener('change',()=>renderLiveMarket());
   const $ = id => document.getElementById(id);
@@ -29,7 +29,7 @@
   // WebGL is optional and loads exactly once when the human enables GFX.
   window.addEventListener('dit:gfx',async e=>{
     if(e.detail?.enabled){
-      try{await import('./stage.js?v=launch-polish-8')}catch(err){console.warn('[DIT] optional GPU effect unavailable:',err);}
+      try{await import('./stage.js?v=treasury-1')}catch(err){console.warn('[DIT] optional GPU effect unavailable:',err);}
     }
   });
   activateTab(location.hash==='#dit-live-transmission-section'?'activity':'radar');
@@ -372,7 +372,7 @@
       render();
     }finally{busy=false}
   }
-  refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();refreshTreasury();setInterval(refresh,10000);setInterval(refreshLiveMarket,['localhost','127.0.0.1'].includes(location.hostname)?1000:10000);setInterval(refreshPrivateDrafts,15000);setInterval(refreshTreasury,60000);
+  refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();refreshTreasury();setInterval(refresh,10000);setInterval(refreshLiveMarket,['localhost','127.0.0.1'].includes(location.hostname)?1000:10000);setInterval(refreshPrivateDrafts,15000);setInterval(refreshTreasury,10000);
   setInterval(refreshActivity,5000);setInterval(()=>{if(liveMarket&&!document.hidden)renderLiveMarket()},1000);
   if(typeof EventSource!=='undefined'&&['localhost','127.0.0.1'].includes(location.hostname)){const channel=new EventSource('/api/stream');channel.onmessage=()=>{refreshActivity();refreshPrivateDrafts()};}
   document.addEventListener('visibilitychange',()=>{document.body.classList.toggle('dit-page-hidden',document.hidden);if(!document.hidden){refresh();refreshLiveMarket()}});

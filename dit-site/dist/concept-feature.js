@@ -1,5 +1,5 @@
 // The main Radar prefers source-provided artwork; vector studies are fallback previews.
-import {conceptArtwork} from './terminal-ui.js?v=launch-polish-8';
+import {conceptArtwork} from './terminal-ui.js?v=treasury-1';
 export const AGENTS=['GHOST_001','NULL_ENTITY','ECHO.exe'];
 export function featuredAgentIdeas(rows=[],signals=[],failed=new Set()){
  const seen=new Set(),out=[];

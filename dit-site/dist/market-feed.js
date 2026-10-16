@@ -1,5 +1,5 @@
-import {artworkCandidates,matchesMarketFilter} from './market-data.js?v=launch-polish-8';
-import {canonicalCoinXUrl} from './coin-twitter.js?v=launch-polish-8';
+import {artworkCandidates,matchesMarketFilter} from './market-data.js?v=treasury-1';
+import {canonicalCoinXUrl} from './coin-twitter.js?v=treasury-1';
 
 const cash=v=>typeof v==='number'&&Number.isFinite(v)?'$'+v.toLocaleString(undefined,{maximumFractionDigits:2}):'—';
 
