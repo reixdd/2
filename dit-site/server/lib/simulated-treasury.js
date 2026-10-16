@@ -1,6 +1,6 @@
 // Isolated PRETEND creator-fee demo. Never alters verified balances or launches a token.
 import { PG, StoreError } from './store-core.js';
-const SOURCE='dit_simulation',LIMIT=1000,TEST_WINDOW_MS=300000;
+const SOURCE='dit_simulation',RESET_SOURCE='dit_simulation_reset',LIMIT=1000,TEST_WINDOW_MS=300000;
 export function parseSimulatedAmount(v){
  if(typeof v!=='string'||!/^(?:0|[1-9]\d{0,5})(?:\.\d{1,9})?$/.test(v))throw Error('fee_amount_sol must be a decimal string with at most nine fractional digits');
  const [a,b='']=v.split('.'),n=Number(BigInt(a)*1000000000n+BigInt(b.padEnd(9,'0')));
@@ -14,10 +14,11 @@ export function splitSimulatedFee(n){
 export async function simulationOverview(store,enabled,now=Date.now()){
  if(!enabled)return {enabled:false,simulated:true,event_count:0,totals:null,limitation:'Simulation disabled'};
  // Old pretend test events cease to count after five minutes; audit rows are retained.
- const cutoff=new Date(now-TEST_WINDOW_MS).toISOString();
+ const [reset]=await store.select('circuit_events',{filters:[['source','eq',RESET_SOURCE]],order:['received_at','desc'],limit:1});
+ const cutoff=new Date(Math.max(now-TEST_WINDOW_MS,Date.parse(reset?.received_at||'')||0)).toISOString();
  const rows=await store.select('circuit_events',{filters:[['source','eq',SOURCE],['received_at','gt',cutoff]],order:['received_at','desc'],limit:LIMIT});
  const sum=k=>rows.reduce((n,r)=>n+Number(r.payload?.[k]||0),0);
- return {enabled:true,simulated:true,event_count:rows.length,capped:rows.length===LIMIT,latest_event_at:rows[0]?.received_at||null,totals:{fee_lamports:sum('fee_lamports'),treasury_lamports:sum('treasury_lamports'),other_lamports:sum('other_lamports'),transferred_lamports:0},window_seconds:300,limitation:'SIMULATED TEST ONLY. Pretend fees disappear from the preview after five minutes; no real transfers. Audit rows remain stored.'};
+ return {enabled:true,simulated:true,event_count:rows.length,capped:rows.length===LIMIT,latest_event_at:rows[0]?.received_at||null,totals:{fee_lamports:sum('fee_lamports'),treasury_lamports:sum('treasury_lamports'),other_lamports:sum('other_lamports'),transferred_lamports:0},window_seconds:300,manual_reset:true,limitation:'SIMULATED TEST ONLY. Pretend fees expire after five minutes or manual reset; no real transfers. Audit rows remain stored.'};
 }
 export async function ingestSimulatedFee(store,body){
  if(!body||Array.isArray(body)||typeof body!=='object'||typeof body.event_id!=='string'||!/^[a-zA-Z0-9_-]{1,100}$/.test(body.event_id))throw Error('event_id must be 1–100 letters, numbers, underscores or hyphens');
@@ -33,6 +34,13 @@ export async function ingestSimulatedFee(store,body){
   return winner[0].payload?.fee_lamports===fee?{duplicate:true,event_id:body.event_id,simulated:true,...split,fee_lamports:fee}:{conflict:true};
  }
  return {created:true,event_id:body.event_id,simulated:true,...split,fee_lamports:fee};
+}
+export async function resetSimulationPreview(store){
+ // Keep an audit marker instead of deleting historical test records or real balances.
+ const marker=await store.insert('circuit_events',{source:RESET_SOURCE,external_id:crypto.randomUUID(),
+  event_type:'simulated_reset',payload:{simulated:true,manual_reset:true},signature_valid:false,
+  status:'processed',processed_at:new Date().toISOString()});
+ return {reset:true,simulated:true,reset_at:marker.received_at,transferred_lamports:0};
 }
 export async function simulationAuthorized(req,env){
  const secret=env.DIT_SIMULATION_SECRET;

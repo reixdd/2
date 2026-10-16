@@ -23,6 +23,14 @@ async function poll(){
   if(running){const row=r.runs.find(x=>x.id===running);if(row&&row.status!=='running'){$('run-status').textContent=row.status.toUpperCase();running=null}}
  }catch(e){$('run-status').textContent=e.message}
 }
+const resetDemo=$('reset-simulated-fees');
+if(resetDemo)resetDemo.onclick=async()=>{
+ if(!confirm('Reset the pretend treasury display to zero? Historical records and real funds will not change.'))return;
+ const label=$('reset-simulated-status');resetDemo.disabled=true;label.textContent='RESETTING TEST PREVIEW…';
+ try{await api('/operator/api/simulation/reset',{});label.textContent='DEMO RESET / ZERO ON NEXT SITE REFRESH';}
+ catch(error){label.textContent='RESET FAILED / '+String(error.message).slice(0,110);}
+ finally{resetDemo.disabled=false;}
+};
 const s=await api('/operator/api/settings').catch(()=>null);settings=s?.settings||{provider:'ollama',url:'http://127.0.0.1:11434',models:{}};paint();if(s?.lowLoad){$('provider').disabled=true;$('service-url').disabled=true;$('discovery').textContent='JARVIS SHARED / UP TO 3 CONCURRENT AGENTS';}
 async function updateAutonomous(){
  const el=$('autonomous-overview');if(!el)return;

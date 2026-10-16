@@ -51,7 +51,7 @@ export function mountControlRoom({openAgent,activateTab}={}){
    '<div><strong id="dit-room-events">—</strong><span>RECORDED EVENTS</span></div>'+
    '<div><strong id="dit-room-agents">—</strong><span>CONFIGURED AGENTS</span></div>'+
    '<div><strong id="dit-room-freshness">UNAVAILABLE</strong><span>MARKET STATUS</span></div></div>'+
-   '<div class="dit-room-stage-wrap"><aside class="dit-ops-rail" id="dit-treasury"><span class="dit-rail-kicker">[ CONFIRMED FEES ]</span>'+
+   '<div class="dit-room-stage-wrap"><aside class="dit-ops-rail" id="dit-treasury"><span class="dit-rail-kicker">[ TREASURY ]</span>'+
    '<strong class="dit-ops-heading" id="dit-treasury-target">—</strong><p id="dit-treasury-label">VERIFIED LEDGER</p>'+
    '<div class="dit-treasury-meter dit-treasury-ledger-row"><span id="dit-treasury-bar"></span></div>'+
    '<div class="dit-treasury-ledger-row"><span>CONFIRMED FEES</span><b id="dit-treasury-confirmed">—</b></div>'+
@@ -190,12 +190,12 @@ export function updateControlRoom(world,market,events=[],treasury=null,simulatio
     Number.isFinite(Number(simulation.totals.fee_lamports))&&Number(simulation.totals.fee_lamports)>=0;
   if(simBox){
    simBox.hidden=!simulated;
-   if(simulated)simBox.textContent='25% TEST TREASURY '+fmtSol(simulation.totals.treasury_lamports)+' · CLEARS AFTER 5 MIN · NO REAL TRANSFERS';
+   if(simulated)simBox.textContent='DEMO · 25% ALLOCATION · MANUAL RESET AVAILABLE · 5-MIN EXPIRY · NO TRANSFERS';
   }
   for(const row of document.querySelectorAll('#dit-treasury .dit-treasury-ledger-row'))row.hidden=true;
   const status=el('dit-treasury-status');if(status)status.hidden=true;
-  put('dit-treasury-label',simulated?'SIMULATED · TEST ONLY':known?'VERIFIED LEDGER':'LEDGER UNAVAILABLE');
-  if(simulated)put('dit-treasury-target',fmtSol(simulation.totals.fee_lamports));
+  put('dit-treasury-label',simulated?'TEST MODE · NOT REAL FUNDS':known?'VERIFIED LEDGER':'LEDGER UNAVAILABLE');
+  if(simulated)put('dit-treasury-target',fmtSol(simulation.totals.treasury_lamports));
   if(el('dit-treasury-bar'))el('dit-treasury-bar').style.width=known?percent+'%':'0%';
   const failure=(Array.isArray(events)?events:[]).find(e=>e?.event_type==='job_dead');
  put('dit-system-summary','JARVIS: '+(world?.researcher?.online?'WORKER HEARTBEAT RECEIVED':'WORKER OFFLINE / UNVERIFIED'));

@@ -1,9 +1,9 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
   const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=treasury-1');
-  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=treasury-2');
+  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=treasury-3');
   const {MarketFeed}=await import('./market-feed.js?v=treasury-1');
-  const {featuredAgentIdeas}=await import('./concept-feature.js?v=treasury-1');
+  const {featuredAgentIdeas}=await import('./concept-feature.js?v=treasury-3');
   const {conceptStudyArtwork}=await import('./concept-art.js?v=treasury-1');
   const {linkedCoinXEvidence}=await import('./coin-twitter.js?v=treasury-1');
   const marketFeed=new MarketFeed(document.getElementById('dit-live-evidence'));
@@ -169,8 +169,10 @@
     updateControlRoom(world,liveMarket,events,treasury,simTreasury);
   }
   window.addEventListener('dit:open-treasury',()=>{
-    if(!treasury)return open('TREASURY / NO VERIFIED LEDGER',
-     '<p>The existing ledger is unavailable. No creator-fee balance or transfer is being assumed.</p><a class="terminal-action" href="/operator">OPEN OPERATOR ↗</a>');
+    if(!treasury)return open('TREASURY / DATA STATUS',
+     '<p>Verified fee ledger unavailable. No on-chain balance or transfer is assumed.</p>'+
+     (simTreasury?.enabled?'<h3>TEST MODE / NOT REAL FUNDS</h3><p>Demo treasury (25%): '+esc(lamportsSol(simTreasury.totals?.treasury_lamports))+'</p><p>Demo records expire after five minutes or can be reset in local Operator.</p>':'')+
+     '<a class="terminal-action" href="/operator">OPEN LOCAL OPERATOR ↗</a>');
     const t=treasury.totals||{};
     open('TREASURY / VERIFIED LEDGER',
       '<p>Creator-fee allocation target: '+esc(treasury.target_percent)+'% (configuration, not guaranteed transfer)</p>'+

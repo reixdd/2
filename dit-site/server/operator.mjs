@@ -7,6 +7,7 @@ import { StoreError } from './lib/store-core.js';
 import { collectJarvisMarkets } from '../worker/market-bridge.js';
 import { persistMarketSnapshot } from './lib/market-snapshot.js';
 import { persistCompletedResearch, reviewConcept } from './lib/concepts.js';
+import { resetSimulationPreview } from './lib/simulated-treasury.js';
 const out=(data,status=200)=>Response.json(data,{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}});
 const tidy=x=>String(x||'').slice(0,400);
 export function allowedOperatorRequest(req,port){
@@ -85,6 +86,11 @@ export class Operator {
     const {method,url,headers}=request;if(!allowedOperatorRequest({headers},this.port))return out({error:'Loopback operator only; Host/Origin rejected'},403);
     const p=new URL(url).pathname;
     try{
+      if(p==='/operator/api/simulation/reset'&&method==='POST'){
+        if(this.env.DIT_SIMULATION_ENABLED!=='1'||typeof this.env.DIT_SIMULATION_SECRET!=='string'||this.env.DIT_SIMULATION_SECRET.length<32)
+          return out({error:'Test simulation is not enabled or configured'},403);
+        return out(await resetSimulationPreview(this.store));
+      }
       if(p==='/operator/api/market'&&method==='GET')return out(this.marketStatus());
        if(p==='/operator/api/settings'&&method==='GET')return out(this.publicStatus());
       if(p==='/operator/api/settings'&&method==='POST'){

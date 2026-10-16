@@ -64,3 +64,27 @@ test('simulated fee preview expires after five minutes without touching verified
  assert.equal((await store.select('circuit_events')).length,1);
  assert.equal((await store.select('treasury_ledger')).length,0);
 });
+
+test('manual reset is authorized and hides old pretend entries but preserves audit history',async()=>{
+ const clock=clockAt(Date.now());
+ const store=await freshStore(clock);
+ const view=async()=> (await json(handleApi(req('/api/treasury/simulated'),env,{store,now:clock.now}))).body;
+ const reset=(headers,e=env)=>handleApi(req('/api/simulations/reset',{method:'POST',headers}),e,{store});
+ await send(store,{event_id:'before-reset-1',fee_amount_sol:'0.36'});
+ assert.equal((await view()).totals.treasury_lamports,90000000);
+ assert.equal((await reset({authorization:'wrong'})).status,401);
+ assert.equal((await reset({authorization:'Bearer '+secret},{})).status,403);
+ assert.equal((await view()).event_count,1);
+ clock.advance(1000);
+ const result=await json(reset({authorization:'Bearer '+secret}));
+ assert.equal(result.status,200);
+ assert.equal(result.body.reset,true);
+ assert.equal((await view()).totals.treasury_lamports,0);
+ assert.equal((await view()).event_count,0);
+ assert.equal((await store.select('circuit_events')).length,2);
+ assert.equal((await store.select('treasury_ledger')).length,0);
+ clock.advance(1000);
+ await send(store,{event_id:'after-reset-2',fee_amount_sol:'0.12'});
+ assert.equal((await view()).event_count,1);
+ assert.equal((await view()).totals.treasury_lamports,30000000);
+});

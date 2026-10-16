@@ -8,7 +8,7 @@ import { agentId, limit as vLimit, ValidationError } from './validate.js';
 import { bearer, makeVerifier, RateLimiter, AuthError, publicSupabaseKey, publicSupabaseUrl } from './auth.js';
 import { castVote, voteTotals, currentVote } from './votes.js';
 import { verifyWebhook } from './circuit.js';
-import { simulationAuthorized, simulationOverview, ingestSimulatedFee } from './simulated-treasury.js';
+import { simulationAuthorized, simulationOverview, ingestSimulatedFee, resetSimulationPreview } from './simulated-treasury.js';
 import { ingestCircuitEvent, treasuryView, auditLog } from './ledger.js';
 
 const voteLimiter = new RateLimiter(20, 60_000);       // best effort, per isolate; cast_vote() cooldown is the authoritative control
@@ -27,9 +27,9 @@ async function workerStatus(store) {
 
 export async function handleBackendApi(request, env, deps = {}) {
   const url = new URL(request.url); const path = url.pathname; const method = request.method;
-  const mine = path === '/api/simulations/creator-fees' || path === '/api/market' || path === '/api/config' || path === '/api/health' || path === '/api/vote' || path === '/api/votes' || path === '/api/me/vote' || /^\/api\/(agents|activity|proposals|tokens|treasury|memories|observations|evidence|integrations|results|observatory|concepts)(\/|$)/.test(path);
+  const mine = (path === '/api/simulations/creator-fees' || path === '/api/simulations/reset') || path === '/api/market' || path === '/api/config' || path === '/api/health' || path === '/api/vote' || path === '/api/votes' || path === '/api/me/vote' || /^\/api\/(agents|activity|proposals|tokens|treasury|memories|observations|evidence|integrations|results|observatory|concepts)(\/|$)/.test(path);
   if (!mine) return null;
-  const allowedPost = path === '/api/vote' || path === '/api/integrations/circuit' || path === '/api/simulations/creator-fees';
+  const allowedPost = path === '/api/vote' || path === '/api/integrations/circuit' || path === '/api/simulations/creator-fees' || path === '/api/simulations/reset';
   if (method !== 'GET' && !(method === 'POST' && allowedPost)) return json({ error: 'Read-only API. Token signing is never exposed to visitors.' }, 405);
   try {
     const store = deps.store || createStore(env, deps.fetchImpl);
@@ -141,6 +141,11 @@ export async function handleBackendApi(request, env, deps = {}) {
         note: 'Chain data proves the creation transaction and wallet relationship. It does not prove AI authorship.' });
     }
     if (path === '/api/treasury/simulated') return json(await simulationOverview(store, env.DIT_SIMULATION_ENABLED === '1',typeof deps.now==='function'?deps.now():Date.now()));
+    if (path === '/api/simulations/reset') {
+      if (env.DIT_SIMULATION_ENABLED !== '1') return json({error:'Simulation disabled'},403);
+      if (!await simulationAuthorized(request,env)) return json({error:'Unauthorized'},401);
+      return json(await resetSimulationPreview(store));
+    }
     if (path === '/api/simulations/creator-fees') {
       if (method !== 'POST') return json({error:'Method not allowed'},405);
       if (env.DIT_SIMULATION_ENABLED !== '1') return json({error:'Simulation disabled'},403);
