@@ -8,6 +8,7 @@ import { handleApi } from './api.js';
 import { openFileStore } from './lib/store-file.js';
 import { createStore, supabaseUrlFromEnv } from './lib/store-core.js';
 import { Operator } from './operator.mjs';
+import { createPublicResearchPreview } from './lib/read-only-preview.js';
 import { AutonomousResearch } from './autonomous.mjs';
 import { bootstrap } from '../worker/bootstrap.js';
 import { Scheduler } from '../worker/scheduler.js';
@@ -23,6 +24,7 @@ if ((sharedUrl && !env.SUPABASE_SERVICE_ROLE_KEY)||(!sharedUrl&&env.SUPABASE_SER
 const shared=!!(sharedUrl&&env.SUPABASE_SERVICE_ROLE_KEY)&&env.DIT_STORE!=='file';
 env.DIT_STORE=shared?'supabase':'file'; env.DIT_DEV_AUTH=shared?'0':(env.DIT_DEV_AUTH||'1');
 const store=shared?createStore(env):openFileStore(env.DIT_STORE_FILE||path.join(dir,'.data','dit-store.json'));
+const readOnlyPreview=store.kind==='file'&&env.DIT_READONLY_CONCEPT_MIRROR==='1'?createPublicResearchPreview():null;
 await bootstrap(store);await store.flush?.();
 const port=Number(env.PORT||4173); if(!Number.isInteger(port)||port<1||port>65535)throw Error('Invalid PORT');
 let localLlm,scheduler;
@@ -59,7 +61,9 @@ const server=http.createServer(async(req,res)=>{try{const url=new URL(req.url,`h
  if(url.pathname.startsWith('/api/')){
   const bufs=[];let length=0;for await(const c of req){length+=c.length;if(length>65536){res.writeHead(413);res.end('Too large');return;}bufs.push(c)}
   const body=Buffer.concat(bufs);const init={method:req.method,headers:req.headers};if(!['GET','HEAD'].includes(req.method))init.body=body;
-  const r=await handleApi(new Request(url,init),env,{store});send(res,r);return;
+  const r=await handleApi(new Request(url,init),env,{store});
+  const visible=readOnlyPreview&&req.method==='GET'?await readOnlyPreview.preview(url,r):r;
+  send(res,visible);return;
  }
  const resource=url.pathname==='/'?'index.html':decodeURIComponent(url.pathname.slice(1));const full=path.resolve(dir,'dist',resource);
  if(!full.startsWith(path.resolve(dir,'dist')+path.sep)||!fs.existsSync(full)||!fs.statSync(full).isFile()){res.writeHead(404);res.end('Not found');return;}

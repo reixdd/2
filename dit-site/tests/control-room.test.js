@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {roomSummary} from '../dist/control-room.js';
+import {roomSummary,agentPresenceLabel} from '../dist/control-room.js';
 import {conceptArtwork} from '../dist/terminal-ui.js';
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 
@@ -42,3 +42,15 @@ test('moving background and flow use reduced-motion fallback',()=>{
 });
 
 test('cumulative backend counters are not capped to loaded rows',()=>{const s=roomSummary({agents:[]},{signals:[],metrics:{observed_contracts_total:1420,activity_total:905}},[]);assert.equal(s.pairs,1420);assert.equal(s.events,905);});
+
+test('agent ONLINE status requires fresh DIT autonomous heartbeat, not JARVIS alone',()=>{
+ const ghost={id:'GHOST_001',presence:'waiting'};
+ const active={researcher:{online:true}};
+ assert.equal(agentPresenceLabel(active,ghost),'ONLINE · WAITING');
+ assert.equal(agentPresenceLabel(active,{...ghost,presence:'researching'}),'ONLINE · RESEARCHING');
+ assert.equal(agentPresenceLabel(active,{...ghost,presence:'paused'}),'ONLINE · PAUSED');
+ assert.equal(agentPresenceLabel(active,{...ghost,presence:'resource pause'}),'ONLINE · RESOURCE PAUSE');
+ assert.equal(agentPresenceLabel({researcher:{online:false}},ghost),'OFFLINE');
+ assert.equal(agentPresenceLabel(active,{...ghost,presence:'offline'}),'OFFLINE');
+ assert.equal(agentPresenceLabel(active,null),'UNKNOWN');
+});

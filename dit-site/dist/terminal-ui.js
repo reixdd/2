@@ -9,26 +9,30 @@ export const safeArtUrl=value=>{
  catch {return null}
 };
 export const compact=x=>String(x??'').replace(/[\r\n\t ]+/g,' ').replace(/[#*`]/g,'').trim();
-export function conceptArtwork(concept, signals=[]){
+export function conceptArtwork(concept, signals=[], failed=new Set()){
  const body=concept?.content||{};
  const original=safeArtUrl(body.image_url)||safeArtUrl(body.artwork_url)||
   safeArtUrl(body.original_artwork_url)||safeArtUrl(concept?.artwork_url);
- if(original)return {url:original,label:'CONCEPT ART',kind:'concept'};
  const refs=Array.isArray(concept?.source_refs)?concept.source_refs:[];
- // Match source provenance by a real URL or contract identity, never by missing URLs
- // (undefined === undefined previously picked an unrelated token's picture).
- const archived=refs.find(r=>r.social_source==='dexscreener_contract_metadata'&&safeArtUrl(r.source_image_url));
- if(archived)return {url:safeArtUrl(archived.source_image_url),label:'SOURCE IMAGE · NOT CONCEPT ART',kind:'evidence'};
- const matching=signals.find(s=>safeArtUrl(s?.image_url)&&refs.some(r=>{
+ // Never associate unrelated token art just because a concept has no source URL.
+ const archived=refs.find(r=>
+  (r.social_source==='dexscreener_contract_metadata'||(r.social_source==='coin_metadata'&&r.address))&&
+  safeArtUrl(r.source_image_url)&&!failed.has(safeArtUrl(r.source_image_url)));
+ const archivedUrl=archived?safeArtUrl(archived.source_image_url):null;
+ const matching=archivedUrl?null:signals.find(s=>safeArtUrl(s?.image_url)&&
+  !failed.has(safeArtUrl(s.image_url))&&refs.some(r=>{
    if(typeof r?.url==='string'&&r.url&&typeof s.url==='string'&&s.url===r.url)return true;
    const address=typeof s?.address==='string'&&s.address?s.address:(typeof s?.mint==='string'?s.mint:null);
    if(!address)return false;
    if([r?.address,r?.mint,r?.contract_address].some(value=>value===address))return true;
    if(typeof r?.url!=='string'||!r.url)return false;
-   try { return new URL(r.url).pathname.split('/').includes(address); } catch { return false; }
+   try{return new URL(r.url).pathname.split('/').includes(address)}catch{return false}
  }));
- if(matching)return {url:safeArtUrl(matching.image_url),label:'SOURCE IMAGE · NOT CONCEPT ART',kind:'evidence'};
- return {url:null,label:'ORIGINAL CONCEPT ART PENDING',kind:'missing'};
+ const source=archivedUrl||(matching?safeArtUrl(matching.image_url):null);
+ if(source)return {url:source,label:'SOURCE MEME IMAGE · NOT CONCEPT ART',kind:'evidence'};
+ // Created/supplied illustrations never displace a verified meme source image.
+ if(original&&!failed.has(original))return {url:original,label:'CONCEPT ILLUSTRATION',kind:'concept'};
+ return {url:null,label:'VECTOR STUDY / CONCEPT ART PENDING',kind:'missing'};
 }
 export function formatActivity(event){
  if(!AGENTS.includes(event?.agent_id))return null;

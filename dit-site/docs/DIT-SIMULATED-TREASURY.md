@@ -1,0 +1,17 @@
+# DIT simulated treasury
+
+This is a simulation-only API and visible DIT treasury preview, not a live coin, real external webhook or wallet transfer. Existing verified /api/treasury and /api/integrations/circuit are unchanged.
+
+Set DIT_SIMULATION_ENABLED=1 and a private server-only DIT_SIMULATION_SECRET of at least 32 characters in a local/staging environment. It is disabled by default. Never expose the secret in Git or browser code.
+
+Start the local DIT backend as usual. Run node scripts/demo-simulated-fees.mjs with the same secret in that process environment. It sends one mock creator-fee event for 0.36 SOL to http://127.0.0.1:4173/api/simulations/creator-fees.
+
+POST /api/simulations/creator-fees accepts JSON {"event_id":"unique-event","fee_amount_sol":"0.36"} with Authorization: Bearer (private secret). GET /api/treasury/simulated returns the separate pretend ledger. Duplicate events are idempotent; conflicting amounts are rejected. Test records go to the existing circuit_events table as source dit_simulation; fee_receipts and verified treasury_ledger remain untouched. The preview is capped at 1000 events and displays TEST ONLY.
+
+## Five-minute test window
+
+The GET preview counts only pretend fee events from the most recent five minutes. Old entries stop contributing to the preview and site totals at the next ten-second poll. Historic circuit_events rows are preserved for audit/deduplication; give every new test a unique event_id. Verified treasury, real fee receipts and transfers stay unchanged. The compact CONFIRMED FEES window always displays SIMULATED TEST ONLY attribution during demonstrations and uses a subtle cursor/number glow animation with reduced-motion support.
+
+## Manual reset for test preview
+
+The five-minute rolling expiry remains as a fallback. Local-only /operator has RESET DEMO TO ZERO with confirmation. It is enabled only with DIT_SIMULATION_ENABLED=1 and a configured server-only DIT_SIMULATION_SECRET. Remote authorized testing can POST /api/simulations/reset with Authorization: Bearer [private secret]. Do not place tokens in browser source, URLs or GitHub. The reset stores a separate audit marker (source dit_simulation_reset) instead of deleting history or touching real fee receipts; earlier pretend fee events immediately stop counting. New unique events after reset work as normal. The public widget is titled TREASURY, shows the 25% allocation and a small TEST MODE · NOT REAL FUNDS disclosure. Nothing is real on-chain accounting.

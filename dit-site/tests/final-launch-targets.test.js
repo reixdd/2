@@ -3,15 +3,18 @@ import assert from 'node:assert/strict';
 import {enrichVerifiedPairs} from '../worker/pair-metadata.js';
 import {featuredAgentIdeas} from '../dist/concept-feature.js';
 import {conceptStudyArtwork} from '../dist/concept-art.js';
+import {conceptArtwork} from '../dist/terminal-ui.js';
 const A='So11111111111111111111111111111111111111112',B='11111111111111111111111111111111';
 const at=Date.parse('2026-10-15T22:00:00Z');
 test('source-backed pool creation qualifies new pair, not a newly traded old pool',async()=>{
  let calls=0;const item=address=>({address,chain:'sol',pair_created_at:null,pair_time_verified:false});
  const out=await enrichVerifiedPairs({signals:[item(A),item(B)],source_states:{}},{now:at,fetchImpl:async url=>{
-  calls++;assert.match(url,/api\.dexscreener\.com\/tokens\/v1\/solana\//);
+  calls++;
+  if(String(url).includes('api.geckoterminal.com'))return Response.json({data:[]});
+  assert.match(url,/api\.dexscreener\.com\/tokens\/v1\/solana\//);
   return Response.json([{chainId:'solana',baseToken:{address:A},pairCreatedAt:at-60000,info:{imageUrl:'https://source.test/art.png'}},{chainId:'solana',baseToken:{address:B},pairCreatedAt:at-7200000}]);
  }});
- assert.equal(calls,1);assert.equal(out.signals[0].pair_time_verified,true);
+ assert.equal(calls,2,'DexScreener and one bounded GeckoTerminal fallback');assert.equal(out.signals[0].pair_time_verified,true);
  assert.equal(out.signals[0].pair_created_at,new Date(at-60000).toISOString());
  assert.equal(out.signals[1].pair_created_at,new Date(at-7200000).toISOString());
  assert.ok(out.signals[0].image_candidates.some(x=>x.url==='https://source.test/art.png'));
@@ -37,7 +40,7 @@ test('every illustrated study is image data with unique artwork and safely escap
  assert.doesNotMatch(decodeURIComponent(a.split(',')[1]),/<script>/);assert.notEqual(a,b);
 });
 
-test('Radar prefers supplied real artwork and exact-contract source imagery before vector fallback',()=>{
+test('Radar features source meme imagery above drawn concepts and newer text-only items',()=>{
  const now=new Date().toISOString(),address='So11111111111111111111111111111111111111112';
  const src={address,image_url:'https://cdn.example.org/source-token.png',url:'https://gmgn.ai/sol/token/'+address};
  const rows=[
@@ -48,7 +51,10 @@ test('Radar prefers supplied real artwork and exact-contract source imagery befo
  {id:'echo',agent_id:'ECHO.exe',status:'review',created_at:now,content:{name:'Vector fallback'}}
  ];
  const out=featuredAgentIdeas(rows,[src]);
- assert.deepEqual(out.map(x=>x.id),['ghost-with-picture','null-source','echo']);
+ assert.deepEqual(out.map(x=>x.id),['null-source','ghost-with-picture','echo']);
+  assert.equal(conceptArtwork(rows[1]).kind,'concept');
+  assert.equal(conceptArtwork(rows[3],[src]).kind,'evidence');
+  assert.equal(conceptArtwork({...rows[1],source_refs:[{address}]},[src]).kind,'evidence');
 });
 
 

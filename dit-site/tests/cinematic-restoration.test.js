@@ -170,7 +170,7 @@ test('updated HUD has motion tied to recorded events, accessible reduced-motion 
 });
 test('Radar uses real source imagery and degrades to vector only on image failure',()=>{
  const live=read('../dist/live-research.js');
- assert.match(live,/conceptArtwork\(c,liveMarket\?\.signals/);
+ assert.match(live,/conceptArtwork\(c,artworkSignals\(\)/);
  assert.match(live,/data-fallback-study/);
  assert.match(live,/VECTOR STUDY \/ ORIGINAL IMAGE UNAVAILABLE/);
 });

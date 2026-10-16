@@ -1,5 +1,5 @@
-import {mountTerminalFeedback} from './terminal-feedback.js?v=launch-polish-8';
-import {mountTerminalMotion,typeRecordedEvents} from './terminal-motion.js?v=launch-polish-8';
+import {mountTerminalFeedback} from './terminal-feedback.js?v=treasury-1';
+import {mountTerminalMotion,typeRecordedEvents} from './terminal-motion.js?v=treasury-1';
 // Live cinematic machine composition. Real state comes only from JARVIS APIs.
 const IDS=['GHOST_001','NULL_ENTITY','ECHO.exe'];
 const ROLES=['THE ARCHIVIST','THE SIGNAL HUNTER','THE VIRAL MACHINE'];
@@ -51,13 +51,14 @@ export function mountControlRoom({openAgent,activateTab}={}){
    '<div><strong id="dit-room-events">—</strong><span>RECORDED EVENTS</span></div>'+
    '<div><strong id="dit-room-agents">—</strong><span>CONFIGURED AGENTS</span></div>'+
    '<div><strong id="dit-room-freshness">UNAVAILABLE</strong><span>MARKET STATUS</span></div></div>'+
-   '<div class="dit-room-stage-wrap"><aside class="dit-ops-rail" id="dit-treasury"><span class="dit-rail-kicker">[ OPERATION TREASURY ]</span>'+
-   '<strong class="dit-ops-heading" id="dit-treasury-target">—</strong><p>CREATOR-FEE ALLOCATION TARGET</p>'+
-   '<div class="dit-treasury-meter"><span id="dit-treasury-bar"></span></div>'+
-   '<div><span>CONFIRMED FEES</span><b id="dit-treasury-confirmed">—</b></div>'+
-   '<div><span>PENDING ALLOCATION</span><b id="dit-treasury-pending">—</b></div>'+
-   '<div><span>OBSERVED / UNVERIFIED</span><b id="dit-treasury-observed">—</b></div>'+
+   '<div class="dit-room-stage-wrap"><aside class="dit-ops-rail" id="dit-treasury"><span class="dit-rail-kicker">[ TREASURY ]</span>'+
+   '<strong class="dit-ops-heading" id="dit-treasury-target">—</strong><p id="dit-treasury-label">VERIFIED LEDGER</p>'+
+   '<div class="dit-treasury-meter dit-treasury-ledger-row"><span id="dit-treasury-bar"></span></div>'+
+   '<div class="dit-treasury-ledger-row"><span>CONFIRMED FEES</span><b id="dit-treasury-confirmed">—</b></div>'+
+   '<div class="dit-treasury-ledger-row"><span>PENDING ALLOCATION</span><b id="dit-treasury-pending">—</b></div>'+
+   '<div class="dit-treasury-ledger-row"><span>OBSERVED / UNVERIFIED</span><b id="dit-treasury-observed">—</b></div>'+
    '<small id="dit-treasury-status">WAITING FOR VERIFIED LEDGER</small>'+
+   '<div id="dit-simulation-treasury" class="dit-sim-preview" hidden></div>'+
    '<button type="button" id="dit-treasury-open">VIEW TREASURY ↗</button></aside>'+
    '<div class="dit-entity-stage">'+cards+'</div>'+
    '</div>'+
@@ -122,7 +123,18 @@ export function mountControlRoom({openAgent,activateTab}={}){
   activity.insertBefore(flow,el('dit-live-transmissions'));
  }
 }
-export function updateControlRoom(world,market,events=[],treasury=null){
+// The ONLINE label always follows a fresh, verified DIT autonomous worker heartbeat.
+export function agentPresenceLabel(world,agent){
+ if(!agent)return 'UNKNOWN';
+ const presence=String(agent.presence||'offline').toLowerCase();
+ if(!world?.researcher?.online||presence==='offline')return 'OFFLINE';
+ if(presence==='researching')return 'ONLINE · RESEARCHING';
+ if(presence==='waiting')return 'ONLINE · WAITING';
+ if(presence==='paused')return 'ONLINE · PAUSED';
+ if(presence==='resource pause')return 'ONLINE · RESOURCE PAUSE';
+ return 'ONLINE · '+presence.toUpperCase();
+}
+export function updateControlRoom(world,market,events=[],treasury=null,simulation=null){
  if(!el('dit-room-pairs'))return;
  const v=roomSummary(world,market,events);
  const put=(id,value)=>{const n=el(id);if(n&&n.textContent!==String(value)){
@@ -139,9 +151,12 @@ export function updateControlRoom(world,market,events=[],treasury=null){
  IDS.forEach((id,i)=>{
   const agent=world?.agents?.find(a=>a.id===id);
   const latest=events.find(e=>e.agent_id===id&&e.title);
-  put('dit-room-status-'+i,(agent?.presence||'UNKNOWN').toUpperCase());
+  const presenceLabel=agentPresenceLabel(world,agent);
+  put('dit-room-status-'+i,presenceLabel);
+  const statusNode=el('dit-room-status-'+i);
+  if(statusNode)statusNode.dataset.connected=presenceLabel.startsWith('ONLINE')?'true':'false';
   put('dit-room-recent-'+i,latest?'_ '+shortEvent(latest).slice(0,82):'_ NO RECORDED EVENTS');
-  put('dit-rail-state-'+i,(agent?.presence||'UNKNOWN').toUpperCase());
+  put('dit-rail-state-'+i,presenceLabel);
   const flow=document.querySelectorAll('.dit-flow-agent')[i];
   if(flow){flow.dataset.active=latest?'true':'false';const b=flow.querySelector('b');
    if(b)b.textContent=latest?String(latest.title).slice(0,75):'NO RECORDED SIGNAL';}
@@ -176,15 +191,27 @@ export function updateControlRoom(world,market,events=[],treasury=null){
    button.append(small,headline,time);stat.append(button);}
  }
  const percent=Number(treasury?.target_percent);
- const known=treasury&&treasury.totals&&Number.isFinite(percent)&&percent>=0&&percent<=100;
- put('dit-treasury-target',known?percent.toFixed(percent%1?1:0)+'%':'—');
- const totals=treasury?.totals;
- put('dit-treasury-confirmed',known?fmtSol(totals.confirmed_lamports):'—');
- put('dit-treasury-pending',known?fmtSol(totals.pending_treasury_lamports):'—');
- put('dit-treasury-observed',known?fmtSol(totals.observed_lamports):'—');
- put('dit-treasury-status',known?'RECORDED LEDGER / TRANSFERS NOT ASSUMED':'LEDGER UNAVAILABLE / NO VALUES INFERRED');
- if(el('dit-treasury-bar'))el('dit-treasury-bar').style.width=known?percent+'%':'0%';
- const failure=(Array.isArray(events)?events:[]).find(e=>e?.event_type==='job_dead');
+  const totals=treasury?.totals;
+  const known=!!(totals&&Number.isFinite(percent)&&percent>=0&&percent<=100);
+  // Only the total is on the small HUD; detailed verified allocations stay in VIEW TREASURY.
+  put('dit-treasury-target',known?fmtSol(totals.confirmed_lamports):'—');
+  put('dit-treasury-confirmed',known?fmtSol(totals.confirmed_lamports):'—');
+  put('dit-treasury-pending',known?fmtSol(totals.pending_treasury_lamports):'—');
+  put('dit-treasury-observed',known?fmtSol(totals.observed_lamports):'—');
+  put('dit-treasury-status',known?'RECORDED LEDGER / TRANSFERS NOT ASSUMED':'LEDGER UNAVAILABLE / NO VALUES INFERRED');
+  const simBox=el('dit-simulation-treasury');
+  const simulated=simulation?.enabled===true&&simulation.simulated===true&&simulation.totals&&
+    Number.isFinite(Number(simulation.totals.fee_lamports))&&Number(simulation.totals.fee_lamports)>=0;
+  if(simBox){
+   simBox.hidden=!simulated;
+   if(simulated)simBox.textContent='DEMO · 25% ALLOCATION · MANUAL RESET AVAILABLE · 5-MIN EXPIRY · NO TRANSFERS';
+  }
+  for(const row of document.querySelectorAll('#dit-treasury .dit-treasury-ledger-row'))row.hidden=true;
+  const status=el('dit-treasury-status');if(status)status.hidden=true;
+  put('dit-treasury-label',simulated?'TEST MODE · NOT REAL FUNDS':known?'VERIFIED LEDGER':'LEDGER UNAVAILABLE');
+  if(simulated)put('dit-treasury-target',fmtSol(simulation.totals.treasury_lamports));
+  if(el('dit-treasury-bar'))el('dit-treasury-bar').style.width=known?percent+'%':'0%';
+  const failure=(Array.isArray(events)?events:[]).find(e=>e?.event_type==='job_dead');
  put('dit-system-summary','JARVIS: '+(world?.researcher?.online?'WORKER HEARTBEAT RECEIVED':'WORKER OFFLINE / UNVERIFIED'));
  put('dit-system-market','MARKET: '+v.status+' / '+(v.checked?new Date(v.checked).toLocaleString():'NO SNAPSHOT'));
  put('dit-system-error',failure?'JOB FAILURE / '+failure.agent_id+' — '+String(failure.detail||'Retry attempts exhausted').slice(0,170)+' — OPEN OPERATOR':'NO PERMANENT JOB FAILURE IN LOADED EVENTS');

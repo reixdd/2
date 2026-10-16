@@ -31,3 +31,18 @@
 @keyframes dit-record-reveal{from{clip-path:inset(0 100% 0 0);opacity:.55}to{clip-path:inset(0 0 0 0);opacity:1}}
 @keyframes dit-telemetry-caret{0%,55%{opacity:1}56%,100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.dit-type-in,#dit-room-ticker::after,.dit-room-metrics strong::after,#dit-transmission-ribbon>button.dit-active-trace::after{animation:none}}
+
+.dit-sim-preview{display:block;margin:10px 0 8px;padding:8px;border:1px dashed rgba(191,215,220,.34);background:rgba(8,16,18,.65);color:#d2dddd;font:9px/1.5 monospace;letter-spacing:.2px}.dit-sim-preview[hidden]{display:none}
+
+/* Show only the treasury total during simulation; do not remove the verified ledger. */
+#dit-treasury .dit-treasury-ledger-row[hidden],#dit-treasury-status[hidden]{display:none!important}
+#dit-treasury .dit-ops-heading{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#dit-treasury .dit-sim-preview{border:0;background:transparent;padding:3px 0 0;color:#bfcaca}
+
+/* Single animated fee line; ledger details still available in the details modal. */
+#dit-treasury .dit-treasury-meter,#dit-treasury .dit-treasury-ledger-row,#dit-treasury-status{display:none!important}
+#dit-treasury .dit-rail-kicker::after,#dit-treasury .dit-ops-heading::after{content:"_";color:var(--phosphor);animation:dit-telemetry-caret 1s steps(1,end) infinite}
+#dit-treasury .dit-ops-heading::after{font-size:.45em;vertical-align:.18em;margin-left:2px}
+#dit-treasury .dit-ops-heading{animation:dit-fees-idle 5s ease-in-out infinite}
+@keyframes dit-fees-idle{0%,100%{text-shadow:none}50%{text-shadow:0 0 9px rgba(232,255,183,.25)}}
+@media(prefers-reduced-motion:reduce){#dit-treasury .dit-rail-kicker::after,#dit-treasury .dit-ops-heading::after,#dit-treasury .dit-ops-heading{animation:none}}
