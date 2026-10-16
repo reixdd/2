@@ -31,7 +31,7 @@ export function conceptArtwork(concept, signals=[], failed=new Set()){
  if(source)return {url:source,label:'SOURCE MEME IMAGE · NOT CONCEPT ART',kind:'evidence'};
  // Created/supplied illustrations never displace a verified meme source image.
  if(original&&!failed.has(original))return {url:original,label:'CONCEPT ILLUSTRATION',kind:'concept'};
- return {url:null,label:'VECTOR STUDY / FALLBACK',kind:'missing'};
+ return {url:null,label:'VECTOR STUDY / CONCEPT ART PENDING',kind:'missing'};
 }
 export function formatActivity(event){
  if(!AGENTS.includes(event?.agent_id))return null;
