@@ -56,7 +56,7 @@ export function linkedCoinXEvidence(observations=[],signals=[]){
   // profile link, even when the coin is no longer in the live market cache.
   const profile=String(o?.external_id||'')==='dsp:'+address;
   const archived=profile?canonicalCoinXUrl(o?.evidence?.x_url):null;
-  const retained=o?.social_source==='coin_metadata'&&sourceMint(o?.url)===address?canonicalCoinXUrl(o?.twitter_url):null;
+  const retained=((o?.social_source==='coin_metadata'&&sourceMint(o?.url)===address)||o?.social_source==='dexscreener_contract_metadata')?canonicalCoinXUrl(o?.twitter_url):null;
   const url=known||archived||retained;
   if(!url||found.has(address+'|'+url))continue;
   found.set(address+'|'+url,{address,url,symbol:market?.symbol||null,

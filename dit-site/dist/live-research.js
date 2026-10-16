@@ -1,11 +1,11 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
-  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=launch-polish-7');
-  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=launch-polish-7');
-  const {MarketFeed}=await import('./market-feed.js?v=launch-polish-7');
-  const {featuredAgentIdeas}=await import('./concept-feature.js?v=launch-polish-7');
-  const {conceptStudyArtwork}=await import('./concept-art.js?v=launch-polish-7');
-  const {linkedCoinXEvidence}=await import('./coin-twitter.js?v=launch-polish-7');
+  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=launch-polish-8');
+  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=launch-polish-8');
+  const {MarketFeed}=await import('./market-feed.js?v=launch-polish-8');
+  const {featuredAgentIdeas}=await import('./concept-feature.js?v=launch-polish-8');
+  const {conceptStudyArtwork}=await import('./concept-art.js?v=launch-polish-8');
+  const {linkedCoinXEvidence}=await import('./coin-twitter.js?v=launch-polish-8');
   const marketFeed=new MarketFeed(document.getElementById('dit-live-evidence'));
   document.getElementById('dit-live-filter').addEventListener('change',()=>renderLiveMarket());
   const $ = id => document.getElementById(id);
@@ -29,7 +29,7 @@
   // WebGL is optional and loads exactly once when the human enables GFX.
   window.addEventListener('dit:gfx',async e=>{
     if(e.detail?.enabled){
-      try{await import('./stage.js?v=launch-polish-7')}catch(err){console.warn('[DIT] optional GPU effect unavailable:',err);}
+      try{await import('./stage.js?v=launch-polish-8')}catch(err){console.warn('[DIT] optional GPU effect unavailable:',err);}
     }
   });
   activateTab(location.hash==='#dit-live-transmission-section'?'activity':'radar');
@@ -278,7 +278,7 @@
     older.hidden=!archiveOpen?allIdeas.length<=3&&!conceptBefore:!conceptBefore&&allIdeas.length<=archiveShow;
     older.textContent=archiveOpen?'LOAD MORE AGENT IDEAS':'BROWSE IDEA ARCHIVE';
     const conceptKey=JSON.stringify([archiveOpen,archiveShow,...present.map(c=>[c.id,c.status,c.updated_at,
-      c.content?.name,c.content?.hook,c.content?.image_url,
+      c.content?.name,c.content?.hook,c.content?.image_url,c.source_refs,
       conceptArtwork(c,liveMarket?.signals||[]).url,c.agent_id])]);
     if(conceptKey!==conceptStructureKey){
       conceptStructureKey=conceptKey;

@@ -17,6 +17,8 @@ export function conceptArtwork(concept, signals=[]){
  const refs=Array.isArray(concept?.source_refs)?concept.source_refs:[];
  // Match source provenance by a real URL or contract identity, never by missing URLs
  // (undefined === undefined previously picked an unrelated token's picture).
+ const archived=refs.find(r=>r.social_source==='dexscreener_contract_metadata'&&safeArtUrl(r.source_image_url));
+ if(archived)return {url:safeArtUrl(archived.source_image_url),label:'SOURCE IMAGE · NOT CONCEPT ART',kind:'evidence'};
  const matching=signals.find(s=>safeArtUrl(s?.image_url)&&refs.some(r=>{
    if(typeof r?.url==='string'&&r.url&&typeof s.url==='string'&&s.url===r.url)return true;
    const address=typeof s?.address==='string'&&s.address?s.address:(typeof s?.mint==='string'?s.mint:null);

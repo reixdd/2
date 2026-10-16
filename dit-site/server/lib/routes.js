@@ -1,3 +1,4 @@
+import {enrichConceptSources} from './coin-metadata.js';
 import {publicConcepts} from './concepts.js';
 import {readMarketSnapshot} from './market-snapshot.js';
 // Backend routes beyond the original read-only chain verifier. Returns a Response, or null when the path is not ours.

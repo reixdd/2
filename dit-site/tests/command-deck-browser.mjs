@@ -92,6 +92,7 @@ try{
  }}));
  await page.locator('[data-room-agent="GHOST_001"]').first().click();
  assert.equal(await page.locator('#dit-live-dialog').isVisible(),true,'interactive real dossier');
+ await page.locator('#dit-live-modal-body a[href="https://x.com/OriginalCoin"]').waitFor({state:'visible',timeout:5000});
  assert.equal(await page.locator('#dit-live-modal-body a[href="https://x.com/OriginalCoin"]').count(),1,
    'exact-contract source-associated X handle appears as a working safe link');
  assert.equal(await page.locator('#dit-live-modal-body a[href="https://example.org/random-story"]').count(),0,
