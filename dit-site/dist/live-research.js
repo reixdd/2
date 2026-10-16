@@ -1,7 +1,7 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
   const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=treasury-1');
-  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=treasury-1');
+  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=treasury-2');
   const {MarketFeed}=await import('./market-feed.js?v=treasury-1');
   const {featuredAgentIdeas}=await import('./concept-feature.js?v=treasury-1');
   const {conceptStudyArtwork}=await import('./concept-art.js?v=treasury-1');

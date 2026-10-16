@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {freshStore,req,json} from './helpers.js';
+import {freshStore,req,json,clockAt} from './helpers.js';
 import {handleApi} from '../server/api.js';
 import {parseSimulatedAmount,splitSimulatedFee} from '../server/lib/simulated-treasury.js';
 const secret='s'.repeat(40),env={DIT_SIMULATION_ENABLED:'1',DIT_SIMULATION_SECRET:secret};
@@ -9,7 +9,7 @@ const example={event_id:'demo-fees-036',fee_amount_sol:'0.36'};
 test('75/25 simulation is exact and contains no real transfers',async()=>{
  assert.equal(parseSimulatedAmount('0.36'),360000000);
  assert.deepEqual(splitSimulatedFee(360000000),{treasury_lamports:90000000,other_lamports:270000000});
- const store=await freshStore();
+ const store=await freshStore(clockAt(Date.now()));
  assert.equal((await send(store,example,{})).status,403);
  assert.equal((await send(store,example,env,{authorization:'bad'})).status,401);
  assert.equal((await send(store,example)).status,200);
@@ -22,13 +22,13 @@ test('75/25 simulation is exact and contains no real transfers',async()=>{
  assert.equal((await store.select('fee_receipts')).length,0);
 });
 test('reject non-decimal, negative and malformed fee events',async()=>{
- const s=await freshStore();
+ const s=await freshStore(clockAt(Date.now()));
  for(const bad of [0.36,'-1','1e3','1.1234567890','0'])assert.throws(()=>parseSimulatedAmount(bad));
  assert.equal((await send(s,{event_id:'!',fee_amount_sol:'0.36'})).status,422);
 });
 
 test('distinct events accumulate while duplicate retries do not',async()=>{
- const store=await freshStore();
+ const store=await freshStore(clockAt(Date.now()));
  await send(store,{event_id:'first',fee_amount_sol:'0.12'});
  await send(store,{event_id:'second',fee_amount_sol:'0.24'});
  await send(store,{event_id:'second',fee_amount_sol:'0.24'});
@@ -38,7 +38,7 @@ test('distinct events accumulate while duplicate retries do not',async()=>{
 });
 
 test('concurrent reuse of an event ID with a different amount conflicts',async()=>{
- const store=await freshStore();
+ const store=await freshStore(clockAt(Date.now()));
  const select=store.select.bind(store);let reads=0,release;
  const barrier=new Promise(resolve=>{release=resolve});
  store.select=async(table,options)=>{
@@ -48,4 +48,19 @@ test('concurrent reuse of an event ID with a different amount conflicts',async()
  const results=await Promise.all([send(store,example),send(store,{...example,fee_amount_sol:'0.12'})]);
  assert.deepEqual(results.map(r=>r.status).sort(),[200,409]);
  assert.equal((await store.select('circuit_events')).length,1);
+});
+
+test('simulated fee preview expires after five minutes without touching verified ledger',async()=>{
+ const clock=clockAt(Date.parse('2026-10-16T13:00:00Z'));
+ const store=await freshStore(clock);
+ assert.equal((await send(store,{event_id:'temporary-5m',fee_amount_sol:'0.36'})).status,200);
+ const view=async()=> (await json(handleApi(req('/api/treasury/simulated'),env,{store,now:clock.now}))).body;
+ assert.equal((await view()).totals.treasury_lamports,90000000);
+ clock.advance(300001);
+ const after=await view();
+ assert.equal(after.event_count,0);
+ assert.equal(after.latest_event_at,null);
+ assert.deepEqual(after.totals,{fee_lamports:0,treasury_lamports:0,other_lamports:0,transferred_lamports:0});
+ assert.equal((await store.select('circuit_events')).length,1);
+ assert.equal((await store.select('treasury_ledger')).length,0);
 });

@@ -51,9 +51,11 @@ try{
  await page.locator('.dit-room').waitFor({timeout:25000});
  await page.locator('#dit-simulation-treasury').waitFor({timeout:15000});
  simulationFee=360000000;
- await page.waitForFunction(()=>document.querySelector('#dit-simulation-treasury')?.textContent.includes('0.09 SOL'),{},{timeout:20000});
+ await page.waitForFunction(()=>document.querySelector('#dit-treasury-target')?.textContent.includes('0.36 SOL'),{},{timeout:20000});
  const simulationText=await page.locator('#dit-simulation-treasury').textContent();
- for(const label of ['SIMULATED','0.36 SOL','0.27 SOL','NO TRANSFERS'])assert.ok(simulationText.includes(label),label);
+ for(const label of ['0.09 SOL','CLEARS AFTER 5 MIN','NO REAL TRANSFERS'])assert.ok(simulationText.includes(label),label);
+  assert.match(await page.locator('#dit-treasury-label').textContent(),/SIMULATED.*TEST ONLY/);
+  assert.match(await page.locator('#dit-treasury .dit-rail-kicker').textContent(),/CONFIRMED FEES/);
  await page.locator('.market-source-warning').waitFor({timeout:20000});
  assert.equal(await page.locator('#dit-live-evidence .live-row').count(),0,'source research headlines cannot impersonate market pairs');
  assert.equal(await page.locator('.dit-entity').count(),3,'three original HD character controls');

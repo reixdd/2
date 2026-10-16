@@ -140,7 +140,7 @@ export async function handleBackendApi(request, env, deps = {}) {
       return json({ token: t, agent: a ? { id: a.id, title: a.title } : null, proposal: proposal || null, proposal_history: hist, evidence: ev, verifyPath: `/api/verify?signature=${t.signature}`, explorerUrl: `https://solscan.io/tx/${t.signature}`,
         note: 'Chain data proves the creation transaction and wallet relationship. It does not prove AI authorship.' });
     }
-    if (path === '/api/treasury/simulated') return json(await simulationOverview(store, env.DIT_SIMULATION_ENABLED === '1'));
+    if (path === '/api/treasury/simulated') return json(await simulationOverview(store, env.DIT_SIMULATION_ENABLED === '1',typeof deps.now==='function'?deps.now():Date.now()));
     if (path === '/api/simulations/creator-fees') {
       if (method !== 'POST') return json({error:'Method not allowed'},405);
       if (env.DIT_SIMULATION_ENABLED !== '1') return json({error:'Simulation disabled'},403);

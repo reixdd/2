@@ -51,8 +51,8 @@ export function mountControlRoom({openAgent,activateTab}={}){
    '<div><strong id="dit-room-events">—</strong><span>RECORDED EVENTS</span></div>'+
    '<div><strong id="dit-room-agents">—</strong><span>CONFIGURED AGENTS</span></div>'+
    '<div><strong id="dit-room-freshness">UNAVAILABLE</strong><span>MARKET STATUS</span></div></div>'+
-   '<div class="dit-room-stage-wrap"><aside class="dit-ops-rail" id="dit-treasury"><span class="dit-rail-kicker">[ TREASURY ]</span>'+
-   '<strong class="dit-ops-heading" id="dit-treasury-target">—</strong><p id="dit-treasury-label">CREATOR-FEE ALLOCATION TARGET</p>'+
+   '<div class="dit-room-stage-wrap"><aside class="dit-ops-rail" id="dit-treasury"><span class="dit-rail-kicker">[ CONFIRMED FEES ]</span>'+
+   '<strong class="dit-ops-heading" id="dit-treasury-target">—</strong><p id="dit-treasury-label">VERIFIED LEDGER</p>'+
    '<div class="dit-treasury-meter dit-treasury-ledger-row"><span id="dit-treasury-bar"></span></div>'+
    '<div class="dit-treasury-ledger-row"><span>CONFIRMED FEES</span><b id="dit-treasury-confirmed">—</b></div>'+
    '<div class="dit-treasury-ledger-row"><span>PENDING ALLOCATION</span><b id="dit-treasury-pending">—</b></div>'+
@@ -177,28 +177,27 @@ export function updateControlRoom(world,market,events=[],treasury=null,simulatio
    button.append(small,headline,time);stat.append(button);}
  }
  const percent=Number(treasury?.target_percent);
- const known=treasury&&treasury.totals&&Number.isFinite(percent)&&percent>=0&&percent<=100;
- put('dit-treasury-target',known?percent.toFixed(percent%1?1:0)+'%':'—');
- const totals=treasury?.totals;
- put('dit-treasury-confirmed',known?fmtSol(totals.confirmed_lamports):'—');
- put('dit-treasury-pending',known?fmtSol(totals.pending_treasury_lamports):'—');
- put('dit-treasury-observed',known?fmtSol(totals.observed_lamports):'—');
- put('dit-treasury-status',known?'RECORDED LEDGER / TRANSFERS NOT ASSUMED':'LEDGER UNAVAILABLE / NO VALUES INFERRED');
- // Prefer a single simulated allocation value when test mode is enabled.
- // Never display pretend funds as confirmed or transferred.
- const simBox=el('dit-simulation-treasury');
- const simulated=simulation?.enabled===true&&simulation.simulated===true&&simulation.totals&&
-   Number.isFinite(Number(simulation.totals.treasury_lamports))&&Number(simulation.totals.treasury_lamports)>=0;
- if(simBox){
-  simBox.hidden=!simulated;
-  if(simulated)simBox.textContent='SIMULATED · NO REAL TRANSFERS';
- }
- for(const row of document.querySelectorAll('#dit-treasury .dit-treasury-ledger-row'))row.hidden=!!simulated;
- const status=el('dit-treasury-status');if(status)status.hidden=!!simulated;
- put('dit-treasury-label',simulated?'SIMULATED SOL ALLOCATED (25%)':'CREATOR-FEE ALLOCATION TARGET');
- if(simulated)put('dit-treasury-target',fmtSol(simulation.totals.treasury_lamports));
- if(el('dit-treasury-bar'))el('dit-treasury-bar').style.width=known?percent+'%':'0%';
- const failure=(Array.isArray(events)?events:[]).find(e=>e?.event_type==='job_dead');
+  const totals=treasury?.totals;
+  const known=!!(totals&&Number.isFinite(percent)&&percent>=0&&percent<=100);
+  // Only the total is on the small HUD; detailed verified allocations stay in VIEW TREASURY.
+  put('dit-treasury-target',known?fmtSol(totals.confirmed_lamports):'—');
+  put('dit-treasury-confirmed',known?fmtSol(totals.confirmed_lamports):'—');
+  put('dit-treasury-pending',known?fmtSol(totals.pending_treasury_lamports):'—');
+  put('dit-treasury-observed',known?fmtSol(totals.observed_lamports):'—');
+  put('dit-treasury-status',known?'RECORDED LEDGER / TRANSFERS NOT ASSUMED':'LEDGER UNAVAILABLE / NO VALUES INFERRED');
+  const simBox=el('dit-simulation-treasury');
+  const simulated=simulation?.enabled===true&&simulation.simulated===true&&simulation.totals&&
+    Number.isFinite(Number(simulation.totals.fee_lamports))&&Number(simulation.totals.fee_lamports)>=0;
+  if(simBox){
+   simBox.hidden=!simulated;
+   if(simulated)simBox.textContent='25% TEST TREASURY '+fmtSol(simulation.totals.treasury_lamports)+' · CLEARS AFTER 5 MIN · NO REAL TRANSFERS';
+  }
+  for(const row of document.querySelectorAll('#dit-treasury .dit-treasury-ledger-row'))row.hidden=true;
+  const status=el('dit-treasury-status');if(status)status.hidden=true;
+  put('dit-treasury-label',simulated?'SIMULATED · TEST ONLY':known?'VERIFIED LEDGER':'LEDGER UNAVAILABLE');
+  if(simulated)put('dit-treasury-target',fmtSol(simulation.totals.fee_lamports));
+  if(el('dit-treasury-bar'))el('dit-treasury-bar').style.width=known?percent+'%':'0%';
+  const failure=(Array.isArray(events)?events:[]).find(e=>e?.event_type==='job_dead');
  put('dit-system-summary','JARVIS: '+(world?.researcher?.online?'WORKER HEARTBEAT RECEIVED':'WORKER OFFLINE / UNVERIFIED'));
  put('dit-system-market','MARKET: '+v.status+' / '+(v.checked?new Date(v.checked).toLocaleString():'NO SNAPSHOT'));
  put('dit-system-error',failure?'JOB FAILURE / '+failure.agent_id+' — '+String(failure.detail||'Retry attempts exhausted').slice(0,170)+' — OPEN OPERATOR':'NO PERMANENT JOB FAILURE IN LOADED EVENTS');
