@@ -14,6 +14,7 @@ on:
       - 'dit-site/tests/market-snapshot.test.js'
       - 'dit-site/tests/simulated-treasury.test.js'
       - 'dit-site/tests/meme-radar.test.js'
+      - 'dit-site/tests/final-launch-targets.test.js'
       - 'dit-site/dist/concept-feature.js'
       - 'dit-site/tests/market-cache.test.js'
       - 'dit-site/supabase/migrations/0010_readonly_market_snapshots.sql'
