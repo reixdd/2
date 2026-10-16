@@ -36,7 +36,7 @@
   const failedConceptArt=new Set();
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
   let conceptBefore=null,conceptArchive=[],conceptPaging=false,archiveOpen=false,archiveShow=9;
-  let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[],treasury=null;
+  let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[],treasury=null,simTreasury=null;
   let activityStructureKey='',conceptStructureKey='',lastActivityTime=0,conceptArtContextKey='';
   for(const [id,title] of [['dit-live-evidence-section','MARKET OBSERVATIONS'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // AGENT IDEAS']]){
     const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
@@ -163,9 +163,10 @@
   // Treasury values are shown only when the existing ledger API returns valid data.
   const lamportsSol=n=>Number.isFinite(Number(n))&&Number(n)>=0?(Number(n)/1e9).toLocaleString(undefined,{maximumFractionDigits:6})+' SOL':'—';
   async function refreshTreasury(){
-    try{const v=await api('/api/treasury');treasury=v?.totals&&Number.isFinite(Number(v.target_percent))?v:null;}
-    catch{treasury=null;}
-    updateControlRoom(world,liveMarket,events,treasury);
+    const [real,pretend]=await Promise.allSettled([api('/api/treasury'),api('/api/treasury/simulated')]);
+    treasury=real.status==='fulfilled'&&real.value?.totals&&Number.isFinite(Number(real.value.target_percent))?real.value:null;
+    simTreasury=pretend.status==='fulfilled'&&pretend.value?.simulated===true&&pretend.value.enabled===true?pretend.value:null;
+    updateControlRoom(world,liveMarket,events,treasury,simTreasury);
   }
   window.addEventListener('dit:open-treasury',()=>{
     if(!treasury)return open('TREASURY / NO VERIFIED LEDGER',
@@ -177,6 +178,7 @@
       '<p>Pending allocation: '+esc(lamportsSol(t.pending_treasury_lamports))+'</p>'+
       '<p>Observed but unverified: '+esc(lamportsSol(t.observed_lamports))+'</p>'+
       '<p>'+esc(treasury.transfer?.limitation||'Any transfer requires an independently validated record.')+'</p>'+
+      (simTreasury?.enabled?'<h3>SIMULATION ONLY — NOT VERIFIED FUNDS</h3><p>Pretend fees: '+esc(lamportsSol(simTreasury.totals?.fee_lamports))+' / 75%: '+esc(lamportsSol(simTreasury.totals?.other_lamports))+' / 25%: '+esc(lamportsSol(simTreasury.totals?.treasury_lamports))+'</p><p>Simulated wallet transfers: NONE.</p>':'')+
       '<a class="terminal-action" href="/operator">OPEN OPERATOR ↗</a>');
   });
   async function detail(id){
@@ -267,7 +269,7 @@
       unavailable:!world,workerAlive:!!world?.researcher?.online,
       agents:(world?.agents||[]).map(a=>({id:a.id,state:['OBSERVING','THINKING','CREATING'].includes(String(a.presence).toUpperCase())?String(a.presence).toUpperCase():'IDLE'}))
     }}));
-    updateControlRoom(world,liveMarket,events,treasury);
+    updateControlRoom(world,liveMarket,events,treasury,simTreasury);
 
 
     // Primary Radar: newest actual research idea per agent. History is opt-in.
@@ -343,7 +345,7 @@
         conceptArtContextKey=nextArtContext;
         render(); // featured ideas update only when actual market art changes
       }else renderLiveMarket();
-      updateControlRoom(world,liveMarket,events,treasury);
+      updateControlRoom(world,liveMarket,events,treasury,simTreasury);
       // Ideas only re-render when their own persisted content changes.
     }catch{
       if(liveMarket)liveMarket.stale=true;

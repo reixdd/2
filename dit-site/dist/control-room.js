@@ -57,7 +57,8 @@ export function mountControlRoom({openAgent,activateTab}={}){
    '<div><span>CONFIRMED FEES</span><b id="dit-treasury-confirmed">—</b></div>'+
    '<div><span>PENDING ALLOCATION</span><b id="dit-treasury-pending">—</b></div>'+
    '<div><span>OBSERVED / UNVERIFIED</span><b id="dit-treasury-observed">—</b></div>'+
-   '<small id="dit-treasury-status">WAITING FOR VERIFIED LEDGER</small>'+
+   '<small id="dit-treasury-status">WAITING FOR VERIFIED LEDGER</small>'+ 
+   '<div id="dit-simulation-treasury" class="dit-sim-preview" hidden></div>'+
    '<button type="button" id="dit-treasury-open">VIEW TREASURY ↗</button></aside>'+
    '<div class="dit-entity-stage">'+cards+'</div>'+
    '</div>'+
@@ -122,7 +123,7 @@ export function mountControlRoom({openAgent,activateTab}={}){
   activity.insertBefore(flow,el('dit-live-transmissions'));
  }
 }
-export function updateControlRoom(world,market,events=[],treasury=null){
+export function updateControlRoom(world,market,events=[],treasury=null,simulation=null){
  if(!el('dit-room-pairs'))return;
  const v=roomSummary(world,market,events);
  const put=(id,value)=>{const n=el(id);if(n&&n.textContent!==String(value)){
@@ -183,6 +184,10 @@ export function updateControlRoom(world,market,events=[],treasury=null){
  put('dit-treasury-pending',known?fmtSol(totals.pending_treasury_lamports):'—');
  put('dit-treasury-observed',known?fmtSol(totals.observed_lamports):'—');
  put('dit-treasury-status',known?'RECORDED LEDGER / TRANSFERS NOT ASSUMED':'LEDGER UNAVAILABLE / NO VALUES INFERRED');
+ const simBox=el('dit-simulation-treasury');
+ if(simBox){const active=simulation?.enabled===true&&simulation.simulated===true&&simulation.totals;simBox.hidden=!active;
+  if(active){const sum=simulation.totals;simBox.textContent='TEST ONLY · '+fmtSol(sum.treasury_lamports)+' / 25% OF '+fmtSol(sum.fee_lamports)+' · '+simulation.event_count+' EVENTS · NO TRANSFERS';}
+ }
  if(el('dit-treasury-bar'))el('dit-treasury-bar').style.width=known?percent+'%':'0%';
  const failure=(Array.isArray(events)?events:[]).find(e=>e?.event_type==='job_dead');
  put('dit-system-summary','JARVIS: '+(world?.researcher?.online?'WORKER HEARTBEAT RECEIVED':'WORKER OFFLINE / UNVERIFIED'));

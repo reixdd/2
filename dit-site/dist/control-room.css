@@ -31,3 +31,5 @@
 @keyframes dit-record-reveal{from{clip-path:inset(0 100% 0 0);opacity:.55}to{clip-path:inset(0 0 0 0);opacity:1}}
 @keyframes dit-telemetry-caret{0%,55%{opacity:1}56%,100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.dit-type-in,#dit-room-ticker::after,.dit-room-metrics strong::after,#dit-transmission-ribbon>button.dit-active-trace::after{animation:none}}
+
+.dit-sim-preview{display:block;margin:10px 0 8px;padding:8px;border:1px dashed rgba(191,215,220,.34);background:rgba(8,16,18,.65);color:#d2dddd;font:9px/1.5 monospace;letter-spacing:.2px}.dit-sim-preview[hidden]{display:none}

@@ -8,6 +8,7 @@ import { agentId, limit as vLimit, ValidationError } from './validate.js';
 import { bearer, makeVerifier, RateLimiter, AuthError, publicSupabaseKey, publicSupabaseUrl } from './auth.js';
 import { castVote, voteTotals, currentVote } from './votes.js';
 import { verifyWebhook } from './circuit.js';
+import { simulationAuthorized, simulationOverview, ingestSimulatedFee } from './simulated-treasury.js';
 import { ingestCircuitEvent, treasuryView, auditLog } from './ledger.js';
 
 const voteLimiter = new RateLimiter(20, 60_000);       // best effort, per isolate; cast_vote() cooldown is the authoritative control
@@ -26,9 +27,9 @@ async function workerStatus(store) {
 
 export async function handleBackendApi(request, env, deps = {}) {
   const url = new URL(request.url); const path = url.pathname; const method = request.method;
-  const mine = path === '/api/market' || path === '/api/config' || path === '/api/health' || path === '/api/vote' || path === '/api/votes' || path === '/api/me/vote' || /^\/api\/(agents|activity|proposals|tokens|treasury|memories|observations|evidence|integrations|results|observatory|concepts)(\/|$)/.test(path);
+  const mine = path === '/api/simulations/creator-fees' || path === '/api/market' || path === '/api/config' || path === '/api/health' || path === '/api/vote' || path === '/api/votes' || path === '/api/me/vote' || /^\/api\/(agents|activity|proposals|tokens|treasury|memories|observations|evidence|integrations|results|observatory|concepts)(\/|$)/.test(path);
   if (!mine) return null;
-  const allowedPost = path === '/api/vote' || path === '/api/integrations/circuit';
+  const allowedPost = path === '/api/vote' || path === '/api/integrations/circuit' || path === '/api/simulations/creator-fees';
   if (method !== 'GET' && !(method === 'POST' && allowedPost)) return json({ error: 'Read-only API. Token signing is never exposed to visitors.' }, 405);
   try {
     const store = deps.store || createStore(env, deps.fetchImpl);
@@ -138,6 +139,16 @@ export async function handleBackendApi(request, env, deps = {}) {
       const hist = proposal ? (await store.select('audit_logs', { filters: [['subject_type', 'eq', 'token_proposal'], ['subject_id', 'eq', String(proposal.id)], ['action', 'eq', 'proposal_transition']], order: ['created_at', 'asc'], limit: 50 })).map(h => ({ at: h.created_at, from: h.details?.from ?? null, to: h.details?.to ?? null })) : [];
       return json({ token: t, agent: a ? { id: a.id, title: a.title } : null, proposal: proposal || null, proposal_history: hist, evidence: ev, verifyPath: `/api/verify?signature=${t.signature}`, explorerUrl: `https://solscan.io/tx/${t.signature}`,
         note: 'Chain data proves the creation transaction and wallet relationship. It does not prove AI authorship.' });
+    }
+    if (path === '/api/treasury/simulated') return json(await simulationOverview(store, env.DIT_SIMULATION_ENABLED === '1'));
+    if (path === '/api/simulations/creator-fees') {
+      if (method !== 'POST') return json({error:'Method not allowed'},405);
+      if (env.DIT_SIMULATION_ENABLED !== '1') return json({error:'Simulation disabled'},403);
+      if (!await simulationAuthorized(request,env)) return json({error:'Unauthorized'},401);
+      const raw=await request.text();if(raw.length>4096)return json({error:'Payload too large'},413);
+      let payload;try{payload=JSON.parse(raw)}catch{return json({error:'Invalid JSON'},400)}
+      let event;try{event=await ingestSimulatedFee(store,payload)}catch(e){if(e instanceof Error && /^(event_id|fee_amount_sol|Invalid simulated)/.test(e.message))return json({error:e.message},422);throw e}
+      return json(event.conflict?{error:'Event ID already used for a different amount'}:event,event.conflict?409:200);
     }
     if (path === '/api/treasury') return json(await treasuryView(store, env));
     if (path === '/api/integrations/circuit') {
