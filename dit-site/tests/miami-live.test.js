@@ -22,7 +22,7 @@ test('archived cloud evidence does not falsely claim local JARVIS is online',asy
  assert.equal(j.researcher.online,false);assert.equal(j.collector.online,true);
  assert.ok(j.agents.every(a=>a.presence==='offline'));
 });
-test('concepts require recorded source provenance and remain private until human review',async()=>{
+test('concept ideas are automatically visible with review status and no launch authority',async()=>{
  const source={id:'observation-1',agent_id:'GHOST_001',url:'https://example.org/history',title:'Recorded history',observed_at:new Date().toISOString()};
  const refs=recordedSources('Documented at https://example.org/history', [source]);
  assert.equal(refs.length,1);
@@ -32,7 +32,7 @@ test('concepts require recorded source provenance and remain private until human
  const store=await freshStore();
  await store.insert('agent_research_runs',{id:'run-1',agent_id:'GHOST_001',prompt:'Research evidence',provider:'jarvis',status:'completed',answer:'Example'});
  await store.insert('fictional_concepts',{id:'concept-1',run_id:'run-1',agent_id:'GHOST_001',status:'review',content:x,source_refs:refs});
- let r=await handleBackendApi(req('/api/concepts'),{}, {store});assert.deepEqual((await r.json()).concepts,[]);
+ let r=await handleBackendApi(req('/api/concepts'),{}, {store});assert.equal((await r.json()).concepts[0].status,'review');
  await store.update('fictional_concepts',[['id','eq','concept-1']],{status:'published',published_at:new Date().toISOString()});
  r=await handleBackendApi(req('/api/concepts'),{}, {store});assert.equal((await r.json()).concepts.length,1);
 });

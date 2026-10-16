@@ -35,6 +35,11 @@ export class SupabaseStore {
     if (limit) q.set('limit', String(limit));
     return '?' + q.toString();
   }
+  async count(table){
+    const r=await this.f(this.base+'/'+table+'?select=id',{method:'HEAD',signal:AbortSignal.timeout(this.timeoutMs),headers:{apikey:this.key,authorization:'Bearer '+this.key,prefer:'count=exact'}});
+    if(!r.ok)throw new StoreError('Count request failed',String(r.status),r.status);
+    const total=r.headers.get('content-range')?.split('/')[1];return total&&/^\d+$/.test(total)?Number(total):null;
+  }
   select(table, opts) { return this.#req(`/${table}${SupabaseStore.query(opts)}`); }
   async insert(table, rows) { const arr = await this.#req(`/${table}`, { method: 'POST', body: rows, headers: { prefer: 'return=representation' } }); return Array.isArray(rows) ? arr : arr[0]; }
   async upsert(table, rows, { onConflict, ignoreDuplicates = false } = {}) {
@@ -121,6 +126,7 @@ export class MemoryStore {
     if (limit) rows = rows.slice(0, limit);
     return clone(rows);
   }
+  async count(table){return this.#tab(table).length;}
   async insert(table, rows) {
     const list = (Array.isArray(rows) ? rows : [rows]).map(r => this.#prepare(table, r)); const out = [];
     for (const r of list) { const c = this.#conflict(table, r); if (c) throw new StoreError(`duplicate key (${c})`, PG.UNIQUE, 409); }

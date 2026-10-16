@@ -11,16 +11,31 @@ export const safeArtUrl=value=>{
 export const compact=x=>String(x??'').replace(/[\r\n\t ]+/g,' ').replace(/[#*`]/g,'').trim();
 export function conceptArtwork(concept, signals=[]){
  const body=concept?.content||{};
- const original=safeArtUrl(body.image_url||body.artwork_url);
+ const original=safeArtUrl(body.image_url)||safeArtUrl(body.artwork_url)||
+  safeArtUrl(body.original_artwork_url)||safeArtUrl(concept?.artwork_url);
  if(original)return {url:original,label:'CONCEPT ART',kind:'concept'};
  const refs=Array.isArray(concept?.source_refs)?concept.source_refs:[];
- const match=signals.find(s=>s.image_url&&refs.some(r=>r.url===s.url));
- if(match){const url=safeArtUrl(match.image_url);if(url)return {url,label:'SOURCE IMAGE · NOT CONCEPT ART',kind:'evidence'}}
+ // Match source provenance by a real URL or contract identity, never by missing URLs
+ // (undefined === undefined previously picked an unrelated token's picture).
+ const archived=refs.find(r=>r.social_source==='dexscreener_contract_metadata'&&safeArtUrl(r.source_image_url));
+ if(archived)return {url:safeArtUrl(archived.source_image_url),label:'SOURCE IMAGE · NOT CONCEPT ART',kind:'evidence'};
+ const matching=signals.find(s=>safeArtUrl(s?.image_url)&&refs.some(r=>{
+   if(typeof r?.url==='string'&&r.url&&typeof s.url==='string'&&s.url===r.url)return true;
+   const address=typeof s?.address==='string'&&s.address?s.address:(typeof s?.mint==='string'?s.mint:null);
+   if(!address)return false;
+   if([r?.address,r?.mint,r?.contract_address].some(value=>value===address))return true;
+   if(typeof r?.url!=='string'||!r.url)return false;
+   try { return new URL(r.url).pathname.split('/').includes(address); } catch { return false; }
+ }));
+ if(matching)return {url:safeArtUrl(matching.image_url),label:'SOURCE IMAGE · NOT CONCEPT ART',kind:'evidence'};
  return {url:null,label:'ORIGINAL CONCEPT ART PENDING',kind:'missing'};
 }
 export function formatActivity(event){
  if(!AGENTS.includes(event?.agent_id))return null;
- const title=compact(event.title||String(event.event_type||'').replace(/_/g,' '));
+ const original=compact(event.title||String(event.event_type||'').replace(/_/g,' '));
+ // A dead job exhausted *that job's* retries; it does not mean future research
+ // cycles are permanently disabled. Keep the real error in detail + job status.
+ const title=event.event_type==='job_dead'?'JOB RETRY LIMIT REACHED — OPEN OPERATOR':original;
  if(!title)return null;
  return {id:String(event.id??event.created_at??title),agent_id:event.agent_id,
    title:title.slice(0,118),status:compact(event.event_type).slice(0,45),

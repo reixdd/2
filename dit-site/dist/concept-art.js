@@ -1,0 +1,21 @@
+// Deterministic, illustrated local concept studies; these are NOT minted-token logos.
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const tones={'GHOST_001':['#7CC7F7','#203E50'],'NULL_ENTITY':['#BA96EC','#3A2256'],'ECHO.exe':['#85E7BB','#183E35']};
+function motif(s,a){
+ if(/ghost|haunt|spirit|spectre/i.test(s))return '<path d="M88 241V144C88 68 212 68 212 144v97l-28-22-24 25-26-25-20 25z" fill="url(#steel)" stroke="'+a+'" stroke-width="4"/><path d="M106 159l32-11-9 23-20-3zm88 0-32-11 9 23 20-3z" fill="'+a+'"/>';
+ if(/void|pay|wallet|cash|bank/i.test(s))return '<rect x="75" y="108" width="151" height="119" rx="17" fill="url(#steel)" stroke="'+a+'" stroke-width="4"/><circle cx="159" cy="158" r="49" fill="#030606" stroke="'+a+'" stroke-width="4"/><circle cx="159" cy="158" r="23" fill="url(#hole)" stroke="'+a+'" stroke-width="2"/><path d="M95 242h129" stroke="'+a+'" stroke-width="3"/>';
+ if(/dead|net|signal|static|wifi|internet|digital/i.test(s))return '<path d="M70 238V125l52-37 31 30 44-53 45 35v138H70z" fill="url(#steel)" stroke="'+a+'" stroke-width="4"/><path d="M99 239v-73h69v72M185 135v58M152 117l45-52" stroke="'+a+'" stroke-width="3"/><circle cx="122" cy="88" r="10" fill="'+a+'"/><circle cx="197" cy="65" r="10" fill="'+a+'"/>';
+ if(/work|office|boss|sleep|stress|computer/i.test(s))return '<rect x="62" y="103" width="175" height="112" rx="8" fill="url(#steel)" stroke="'+a+'" stroke-width="4"/><rect x="82" y="121" width="135" height="71" fill="#030606"/><path d="M98 145h67m-67 17h51m-39 50-11 32h99l-11-32" fill="none" stroke="'+a+'" stroke-width="4"/><circle cx="189" cy="158" r="17" fill="none" stroke="'+a+'" stroke-width="3"/>';
+ if(/dog|puppy|bark|woof/i.test(s))return '<path d="M88 108 59 85v84l29 13m123-74 30-23v84l-30 13M99 110q51-45 102 0l21 51-19 65H97l-21-65z" fill="url(#steel)" stroke="'+a+'" stroke-width="4"/><circle cx="122" cy="160" r="8" fill="'+a+'"/><circle cx="179" cy="160" r="8" fill="'+a+'"/><path d="M140 190l10-9 10 9-10 12z" fill="'+a+'"/>';
+ return '<circle cx="150" cy="152" r="70" fill="url(#steel)" stroke="'+a+'" stroke-width="4"/><circle cx="150" cy="152" r="43" fill="#030606" stroke="'+a+'" stroke-width="2"/><path d="M105 151h31l14-28 15 56 13-27h24" fill="none" stroke="'+a+'" stroke-width="5"/><circle cx="150" cy="152" r="89" stroke="'+a+'" stroke-dasharray="4 15" fill="none"/>';
+}
+export function conceptStudyArtwork(concept){
+ const c=concept?.content||{},title=String(c.name||'UNTITLED').slice(0,26);
+ const ticker=String(c.ticker||'IDEA').replace(/[^a-z0-9]/gi,'').toUpperCase().slice(0,10);
+ const [accent,shade]=tones[concept?.agent_id]||['#E8FFB7','#39433A'];
+ const source=title+' '+String(c.artwork_brief||c.hook||c.narrative||'').slice(0,180);
+ let seed=0;for(const ch of title+ticker)seed=(seed*31+ch.charCodeAt(0))>>>0;
+ const stars=Array.from({length:17},(_,i)=>'<circle cx="'+(30+(seed+i*131)%252)+'" cy="'+(28+((seed>>>4)+i*97)%226)+'" r="'+(i%3===0?2:1)+'" fill="'+accent+'" opacity=".35"/>').join('');
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" aria-label="Concept study for '+esc(title)+'"><defs><linearGradient id="steel" x2="1" y2="1"><stop stop-color="'+shade+'"/><stop offset=".6" stop-color="#192522"/><stop offset="1" stop-color="#030606"/></linearGradient><radialGradient id="hole"><stop stop-color="#030606"/><stop offset="1" stop-color="'+shade+'"/></radialGradient></defs><rect width="300" height="300" fill="#030606"/><path d="M0 45h300M0 100h300M0 155h300M0 210h300M0 265h300M45 0v300M100 0v300M155 0v300M210 0v300M265 0v300" stroke="'+shade+'" opacity=".28"/>'+stars+'<circle cx="150" cy="151" r="109" stroke="'+accent+'" opacity=".25" fill="none"/>'+motif(source,accent)+'<path d="M13 13h30m-30 0v29M287 13h-30m30 0v29M13 287h30m-30 0v-29M287 287h-30m30 0v-29" stroke="'+accent+'" stroke-width="2"/><rect x="11" y="258" width="278" height="31" fill="#030606"/><text x="22" y="279" font-family="monospace" font-size="14" font-weight="700" fill="'+accent+'">'+esc('$'+ticker)+'</text><text x="282" y="279" text-anchor="end" font-family="monospace" font-size="8" fill="#A4BDB1">AGENT STUDY / DIT</text></svg>';
+ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}

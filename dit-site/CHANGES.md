@@ -18,3 +18,6 @@
 - Added gentle pointer-driven background-city and moving-bar depth; respected reduced motion.
 - Replaced fake podiums in still fallback with diffuse colored pools, added slender non-card label accents.
 - Kept safe hosted Supabase binding-name diagnostics; production secrets, credentials and live provider connections are not part of this ZIP.
+
+## 2026-10-15 final launch pass
+Spectral Phosphor terminal, source-clock market filtering, retained per-contract artwork, evidence dossiers and 67-update browser acceptance. See docs/FINAL-LAUNCH.md.

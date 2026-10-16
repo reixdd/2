@@ -3,8 +3,8 @@
 // Detailed, transparent 2.5D portraits share a camera and softly animated city backdrop.
 // Prototype GLBs remain in dit-assets for authoring; they are not the production characters.
 // Research activity always comes from the existing API. Idle motion is visual only.
-import { createQualityController, opaqueAt } from './stage-quality.js';
-const THREE_URL = './vendor/three.module.js';
+import { createQualityController, createFrameGuard, opaqueAt } from './stage-quality.js?v=launch-polish-8';
+const THREE_URL = './vendor/three.module.js?v=launch-polish-8';
 const AGENTS = [
   { id: 'GHOST_001', title: 'THE ARCHIVIST', model: 'ghost_001', accent: 0x66baff },
   { id: 'NULL_ENTITY', title: 'THE SIGNAL HUNTER', model: 'null_entity', accent: 0xb18aff },
@@ -26,6 +26,7 @@ if (host) boot();
 
 function boot() {
   const section = host;
+  const ambient = host.dataset.mode === 'ambient';
   section.innerHTML = `
     <div class="dit-stage-frame">
       <div class="hud-orbit-field" aria-hidden="true">
@@ -83,7 +84,7 @@ function boot() {
       const plate = section.querySelector(`[data-stage-agent="${CSS.escape(a.id)}"]`);
       if (plate) { plate.dataset.machineState = live.workerAlive ? (s || 'IDLE') : 'STANDBY'; plate.dataset.workerOnline = String(live.workerAlive); }
     }
-    note.textContent = live.unavailable ? 'BACKEND UNAVAILABLE' : !live.received ? 'AWAITING BACKEND' : live.workerAlive ? 'STATES FROM LIVE WORKER' : 'WORKER OFFLINE — AGENTS DIMMED';
+    if(note) note.textContent = live.unavailable ? 'BACKEND UNAVAILABLE' : !live.received ? 'AWAITING BACKEND' : live.workerAlive ? 'STATES FROM LIVE WORKER' : 'WORKER OFFLINE — AGENTS DIMMED';
   };
   window.addEventListener('dit:messages', e => {
     for (const [id, title] of Object.entries(e.detail || {})) {
@@ -126,18 +127,19 @@ function boot() {
   const start = async () => {
     if (started) return; started = true;
     try {
-      note.textContent = 'ESTABLISHING OBSERVATORY…';
+      if(note) note.textContent = 'ESTABLISHING OBSERVATORY…';
       const THREE = await import(THREE_URL);
       const probe = document.createElement('canvas');
       if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) throw Error('WebGL is not available in this browser');
-      stage = await buildStage(THREE, canvas, live, section);
+      if(ambient && matchMedia('(max-width:760px)').matches) throw Error('Mobile uses original portrait fallback');
+      stage = await buildStage(THREE, canvas, live, section, ambient);
       section.querySelector("#dit-stage-still").hidden = true;
       paintLabels();
       section.dataset.renderer = 'webgl';
     } catch (err) {
       fallback.hidden = false;
       fallback.textContent = `3D STAGE UNAVAILABLE (${err.message}). THE PORTRAIT FALLBACK AND AGENT PROFILES REMAIN AVAILABLE.`;
-      canvas.hidden = true; section.dataset.renderer='fallback';note.textContent = '3D UNAVAILABLE';
+      canvas.hidden = true; section.dataset.renderer='fallback';if(note) note.textContent = '3D UNAVAILABLE';
     }
   };
   if ('IntersectionObserver' in window) {
@@ -146,9 +148,9 @@ function boot() {
   } else start();
 }
 
-async function buildStage(THREE, canvas, live, section) {
+async function buildStage(THREE, canvas, live, section, ambient=false) {
   const small = matchMedia('(max-width: 760px)').matches;
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !small, alpha: true, powerPreference: 'high-performance' });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: ambient ? false : !small, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x030405, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -167,7 +169,7 @@ async function buildStage(THREE, canvas, live, section) {
   })();
 
   // ---- particles ------------------------------------------------------------------------------
-  const N = small ? 64 : 130; const pos = new Float32Array(N * 3); const vel = new Float32Array(N);
+  const N = ambient ? 36 : small ? 64 : 130; const pos = new Float32Array(N * 3); const vel = new Float32Array(N);
   for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - .5) * 26; pos[i * 3 + 1] = Math.random() * 8 - 2; pos[i * 3 + 2] = (Math.random() - .5) * 14 - 1; vel[i] = .1 + Math.random() * .4; }
   const pGeo = new THREE.BufferGeometry(); pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const pMat = new THREE.PointsMaterial({ color: 0xb7bec2, size: small ? .05 : .04, transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -176,7 +178,7 @@ async function buildStage(THREE, canvas, live, section) {
   // ---- agents ---------------------------------------------------------------------------------
   // Three separate transparent cutouts retain the supplied detail, with subtle shared-camera motion.
   const textures = await Promise.all(AGENTS.map(a=>new Promise((resolve,reject)=>new THREE.TextureLoader().load(`assets/cutouts/${a.model}.png`,resolve,undefined,()=>reject(Error('Character cutout missing: '+a.model))))));
-  const masks = textures.map(t=>{const c=document.createElement('canvas');c.width=t.image.width;c.height=t.image.height;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(t.image,0,0);const rgba=g.getImageData(0,0,c.width,c.height).data;const data=new Uint8Array(c.width*c.height);for(let i=0;i<data.length;i++){data[i]=rgba[i*4+3];}return {width:c.width,height:c.height,data};});
+  const masks = ambient ? [null,null,null] : textures.map(t=>{const c=document.createElement('canvas');c.width=t.image.width;c.height=t.image.height;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(t.image,0,0);const rgba=g.getImageData(0,0,c.width,c.height).data;const data=new Uint8Array(c.width*c.height);for(let i=0;i<data.length;i++){data[i]=rgba[i*4+3];}return {width:c.width,height:c.height,data};});
   for(const t of textures){t.colorSpace=THREE.SRGBColorSpace;t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy())}
   const vert='varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}';
   const frag=`
@@ -207,7 +209,7 @@ async function buildStage(THREE, canvas, live, section) {
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`;
-  const FIG=1.17; // Larger, character-first 2.5D composition with no base pedestal
+  const FIG=ambient ? 1.12 : 1.17; // The embedded room aligns shader portraits with the native agent cards.
   const items=AGENTS.map((a,i)=>{
     const group=new THREE.Group();
     const uniforms={map:{value:textures[i]},mouse:{value:new THREE.Vector2()},time:{value:0},energy:{value:.1},glitch:{value:0},dim:{value:1},hover:{value:0},accent:{value:new THREE.Color(a.accent)}};
@@ -215,7 +217,7 @@ async function buildStage(THREE, canvas, live, section) {
     mesh.renderOrder=20;mesh.userData.agent=a.id;group.add(mesh);
     const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:a.accent,transparent:true,opacity:.09,depthWrite:false,blending:THREE.AdditiveBlending}));
     glow.scale.set(3.8,4.8,1);glow.position.set(0,1.9,-.38);group.add(glow);
-    group.position.set((i-1)*3.85,-2.17,0);mesh.position.y=3.47*FIG/2-.02;scene.add(group);
+    group.position.set((i-1)*3.85,ambient ? -1.8 : -2.17,0);mesh.position.y=3.47*FIG/2-.02;group.visible=section.dataset.backgroundOnly!=='true';scene.add(group);
     return {id:a.id,group,mesh,glow,uniforms,cur:{energy:.1,glitch:0,dim:1},hover:0,phase:i*1.7,model:null,mixer:null,head:null,labelPosition:new THREE.Vector3(),label:section.querySelector(`[data-stage-agent="${CSS.escape(a.id)}"]`),lastLabelX:null,mask:masks[i],modelFile:a.model,baseX:group.position.x};
   });
   const byId=new Map(items.map(it=>[it.id,it]));
@@ -233,7 +235,7 @@ async function buildStage(THREE, canvas, live, section) {
     const a = Math.max(.35, aspect || 2);
     const minGap = a < 1.3 ? 3.6 : 3.9; // keep all three silhouettes within the portrait viewport
     const z = Math.min(34, Math.max(7.65, (2 * minGap + 4.0) / (2 * HALF_TAN * a)));
-    const W = 2 * HALF_TAN * z * a, spacing = Math.min(6.2, Math.max(minGap, .24 * W));
+    const W = 2 * HALF_TAN * z * a, spacing = ambient ? (W / 3) : Math.min(6.2, Math.max(minGap, .24 * W));
     return { z, W, spacing };
   };
   const baseZ = () => layoutFor(camera.aspect).z;
@@ -256,6 +258,23 @@ async function buildStage(THREE, canvas, live, section) {
   canvas.addEventListener('pointerleave', () => { pointer.in = false; focusId = null; section.dataset.focusAgent = ''; if(!quality.lowPower)requestRender(); });
   canvas.addEventListener('click', e => { const id = pick(e); if (id) { section.querySelector(`[data-stage-open="${CSS.escape(id)}"]`)?.click(); } });
 
+  // The ambient WebGL canvas never captures input: the existing dossier buttons stay clickable.
+  // Feed their actual pointer position to the original lighting, camera and focus shader.
+  if(ambient){
+    const trackPointer=e=>{
+      const r=canvas.getBoundingClientRect();
+      if(!r.width||!r.height)return;
+      pointer.x=((e.clientX-r.left)/r.width)*2-1;
+      pointer.y=1-((e.clientY-r.top)/r.height)*2;
+      pointer.in=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
+      const button=e.target.closest?.('[data-room-agent]');
+      focusId=button?.dataset.roomAgent||null;
+      if(!quality.lowPower)requestRender();
+    };
+    window.addEventListener('pointermove',trackPointer,{passive:true});
+    window.addEventListener('pagehide',()=>window.removeEventListener('pointermove',trackPointer),{once:true});
+  }
+
   function zoomTo(id, done) {
     const it = byId.get(id); if (!it) return done?.();
     camTarget = { x: it.baseX * .35, y: BASE_Y, z: baseZ() * .90 };
@@ -267,10 +286,11 @@ async function buildStage(THREE, canvas, live, section) {
 
   // ---- sizing / loop --------------------------------------------------------------------------
   const quality = createQualityController(devicePixelRatio, small);
+  const guard = createFrameGuard(120,3);
   let lastFrame = 0, disposed = false, lost = false, needsResize = true;
   function resize() {
     const w = canvas.clientWidth || 800, h = canvas.clientHeight || 420;
-    renderer.setPixelRatio(quality.dpr); renderer.setSize(w, h, false);
+    renderer.setPixelRatio(ambient ? Math.min(1,quality.dpr) : quality.dpr); renderer.setSize(w, h, false);
     camera.aspect = w / h; camera.updateProjectionMatrix();
     applyLayout();
     if (!zoom) { camTarget = {x:0,y:BASE_Y,z:baseZ()}; Object.assign(cam,camTarget); }
@@ -279,7 +299,7 @@ async function buildStage(THREE, canvas, live, section) {
   // render, so an offscreen/reduced-motion resize never leaves an empty canvas.
   const resizeObserver = new ResizeObserver(()=>{needsResize=true;requestRender();}); resizeObserver.observe(canvas);
 
-  const clock = new THREE.Clock(); let visible = true, raf = 0, pending = false;
+  const clock = new THREE.Clock(); let visible = true, raf = 0, pending = false, gfxEnabled = true;
   const visibilityObserver = new IntersectionObserver(es => { visible = es[0].isIntersecting; lastFrame=0; if (visible) requestRender(); }); visibilityObserver.observe(canvas);
   const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -311,14 +331,27 @@ async function buildStage(THREE, canvas, live, section) {
     const ck = Math.min(1, dt * 2.5); cam.x = lerp(cam.x, camTarget.x, ck); cam.y = lerp(cam.y, camTarget.y, ck); cam.z = lerp(cam.z, camTarget.z, ck);
     camera.position.set(cam.x + (pointer.in && !still ? pointer.x * .35 : 0), cam.y + (pointer.in && !still ? pointer.y * .20 : 0), cam.z);
     camera.lookAt(cam.x * .9, -.32, 0);
-    items.forEach(it=>{const v=it.labelPosition.set(it.baseX,-2.5,0).project(camera);const x=(v.x+1)*50;if(it.lastLabelX===null||Math.abs(x-it.lastLabelX)>.035){it.label.style.setProperty("--label-x",`${x}%`);it.lastLabelX=x;}});
+    items.forEach(it=>{const v=it.labelPosition.set(it.baseX,-2.5,0).project(camera);const x=(v.x+1)*50;if(it.lastLabelX===null||Math.abs(x-it.lastLabelX)>.035){it.label?.style.setProperty("--label-x",`${x}%`);it.lastLabelX=x;}});
   }
   function render() { renderer.render(scene, camera); }
   function frame(now) {
     raf = 0; pending = false;
-    if (!visible || document.hidden || disposed || lost) { lastFrame=0; return; }
+    if (!visible || document.hidden || disposed || lost || !gfxEnabled || section.dataset.performance === 'slow') { lastFrame=0; return; }
+    // High-refresh monitors can schedule hundreds of frames/sec. Cap the expensive
+    // shader to ~110fps while CSS architecture continues on its own compositor.
+    if(ambient && lastFrame && now-lastFrame < 9){raf=requestAnimationFrame(frame);return;}
     if (needsResize) { resize(); needsResize=false; }
-    if(lastFrame && !reduced && quality.sample(now-lastFrame)){renderer.setPixelRatio(quality.dpr); renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);}
+    if(lastFrame && ambient && guard.sample(now-lastFrame)){
+      section.dataset.performance = 'slow';
+      section.dataset.renderer = 'fallback';
+      section.dataset.motion = 'css-environment';
+      canvas.hidden = true;
+      // Keep the original HD art visible; drop the frozen WebGL layer completely.
+      // The independent atmospheric city remains alive in CSS.
+      document.getElementById('stage')?.classList.add('dit-gpu-fallback');
+      return;
+    }
+    if(lastFrame && !reduced && quality.sample(now-lastFrame)){renderer.setPixelRatio(ambient?Math.min(1,quality.dpr):quality.dpr); renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);}
     if(lastFrame) section.dataset.frameMs=(now-lastFrame).toFixed(1);
     section.dataset.pixelRatio=quality.dpr; lastFrame=now;
     const dt = Math.min(.05, clock.getDelta()); update(dt, clock.elapsedTime); render();
@@ -327,15 +360,22 @@ async function buildStage(THREE, canvas, live, section) {
     else if (!quality.lowPower && Math.abs(cam.z - camTarget.z) > .01) requestRender();
   }
   function requestRender() {
-    if (raf || pending || disposed || lost) return; pending = true; raf = requestAnimationFrame(frame);
+    if (raf || pending || disposed || lost || !gfxEnabled || section.dataset.performance==='slow') return; pending = true; raf = requestAnimationFrame(frame);
   }
   const resume=()=>{lastFrame=0;quality.reset();if(!document.hidden)requestRender();};
   document.addEventListener('visibilitychange',resume);
   window.addEventListener('dit:motion',resume);
+  const onGfx=e=>{
+    gfxEnabled=!!e.detail?.enabled;
+    if(!gfxEnabled){cancelAnimationFrame(raf);raf=0;pending=false;canvas.hidden=true;}
+    else if(!lost&&section.dataset.performance!=='slow'){canvas.hidden=false;section.dataset.renderer='webgl';resume();}
+  };
+  window.addEventListener('dit:gfx',onGfx);
   canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); lost=true;cancelAnimationFrame(raf);raf=0;pending=false;canvas.hidden=true;section.querySelector('#dit-stage-still').hidden=false;section.dataset.renderer='fallback'; });
   canvas.addEventListener('webglcontextrestored', ()=>{lost=false;canvas.hidden=false;section.querySelector('#dit-stage-still').hidden=true;section.dataset.renderer='webgl';resume();});
-  window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;clearTimeout(zoom);cancelAnimationFrame(raf);resizeObserver.disconnect();visibilityObserver.disconnect();document.removeEventListener('visibilitychange',resume);window.removeEventListener('dit:motion',resume);const resources=new Set();scene.traverse(o=>{if(o.geometry)resources.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])resources.add(m);});resources.forEach(r=>r.dispose());textures.forEach(t=>t.dispose());glowTex.dispose();renderer.dispose();},{once:true});
-  document.getElementById('dit-stage-note').textContent = 'OBSERVATORY / 2.5D DEPTH';
+  window.addEventListener('pagehide',e=>{if(e.persisted)return;disposed=true;clearTimeout(zoom);cancelAnimationFrame(raf);resizeObserver.disconnect();visibilityObserver.disconnect();document.removeEventListener('visibilitychange',resume);window.removeEventListener('dit:motion',resume);window.removeEventListener('dit:gfx',onGfx);const resources=new Set();scene.traverse(o=>{if(o.geometry)resources.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])resources.add(m);});resources.forEach(r=>r.dispose());textures.forEach(t=>t.dispose());glowTex.dispose();renderer.dispose();},{once:true});
+  const labelNote=document.getElementById('dit-stage-note');
+  if(labelNote) labelNote.textContent = 'OBSERVATORY / 2.5D DEPTH';
   requestRender();
   return { requestRender, zoomTo, zoomOut, setFocus };
 }

@@ -1,7 +1,7 @@
 name: Verify DIT three-agent JARVIS local runtime
 on:
   push:
-    branches: [dit-3d-assets]
+    branches: [dit-3d-assets, 'fix/dit-cinematic-restoration']
     paths:
       - 'dit-site/server/operator.mjs'
       - 'dit-site/server/local.mjs'
@@ -11,11 +11,16 @@ on:
       - 'dit-site/server/lib/store-core.js'
       - 'dit-site/server/lib/market-snapshot.js'
       - 'dit-site/tests/market-snapshot.test.js'
+      - 'dit-site/tests/market-cache.test.js'
       - 'dit-site/supabase/migrations/0010_readonly_market_snapshots.sql'
       - 'dit-site/dist/index.html'
       - 'dit-site/dist/control-room.js'
+      - 'dit-site/dist/stage.js'
+      - 'dit-site/dist/stage-quality.js'
       - 'dit-site/dist/control-room.css'
       - 'dit-site/tests/control-room.test.js'
+      - 'dit-site/tests/cinematic-restoration.test.js'
+      - 'dit-site/tests/command-deck-browser.mjs'
       - 'dit-site/dist/live-research.js'
       - 'dit-site/dist/terminal-ui.js'
       - 'dit-site/tests/terminal-ui.test.js'
@@ -59,6 +64,19 @@ jobs:
       - name: Run existing source regression tests
         run: npm test
       - name: Check live browser module
-        run: node --check dist/live-research.js && node --check dist/control-room.js && node --check dist/terminal-ui.js && node --check dist/operator-review.js
+        run: node --check dist/live-research.js && node --check dist/control-room.js && node --check dist/stage.js && node --check dist/terminal-ui.js && node --check dist/operator-review.js
       - name: Check host worker build
         run: npm run build
+      - name: Chromium command-deck browser acceptance
+        run: |
+          npm ci --ignore-scripts --no-audit
+          CHROMIUM_PATH="$(command -v google-chrome || command -v chromium)" node tests/command-deck-browser.mjs
+      - name: Upload sanitized DIT layout and artwork test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dit-cinematic-browser-review
+          path: dit-site/.qa/*.png
+          if-no-files-found: ignore
+          retention-days: 7
+          include-hidden-files: true

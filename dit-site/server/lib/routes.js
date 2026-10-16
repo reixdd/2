@@ -1,3 +1,4 @@
+import {enrichConceptSources} from './coin-metadata.js';
 import {publicConcepts} from './concepts.js';
 import {readMarketSnapshot} from './market-snapshot.js';
 // Backend routes beyond the original read-only chain verifier. Returns a Response, or null when the path is not ours.
@@ -45,9 +46,11 @@ export async function handleBackendApi(request, env, deps = {}) {
     }
     if(path==='/api/concepts'||path.startsWith('/api/concepts/')){
       const id=path==='/api/concepts'?null:decodeURIComponent(path.slice('/api/concepts/'.length));
-      const rows=await publicConcepts(store,id);
+      const requested=Number(url.searchParams.get('limit'));
+      const pageSize=Number.isInteger(requested)&&requested>=1?Math.min(50,requested):200;
+      const rows=await publicConcepts(store,id,url.searchParams.get('before'),pageSize);
       return id?(rows.length?json({concept:rows[0],fictional:true}):json({error:'Not found'},404)):
-        json({concepts:rows,fictional:true});
+        json({concepts:rows.slice(0,pageSize),next_before:rows.length>pageSize?rows[pageSize-1].created_at:null,fictional:true});
     }
     if(path==='/api/observatory'){
       const [agents,profiles,beats,schedules,runs]=await Promise.all([

@@ -41,3 +41,17 @@ export function opaqueAt(mask, uv) {
   const y = Math.min(mask.height - 1, Math.floor((1 - uv.y) * mask.height));
   return mask.data[y * mask.width + x] > 90;
 }
+
+/** Fail open to the original HD portrait art if expensive GPU frames persist.
+ * The independent CSS environment continues animating even without WebGL. */
+export function createFrameGuard(limitMs=120,consecutive=3){
+  let slow=0;
+  return {
+    sample(ms){
+      if(!Number.isFinite(ms)||ms<=0)return false;
+      slow=ms>limitMs?slow+1:0;
+      return slow>=consecutive;
+    },
+    reset(){slow=0;}
+  };
+}

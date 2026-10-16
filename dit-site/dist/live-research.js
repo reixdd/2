@@ -1,7 +1,13 @@
 // Live display for the uploaded MIAMI SIGNAL HTML. Real backend records only.
 (async () => {
-  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js');
-  const {mountControlRoom,updateControlRoom}=await import('./control-room.js');
+  const {agentPortrait,conceptArtwork,formatActivity,researchHook,safeArtUrl,compact}=await import('./terminal-ui.js?v=launch-polish-8');
+  const {mountControlRoom,updateControlRoom}=await import('./control-room.js?v=launch-polish-8');
+  const {MarketFeed}=await import('./market-feed.js?v=launch-polish-8');
+  const {featuredAgentIdeas}=await import('./concept-feature.js?v=launch-polish-8');
+  const {conceptStudyArtwork}=await import('./concept-art.js?v=launch-polish-8');
+  const {linkedCoinXEvidence}=await import('./coin-twitter.js?v=launch-polish-8');
+  const marketFeed=new MarketFeed(document.getElementById('dit-live-evidence'));
+  document.getElementById('dit-live-filter').addEventListener('change',()=>renderLiveMarket());
   const $ = id => document.getElementById(id);
   const hero=document.getElementById('stage'),controls=document.querySelector('.bottom-bar');
   if(hero&&controls)hero.insertAdjacentElement('afterend',controls); // keep original audio/FX directly below artwork
@@ -19,11 +25,20 @@
     const state=$('dit-tab-state');if(state)state.textContent=selected==='radar'?'_ ORIGINAL CONCEPTS / HUMAN REVIEW':'_ VERIFIED OBSERVATIONS / DECISION FLOW';
   }
   mountControlRoom({openAgent:id=>detail(id),activateTab});
+  // HD portraits and the composited city run without WebGL by default.
+  // WebGL is optional and loads exactly once when the human enables GFX.
+  window.addEventListener('dit:gfx',async e=>{
+    if(e.detail?.enabled){
+      try{await import('./stage.js?v=launch-polish-8')}catch(err){console.warn('[DIT] optional GPU effect unavailable:',err);}
+    }
+  });
   activateTab(location.hash==='#dit-live-transmission-section'?'activity':'radar');
+  const failedConceptArt=new Set();
   const ids=['GHOST_001','NULL_ENTITY','ECHO.exe'];
-  let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[];
-  let marketStructureKey='',activityStructureKey='',conceptStructureKey='',lastActivityTime=0;
-  for(const [id,title] of [['dit-live-evidence-section','NEW PAIRS // EVIDENCE'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // APPROVED CONCEPTS']]){
+  let conceptBefore=null,conceptArchive=[],conceptPaging=false,archiveOpen=false,archiveShow=9;
+  let world=null,observations=[],runs=[],concepts=[],events=[],busy=false,liveMarket=null,marketBusy=false,localDrafts=[],treasury=null;
+  let activityStructureKey='',conceptStructureKey='',lastActivityTime=0,conceptArtContextKey='';
+  for(const [id,title] of [['dit-live-evidence-section','MARKET OBSERVATIONS'],['dit-live-transmission-section','AGENT ACTIVITY'],['dit-live-concept-section','MEME RADAR // AGENT IDEAS']]){
     const heading=document.querySelector('#'+id+' h2');if(heading)heading.textContent=title;
   }
   // Same HTML reference, new information architecture: MEME RADAR before ACTIVITY.
@@ -37,15 +52,133 @@
     if(conceptLink&&activityLink)nav.insertBefore(conceptLink,activityLink);}
     const buzz=x=>Array.isArray(x)?x.slice(0,4).map(y=>'#'+String(y).replace(/^#/,'')).join(' · '):'';
   const portrait=(id,cls='terminal-avatar')=>agentPortrait(id)?'<img class="'+cls+'" src="'+esc(agentPortrait(id))+'" alt="'+esc(id)+' portrait" loading="lazy">':'';
-  const artTile=(c,cls)=>{const a=conceptArtwork(c,liveMarket?.signals||[]);
-    return '<div class="'+cls+'">'+(a.url?'<img src="'+esc(a.url)+'" alt="'+esc(a.label)+'" loading="lazy" decoding="async">':'<span>_ NO ART</span>')+
-    '<small>'+esc(a.label)+'</small></div>';};
+  const artTile=(c,cls)=>{
+    // A verified concept image belongs to this idea; source token icons do not.
+    const saved=conceptArtwork(c,liveMarket?.signals||[]),actual=!!saved.url;
+    const fallback=conceptStudyArtwork(c);
+    const url=actual?saved.url:fallback;
+    const label=saved.kind==='concept'?'ORIGINAL ART / PROVIDED':
+      saved.kind==='evidence'?'COIN ART / CONTRACT-LINKED SOURCE':'VECTOR CONCEPT STUDY / FALLBACK';
+    return '<div class="'+cls+'"><img src="'+esc(url)+'" data-fallback-study="'+esc(fallback)+'" alt="'+
+      esc((c.content?.name||'Agent idea')+' artwork')+'" loading="lazy" decoding="async"'+
+      (actual?' referrerpolicy="no-referrer"':'')+'><span class="terminal-art-fallback" hidden>_ ARTWORK UNAVAILABLE</span>'+
+      '<small>'+esc(label)+'</small></div>';
+  };
+  document.addEventListener('error',event=>{
+    const img=event.target;
+    if(!(img instanceof HTMLImageElement))return;
+    if(img.closest('.market-card-image'))return;
+    if(!img.closest('.terminal-concept-image,.terminal-concept-art'))return;
+    const study=img.dataset.fallbackStudy;
+    if(study&&!img.dataset.failedOriginal&&img.src!==study){
+      failedConceptArt.add(img.getAttribute('src'));
+      setTimeout(()=>render(),0);
+      img.dataset.failedOriginal='true';
+      const label=img.parentElement?.querySelector('small');
+      if(label)label.textContent='VECTOR STUDY / ORIGINAL IMAGE UNAVAILABLE';
+      img.src=study;
+      return;
+    }
+    img.hidden=true;
+    const placeholder=img.parentElement?.querySelector('.terminal-art-fallback');
+    if(placeholder)placeholder.hidden=false;
+  },true);
 
   const teaser=x=>String(x||'').split('CONCEPT_JSON')[0].split('```')[0].replace(/\s+/g,' ').trim().slice(0,180);
   const dlg=$('dit-live-dialog');
   const open=(title,html)=>{$('dit-live-modal-title').textContent=title;$('dit-live-modal-body').innerHTML=html;if(!dlg.open)dlg.showModal()};
   $('dit-live-close').onclick=()=>dlg.close();
   const agent=id=>world?.agents?.find(x=>x.id===id);
+
+  // Authenticated social votes. No simulated vote count or anonymous production identity.
+  let voteToken='';
+  try{
+    voteToken=sessionStorage.getItem('dit:vote-session')||'';
+    const hash=new URLSearchParams(location.hash.startsWith('#')?location.hash.slice(1):'');
+    if(hash.get('access_token')&&hash.get('token_type')?.toLowerCase()==='bearer'){
+      voteToken=hash.get('access_token');
+      sessionStorage.setItem('dit:vote-session',voteToken);
+      history.replaceState(null,'',location.pathname+location.search);
+    }
+  }catch{/* Session storage can be disabled; sign-in will still show a clear error. */}
+  async function identifyForVote(){
+    let config;
+    try{config=await api('/api/config')}catch{config=null}
+    const mode=config?.auth||'none';
+    if(mode!=='dev'&&mode!=='supabase'){
+      return open('VOTING NOT CONFIGURED','<p>Verified identity is not available in this runtime. Nothing has been submitted.</p>');
+    }
+    open('HUMAN OBSERVER / VOTING IDENTITY',
+      '<p>One current favorite per account. Votes are social, not financial.</p>'+
+      '<form id="dit-vote-identity"><label for="identity-email">EMAIL / VERIFIED IDENTITY</label>'+
+      '<input type="email" id="identity-email" name="email" required autocomplete="email" placeholder="you@example.com">'+
+      '<button type="submit">'+(mode==='dev'?'USE LOCAL TEST IDENTITY':'SEND EMAIL SIGN-IN LINK')+' ↗</button></form>'+
+      '<p id="identity-status" role="status">'+(mode==='dev'?'LOCAL TEST MODE: votes are not verified for public use.':'Email confirmation is required to cast a public vote.')+'</p>');
+    $('dit-vote-identity')?.addEventListener('submit',async e=>{
+      e.preventDefault();
+      const email=String($('identity-email')?.value||'').trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        $('identity-status').textContent='Enter a valid email address.';return;
+      }
+      if(mode==='dev'){
+        voteToken='dev:'+email;
+        try{sessionStorage.setItem('dit:vote-session',voteToken)}catch{}
+        $('identity-status').textContent='LOCAL TEST IDENTITY READY. CLOSE THIS PANEL AND VOTE AGAIN.';
+        return;
+      }
+      const url=config?.supabase?.url,key=config?.supabase?.anonKey;
+      if(!url||!key){$('identity-status').textContent='Authentication service unavailable.';return;}
+      try{
+        const redirect=location.origin+location.pathname;
+        const result=await fetch(url.replace(/\/+$/,'')+'/auth/v1/otp?redirect_to='+encodeURIComponent(redirect),{
+          method:'POST',headers:{apikey:key,'content-type':'application/json'},body:JSON.stringify({email,create_user:true}),
+          signal:AbortSignal.timeout(10000)
+        });
+        if(!result.ok)throw Error('Sign-in link request was not accepted');
+        $('identity-status').textContent='Check your email for the sign-in link. No vote has been recorded yet.';
+      }catch(err){$('identity-status').textContent='Unable to request sign-in: '+String(err.message||'Unavailable');}
+    },{once:true});
+  }
+  window.addEventListener('dit:vote-identity',identifyForVote);
+  async function voteFor(id){
+    if(!ids.includes(id))return;
+    if(!voteToken){window.dispatchEvent(new Event('dit:vote-identity'));return;}
+    try{
+      const res=await fetch('/api/vote',{
+        method:'POST',
+        headers:{authorization:'Bearer '+voteToken,'content-type':'application/json'},
+        body:JSON.stringify({agent_id:id}),signal:AbortSignal.timeout(12000)
+      });
+      const d=await res.json();
+      if(!res.ok){
+        if(res.status===401||res.status===403){voteToken='';try{sessionStorage.removeItem('dit:vote-session')}catch{}}
+        throw Error(d.error||'Server did not record the vote');
+      }
+      open('VOTE RECORDED / '+id,
+        '<p>Server-confirmed favorite: '+esc(id)+'. You can switch later.</p>'+
+        '<p>Recorded social votes: '+esc(String(d.votes?.total??'UNAVAILABLE'))+'</p>');
+    }catch(err){open('VOTE NOT RECORDED','<p>'+esc(String(err.message||'Vote unavailable'))+'</p>');}
+  }
+
+  // Treasury values are shown only when the existing ledger API returns valid data.
+  const lamportsSol=n=>Number.isFinite(Number(n))&&Number(n)>=0?(Number(n)/1e9).toLocaleString(undefined,{maximumFractionDigits:6})+' SOL':'—';
+  async function refreshTreasury(){
+    try{const v=await api('/api/treasury');treasury=v?.totals&&Number.isFinite(Number(v.target_percent))?v:null;}
+    catch{treasury=null;}
+    updateControlRoom(world,liveMarket,events,treasury);
+  }
+  window.addEventListener('dit:open-treasury',()=>{
+    if(!treasury)return open('TREASURY / NO VERIFIED LEDGER',
+     '<p>The existing ledger is unavailable. No creator-fee balance or transfer is being assumed.</p><a class="terminal-action" href="/operator">OPEN OPERATOR ↗</a>');
+    const t=treasury.totals||{};
+    open('TREASURY / VERIFIED LEDGER',
+      '<p>Creator-fee allocation target: '+esc(treasury.target_percent)+'% (configuration, not guaranteed transfer)</p>'+
+      '<p>Confirmed on chain: '+esc(lamportsSol(t.confirmed_lamports))+'</p>'+
+      '<p>Pending allocation: '+esc(lamportsSol(t.pending_treasury_lamports))+'</p>'+
+      '<p>Observed but unverified: '+esc(lamportsSol(t.observed_lamports))+'</p>'+
+      '<p>'+esc(treasury.transfer?.limitation||'Any transfer requires an independently validated record.')+'</p>'+
+      '<a class="terminal-action" href="/operator">OPEN OPERATOR ↗</a>');
+  });
   async function detail(id){
     open(id,'<p>_ RETRIEVING VERIFIED AGENT ACTIVITY...</p>');
     try{
@@ -56,21 +189,23 @@
         '<div><span class="terminal-prompt">_ '+esc(id)+' / '+esc(a?.presence||'offline')+'</span><p>LAST OBSERVED: '+esc(when(a?.last_run?.finished_at))+'</p></div></div>'+
         '<h3>_ RECENT DECISIONS &amp; EVENTS</h3>'+
         (recent.map(ev=>'<p class="terminal-detail-line">_ '+esc(ev.title)+'<small>'+esc(when(ev.at))+' / '+esc(ev.status)+'</small></p>').join('')||'<p>_ No recorded events</p>')+
-        '<h3>_ MEME HOOKS</h3>'+(
+        '<h3>RESEARCH FINDINGS</h3>'+(
         history.map(r=>'<p class="terminal-detail-line">_ '+esc(researchHook(r.answer)||'Research completed; no validated concise hook')+
           '<small>'+esc(when(r.finished_at))+'</small></p>').join('')||'<p>_ No completed meme hooks</p>')+
+        '<h3>COIN-LINKED X / TWITTER</h3>'+(linkedCoinXEvidence([...(d.observations||[]),...(d.research_runs||[]).flatMap(r=>r.source_refs||[])],liveMarket?.signals||[]).map(o=>'<p>'+link(o.url,(o.symbol?'$'+o.symbol+' / ':'')+'COIN SOURCE ON X')+'<small> / '+esc(o.origin)+' / '+esc(o.address.slice(0,6))+'…</small></p>').join('')||'<p>_ NO CONTRACT-LINKED X ACCOUNT PROVIDED BY COIN SOURCES.</p>')+
+        '<details><summary>Errors and full research logs</summary>'+((d.research_runs||[]).slice(0,8).map(r=>'<h4>'+esc(r.status)+' / '+esc(when(r.finished_at||r.started_at))+'</h4><p>'+esc(r.error||r.answer||'No output recorded')+'</p>').join('')||'<p>No runs recorded.</p>')+'</details>'+
         '<a class="terminal-action" href="/operator">OPEN PRIVATE OPERATOR / FULL TRACE ↗</a>';
     }catch{$('dit-live-modal-body').textContent='Agent data is currently unavailable.'}
   }
   async function showConcept(id){
-    open('ATTENTION ANATOMY','<p>Loading approved concept…</p>');
+    open('ATTENTION ANATOMY','<p>Loading agent concept…</p>');
     try{
       const c=(await api('/api/concepts/'+encodeURIComponent(id))).concept,x=c.content||{},a=x.attention_anatomy||{};
       $('dit-live-modal-body').innerHTML='<div class="terminal-modal-head">'+artTile(c,'terminal-concept-art')+
-        '<div><span class="terminal-prompt">_ APPROVED // '+esc(x.ticker)+'</span><h2>'+esc(x.name)+'</h2><p>'+esc(x.hook||x.narrative)+'</p></div></div>'+
+        '<div><span class="terminal-prompt">_ AGENT IDEA // '+esc(x.ticker)+'</span><h2>'+esc(x.name)+'</h2><p>'+esc(x.hook||x.narrative)+'</p></div></div>'+
         '<h3>_ CONCEPT // SHORT BRIEF</h3><p>'+esc(compact(x.narrative).slice(0,250))+'</p>'+
-        '<h3>_ EVIDENCE</h3>'+((c.source_refs||[]).slice(0,6).map(s=>'<p>'+link(s.url,s.title)+'</p>').join('')||'<p>_ No verified source attached</p>')+
-        '<h3>_ STATUS</h3><p>Human-reviewed fictional concept. No asset has been launched.</p>'+
+        '<h3>_ COIN-LINKED X / TWITTER</h3>'+(linkedCoinXEvidence(c.source_refs||[],liveMarket?.signals||[]).map(s=>'<p>'+link(s.url,'COIN SOURCE ON X')+'</p>').join('')||'<p>_ No matching coin-linked X reference supplied by source metadata.</p>')+
+        '<h3>_ STATUS</h3><p>Agent-generated fictional concept. Review status is shown separately; no asset has been launched.</p>'+
         (x.social_draft?'<h3>_ DRAFT TEXT // NOT POSTED</h3><blockquote>'+esc(x.social_draft)+'</blockquote>':'');
     }catch{$('dit-live-modal-body').textContent='Concept not currently published.'}
   }
@@ -78,13 +213,13 @@
     if(b?.dataset.liveEvent){const event=events.find(x=>String(x.id)===b.dataset.liveEvent);if(event){
       const ev=formatActivity(event);open('_ '+ev.agent_id+' / '+ev.status,
         '<div class="terminal-modal-head">'+portrait(ev.agent_id)+'<div><h2>'+esc(ev.title)+'</h2><p>'+esc(when(ev.at))+'</p></div></div>'+
-        '<h3>_ RECORDED EVENT</h3><p>'+esc(ev.detail||'No additional detail recorded')+'</p><button data-live-agent="'+esc(ev.agent_id)+'">AGENT TIMELINE ↗</button>');}}});
+        '<h3>_ RECORDED EVENT</h3><p>'+esc(event.detail||'No additional detail recorded')+'</p>'+link(event.payload?.url||event.source_url,'Evidence trace')+'<p>Event '+esc(event.id)+'</p><button data-live-agent="'+esc(ev.agent_id)+'">AGENT TIMELINE ↗</button>');}}});
   document.addEventListener('click',e=>{
     const b=e.target.closest('.stage [data-view],.stage [data-vote],.panel [data-modal-vote]');if(!b)return;
     const view=b.dataset.view;
     if(!b.dataset.vote&&!b.dataset.modalVote&&!['ghost','null','echo','network','transmissions','treasury'].includes(view))return;
     e.preventDefault();e.stopImmediatePropagation();
-    if(b.dataset.vote||b.dataset.modalVote)return open('ACCOUNT REQUIRED','<p>Voting requires a verified signed-in account; no sample votes are counted.</p>');
+    if(b.dataset.vote||b.dataset.modalVote)return voteFor(b.dataset.vote||b.dataset.modalVote);
     if(view==='ghost')return detail(ids[0]);if(view==='null')return detail(ids[1]);if(view==='echo')return detail(ids[2]);
     if(view==='network')return $('dit-live-network')?.scrollIntoView({behavior:'smooth'});
     if(view==='transmissions')return $('dit-live-transmissions')?.scrollIntoView({behavior:'smooth'});
@@ -92,17 +227,14 @@
   },true);
   function render(){
     const completedRecently=runs.some(r=>r.status==='completed'&&r.finished_at&&Date.now()-Date.parse(r.finished_at)<20*60_000);
-    $('dit-live-status').textContent=world?.researcher?.online?(completedRecently?'RECENT RESEARCH RECORDED':'RESEARCH WORKER CONNECTED / INFERENCE UNVERIFIED'):'RESEARCH WORKER OFFLINE OR STALE';
+    $('dit-live-status').textContent=world?.researcher?.online?(completedRecently?'RECENT RESEARCH RECORDED':'RESEARCH WORKER CONNECTED / INFERENCE UNVERIFIED'):'RESEARCH WORKER OFFLINE / LAST OBSERVATION RETAINED';
     $('dit-live-metrics').textContent='CULTURAL COLLECTOR '+(world?.collector?.online?'ONLINE':'OFFLINE')+' / LAST HEARTBEAT '+when(world?.researcher?.last_seen_at);
     if($('health'))$('health').textContent=world?.researcher?.online?'WORKER HEARTBEAT RECEIVED':'OFFLINE';
     $('dit-live-network').innerHTML=world?ids.map(id=>{
       const a=agent(id),r=a?.last_run||{},presence=a?.presence||'offline';
       return '<article class="live-agent"><span class="agent-name">'+esc(id)+'</span><span class="live-state" data-state="'+esc(presence)+'">'+esc(presence)+'</span><small>LAST RUN '+esc(r.status||'none')+' / '+when(r.finished_at||r.started_at)+'</small><small>NEXT DUE '+(world.researcher.online?when(a?.next_due_at):'Local server offline')+'</small><button data-live-agent="'+esc(id)+'">VIEW DOSSIER ↗</button></article>';
     }).join(''):'<p class="live-empty">Unable to verify local agent status.</p>';
-    const selected=$('dit-live-filter')?.value||'';
-    const marketRefs=runs.flatMap(r=>(r.source_refs||[]).map(s=>({agent_id:r.agent_id,source_id:'GMGN via JARVIS',observed_at:s.observed_at,title:s.title,url:s.url,evidence:{summary:'Market context cited by the local researcher.'}})));
-    const rows=[...observations.filter(o=>/dex|gecko|gmgn|solana/i.test(o.source_id||'')),...marketRefs].sort((a,b)=>Date.parse(b.observed_at||0)-Date.parse(a.observed_at||0)).slice(0,12);
-    if(!liveMarket?.signals?.length)$('dit-live-evidence').innerHTML=rows.length?rows.map(o=>'<article class="live-row"><div><span class="byline">'+esc(o.agent_id)+' / '+esc(o.source_id)+'</span><time>'+when(o.observed_at)+'</time></div><div><h3>'+link(o.url,o.title)+'</h3><p>'+esc(o.evidence?.summary||'Source recorded, claims not independently established.')+'</p></div></article>').join(''):'<p class="live-empty">No recent market observations recorded. General news is hidden.</p>';
+    // Cultural research is NOT a token pair. New Pairs accepts only verified market-adapter rows.
     // Activity comes from persisted activity_events, not from old model answer dumps.
     const realEvents=events.map(formatActivity).filter(Boolean).slice(0,20);
     const key=realEvents.map(e=>e.id+'|'+e.status+'|'+e.title).join(';');
@@ -115,13 +247,6 @@
         panel._ditPulseTimeout=setTimeout(()=>{panel.dataset.transmitting='false'},1500);
       }
       activityStructureKey=key;
-      const shell=document.querySelector('.dit-live');
-      if(shell){
-        let backdrop=shell.querySelector('.terminal-ghost-lines');
-        if(!backdrop){backdrop=document.createElement('div');backdrop.className='terminal-ghost-lines';backdrop.setAttribute('aria-hidden','true');shell.insertBefore(backdrop,shell.firstChild);}
-        backdrop.innerHTML=realEvents.slice(0,14).map((ev,i)=>'<span style="animation-delay:-'+(i*0.7).toFixed(1)+'s">_ '+esc(ev.agent_id)+
-          ' :: '+esc(ev.title)+'</span>').join('');
-      }
       const lines=realEvents.map((ev,i)=>'<button type="button" class="terminal-event" data-live-event="'+esc(ev.id)+'">'+
         portrait(ev.agent_id)+
         '<span class="terminal-event-copy"><small>_ '+esc(ev.agent_id)+' / '+esc(ev.status)+' / '+esc(when(ev.at))+'</small>'+
@@ -137,15 +262,28 @@
       }
     }
     renderLiveMarket();
-    updateControlRoom(world,liveMarket,events);
+    // Animate only verified presence/status provided by the research worker, never simulated work.
+    window.dispatchEvent(new CustomEvent('dit:agents',{detail:{
+      unavailable:!world,workerAlive:!!world?.researcher?.online,
+      agents:(world?.agents||[]).map(a=>({id:a.id,state:['OBSERVING','THINKING','CREATING'].includes(String(a.presence).toUpperCase())?String(a.presence).toUpperCase():'IDLE'}))
+    }}));
+    updateControlRoom(world,liveMarket,events,treasury);
+
+
+    // Primary Radar: newest actual research idea per agent. History is opt-in.
     const liveDrafts=localDrafts.filter(c=>c.status==='review').slice(0,8);
-    const present=[...liveDrafts.map(c=>({...c,_private:true})),...concepts.slice(0,8).map(c=>({...c,_private:false}))];
-    const conceptKey=JSON.stringify(present.map(c=>[c.id,c.status,c.updated_at,c.content?.name,c.content?.hook,
-      c.content?.image_url,c.source_refs?.map(x=>x.url), (liveMarket?.signals||[]).filter(s=>(c.source_refs||[]).some(r=>r.url===s.url)).map(s=>s.image_url)]));
+    const allIdeas=[...concepts.map(c=>({...c,_private:false})),
+      ...liveDrafts.filter(c=>!concepts.some(p=>p.id===c.id)).map(c=>({...c,_private:true}))];
+    const present=archiveOpen?allIdeas.slice(0,archiveShow):featuredAgentIdeas(allIdeas,liveMarket?.signals||[],failedConceptArt);
+    older.hidden=!archiveOpen?allIdeas.length<=3&&!conceptBefore:!conceptBefore&&allIdeas.length<=archiveShow;
+    older.textContent=archiveOpen?'LOAD MORE AGENT IDEAS':'BROWSE IDEA ARCHIVE';
+    const conceptKey=JSON.stringify([archiveOpen,archiveShow,...present.map(c=>[c.id,c.status,c.updated_at,
+      c.content?.name,c.content?.hook,c.content?.image_url,c.source_refs,
+      conceptArtwork(c,liveMarket?.signals||[]).url,c.agent_id])]);
     if(conceptKey!==conceptStructureKey){
       conceptStructureKey=conceptKey;
       $('dit-live-concepts').innerHTML=present.length?present.map(c=>{
-      const x=c.content||{},label=c._private?'DRAFT // REQUIRES HUMAN REVIEW':'APPROVED CONCEPT';
+      const x=c.content||{},label=c._private?'DRAFT // REQUIRES HUMAN REVIEW':(c.status==='published'?'REVIEWED IDEA':'UNREVIEWED AGENT IDEA');
       return '<article class="terminal-concept-card">'+artTile(c,'terminal-concept-image')+
         '<div class="dit-creator-credit">'+portrait(c.agent_id,'dit-creator-avatar')+'<span>'+esc(c.agent_id)+'</span></div>'+
         '<div class="terminal-concept-copy"><small>_ '+label+'</small>'+
@@ -155,48 +293,26 @@
         (c._private?'<a class="terminal-action" href="/operator">OPEN PRIVATE REVIEW ↗</a>':
         '<button type="button" data-live-concept="'+esc(c.id)+'">OPEN CONCEPT BRIEF ↗</button>')+
         '</div></article>';
-    }).join(''):'<p class="live-empty">_ NO REVIEWED CONCEPTS YET. MARKET SCANS CONTINUE INDEPENDENTLY<span class="terminal-cursor">_</span></p>';
+    }).join(''):'<p class="live-empty">_ AWAITING THE NEXT SOURCED AGENT IDEA. MARKET SCANS CONTINUE<span class="terminal-cursor">_</span></p>';
 
     }
   }
 
+  const older=document.createElement('button');older.type='button';older.textContent='LOAD OLDER AGENT IDEAS';$('dit-live-concepts').after(older);older.hidden=true;
+  older.addEventListener('click',async()=>{
+    if(conceptPaging)return;
+    if(!archiveOpen){archiveOpen=true;archiveShow=9;render();return;}
+    if(archiveShow<concepts.length+localDrafts.length){archiveShow+=9;render();return;}
+    if(!conceptBefore)return;
+    conceptPaging=true;older.disabled=true;
+    try{const page=await api('/api/concepts?limit=24&before='+encodeURIComponent(conceptBefore));
+      conceptArchive=[...conceptArchive,...(page.concepts||[])];conceptBefore=page.next_before;
+      concepts=[...concepts,...conceptArchive.filter(c=>!concepts.some(n=>n.id===c.id))];
+      archiveShow+=9;render();
+    }catch{older.textContent='RETRY IDEA ARCHIVE';}finally{conceptPaging=false;older.disabled=false;}
+  });
   const money=x=>typeof x==='number'&&Number.isFinite(x)?('$'+(x>=1000?(x/1000).toFixed(1)+'k':Math.round(x).toLocaleString())):'—';
-  const marketImage=s=>safeArtUrl(s.image_url)
-    ?'<img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="'+esc(safeArtUrl(s.image_url))+'" alt="'+esc((s.name||s.symbol||'Token')+' artwork')+'">'
-    :'<div class="market-art-empty" aria-label="No verified artwork">◈ '+esc((s.symbol||'?').slice(0,6))+'</div>';
-  function renderLiveMarket(){
-    const feed=$('dit-live-evidence');
-    if(!feed||!liveMarket?.signals?.length)return;
-    const stream=$('dit-live-filter')?.value||'';
-    const signals=liveMarket.signals.filter(s=>!stream||s.kind===stream).slice(0,12);
-    // Do not recreate image elements at 1Hz: GIFs must keep playing.
-    const structure=JSON.stringify(signals.map(s=>[s.address,s.image_url,s.symbol,s.kind]));
-    if(structure!==marketStructureKey){
-      marketStructureKey=structure;
-      const cards=signals.map(s=>'<article class="market-card" data-market-index="'+signals.indexOf(s)+'"><div class="market-card-image">'+marketImage(s)+'</div>'+
-        '<div class="market-card-body"><div class="market-card-title"><b>'+esc(s.symbol||'???')+'</b><span>_ '+esc(s.kind||'PAIR')+'</span></div>'+
-        '<p class="market-card-name terminal-type">'+esc(s.name||'Unnamed Solana token')+'</p>'+
-        '<div class="market-card-stats"><span>5M VOL<strong data-stat="vol">'+money(s.volume_5m_usd)+'</strong></span><span>LIQUIDITY<strong data-stat="liq">'+money(s.liquidity_usd)+'</strong></span>'+
-        '<span>BUYS / SELLS<strong data-stat="txns">'+esc(s.buys_5m??'—')+' / '+esc(s.sells_5m??'—')+'</strong></span></div>'+
-        '<div class="market-card-foot"><small>'+esc(s.provider||'JARVIS')+' · <time class="market-age" data-time="'+esc(s.observed_at)+'"></time></small>'+
-        '<a href="'+esc(valid(s.url)||'#')+'" target="_blank" rel="noopener noreferrer">VIEW SOURCE ↗</a></div>'+
-        '<small class="market-card-disclaimer">Safety: '+esc(s.safety||'UNVERIFIED')+(s.paid_attention?' · PAID ATTENTION':'')+'</small></div></article>').join('');
-      feed.innerHTML='<div class="market-feed-meta"><span>_ READ-ONLY JARVIS CACHE / DISPLAY 1S</span>'+
-        '<span>OBSERVED <time id="market-last-observed"></time></span></div>'+
-        '<div class="market-grid">'+cards+'</div>';
-    }
-    const age=x=>{const t=Date.parse(x||'');return Number.isFinite(t)?Math.max(0,Math.floor((Date.now()-t)/1000))+'s ago':'unknown'};
-    feed.querySelectorAll('.market-card').forEach(card=>{
-      const token=signals[Number(card.dataset.marketIndex)];if(!token)return;
-      const put=(sel,value)=>{const el=card.querySelector(sel);if(el&&el.textContent!==value)el.textContent=value};
-      put('[data-stat="vol"]',money(token.volume_5m_usd));
-      put('[data-stat="liq"]',money(token.liquidity_usd));
-      put('[data-stat="txns"]',String(token.buys_5m??'—')+' / '+String(token.sells_5m??'—'));
-      const tick=card.querySelector('.market-age');if(tick){tick.dataset.time=token.observed_at;tick.textContent=age(token.observed_at)}
-    });
-    const updated=feed.querySelector('#market-last-observed');
-    if(updated)updated.textContent=age(liveMarket.last_checked_at)+(liveMarket.stale?' / STALE — LAST VALID SNAPSHOT':liveMarket.refreshing?' / REFRESHING':'');
-  }
+  function renderLiveMarket(){marketFeed.render(liveMarket,$('dit-live-filter')?.value||'all');}
   async function refreshPrivateDrafts(){
     if(!['localhost','127.0.0.1'].includes(location.hostname)||document.hidden)return;
     try{
@@ -207,6 +323,7 @@
   async function refreshLiveMarket(){
     if(marketBusy||document.hidden)return;
     marketBusy=true;
+    // Market updates must not reconstruct independent agent-concept artwork.
     try{
       // Private local operator for fast source access; hosted clients read the
       // sanitized shared snapshot instead of attempting Windows localhost.
@@ -221,8 +338,13 @@
         // Preserve the last valid snapshot during outages or empty refreshes.
         liveMarket={...liveMarket,stale:true,source_states:incoming.source_states||liveMarket.source_states};
       }else liveMarket=incoming;
-      renderLiveMarket();
-      updateControlRoom(world,liveMarket,events);
+      const nextArtContext=JSON.stringify((liveMarket?.signals||[]).map(s=>[s.address,s.image_url]));
+      if(nextArtContext!==conceptArtContextKey){
+        conceptArtContextKey=nextArtContext;
+        render(); // featured ideas update only when actual market art changes
+      }else renderLiveMarket();
+      updateControlRoom(world,liveMarket,events,treasury);
+      // Ideas only re-render when their own persisted content changes.
     }catch{
       if(liveMarket)liveMarket.stale=true;
       renderLiveMarket();
@@ -240,16 +362,16 @@
   async function refresh(){
     if(busy||document.hidden)return;busy=true;
     try{
-      const out=await Promise.allSettled([api('/api/observatory'),api('/api/observations?limit=60'),api('/api/results?limit=40'),api('/api/concepts')]);
+      const out=await Promise.allSettled([api('/api/observatory'),api('/api/observations?limit=60'),api('/api/results?limit=40'),api('/api/concepts?limit=24')]);
       world=out[0].status==='fulfilled'?out[0].value:null;
       if(out[1].status==='fulfilled')observations=out[1].value.observations||[];
       if(out[2].status==='fulfilled')runs=out[2].value.runs||[];
-      if(out[3].status==='fulfilled')concepts=out[3].value.concepts||[];
+      if(out[3].status==='fulfilled'){const latest=out[3].value.concepts||[];if(!conceptArchive.length)conceptBefore=out[3].value.next_before;concepts=[...latest,...conceptArchive.filter(c=>!latest.some(n=>n.id===c.id))];}
       render();
     }finally{busy=false}
   }
-  refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();setInterval(refresh,30000);setInterval(refreshLiveMarket,1000);setInterval(refreshPrivateDrafts,15000);
-  setInterval(refreshActivity,5000);setInterval(()=>{if(liveMarket)renderLiveMarket()},1000);
+  refresh();refreshActivity();refreshLiveMarket();refreshPrivateDrafts();refreshTreasury();setInterval(refresh,10000);setInterval(refreshLiveMarket,['localhost','127.0.0.1'].includes(location.hostname)?1000:10000);setInterval(refreshPrivateDrafts,15000);setInterval(refreshTreasury,60000);
+  setInterval(refreshActivity,5000);setInterval(()=>{if(liveMarket&&!document.hidden)renderLiveMarket()},1000);
   if(typeof EventSource!=='undefined'&&['localhost','127.0.0.1'].includes(location.hostname)){const channel=new EventSource('/api/stream');channel.onmessage=()=>{refreshActivity();refreshPrivateDrafts()};}
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh();refreshLiveMarket()}});
+  document.addEventListener('visibilitychange',()=>{document.body.classList.toggle('dit-page-hidden',document.hidden);if(!document.hidden){refresh();refreshLiveMarket()}});
 })();

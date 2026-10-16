@@ -1,3 +1,4 @@
+import {mergeMarketRows} from '../dist/market-data.js';
 // Loopback-only operator API: no signing, no public hosted endpoints.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,50 +16,67 @@ export function allowedOperatorRequest(req,port){
 }
 export class Operator {
   constructor({store,env,port,fetchImpl=fetch,configFile='.data/operator-settings.json',onSettings=async()=>{}}){
-    this.store=store;this.env=env;this.port=port;this.fetchImpl=fetchImpl;this.configFile=configFile;this.onSettings=onSettings;this.running=new Map();this.marketSnapshot=null;this.marketAt=0;this.marketInflight=null;this.verifying=new Set();
+    this.store=store;this.env=env;this.port=port;this.fetchImpl=fetchImpl;this.configFile=configFile;this.onSettings=onSettings;this.running=new Map();this.marketSnapshot=null;this.marketAt=0;this.discoveryAt=0;this.publishAt=0;this.marketInflight=null;this.verifying=new Set();
+    this.marketLedgerPath=path.join(path.dirname(configFile),'market-ledger.json');this.seenContracts=new Set();if(store.kind==='supabase'){try{this.seenContracts=new Set(JSON.parse(fs.readFileSync(this.marketLedgerPath,'utf8')).contracts||[])}catch{}}
     this.lowLoad = env.DIT_JARVIS_SHARED === '1';
     this.maxConcurrent = this.lowLoad ? Math.max(1, Math.min(3, Number(env.DIT_JARVIS_PARALLEL || 3))) : 3;
     const fallback={provider:this.lowLoad?'jarvis':'ollama',url:this.lowLoad?(env.DIT_JARVIS_URL||'http://127.0.0.1:8768'):(env.OLLAMA_URL||'http://127.0.0.1:11434'),models:{GHOST_001:env.DIT_MODEL_GHOST||'',NULL_ENTITY:env.DIT_MODEL_NULL||'','ECHO.exe':env.DIT_MODEL_ECHO||''}};
     let saved={};try{saved=JSON.parse(fs.readFileSync(configFile,'utf8'))}catch{}
     try{this.settings=validateSettings(this.lowLoad?{...fallback,models:{...fallback.models,...(saved.models||{})}}:{...fallback,...saved})}catch{this.settings=validateSettings(fallback)}
   }
-  // The dashboard updates each second from cache. Providers are queried only
-  // once per TTL with one shared in-flight read. No extra market scheduler.
+  // One server-side market pipeline; discovery cached for 20s, tape refreshed
+  // at most once each second. Browsers never contact GMGN themselves.
   async refreshMarket(){
-    if(this.marketSnapshot&&Date.now()-this.marketAt<20_000)return this.marketSnapshot;
+    const now=Date.now();
+    if(this.marketSnapshot&&now-this.marketAt<1000)return this.marketSnapshot;
     if(this.marketInflight)return this.marketInflight;
     this.marketInflight=(async()=>{
+      const full=!this.discoveryAt||now-this.discoveryAt>=20_000;
+      if(full)this.discoveryAt=now;
       try{
-        const current=await collectJarvisMarkets({baseUrl:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',fetchImpl:this.fetchImpl});
-        // Never erase previous observations because a source temporarily returns zero.
-        if(current.signals.length)this.marketSnapshot=current;
-        else if(this.marketSnapshot?.signals?.length)this.marketSnapshot={
-          ...this.marketSnapshot,source_states:current.source_states,stale:true
-        };
-        else this.marketSnapshot=current;
+        const current=await collectJarvisMarkets({
+          baseUrl:this.env.DIT_JARVIS_URL||'http://127.0.0.1:8768',
+          fetchImpl:this.fetchImpl,tapeOnly:!full,enrichPairs:full
+        });
+        const previous=this.marketSnapshot;
+        const source_states={...(previous?.source_states||{}),...(current.source_states||{})};
+        // Cross-refresh union retains discovery imagery and pair creation,
+        // while real tape observations update current volume/transactions.
+        const merged=new Map((previous?.signals||[]).map(x=>[x.address,{...x}]));
+        for(const row of current.signals||[]){
+          const old=merged.get(row.address);
+          if(!old){merged.set(row.address,{...row});continue;}
+          merged.set(row.address,mergeMarketRows(old,row));
+        }
+        const fresh=[...merged.values()].map(row=>({...row,freshness:(row.source_observed_at||row.provider_response_at)?(Date.now()-Date.parse(row.source_observed_at||row.provider_response_at)<=900000?'FRESH':'STALE'):'UNKNOWN'})).sort((a,b)=>Number(!!(b.source_observed_at||b.provider_response_at))-Number(!!(a.source_observed_at||a.provider_response_at))||Date.parse(b.observed_at)-Date.parse(a.observed_at)).slice(0,100);
+        for(const row of current.signals||[])this.seenContracts.add(row.address);
+        const unavailable=Object.values(current.source_states||{}).every(x=>x!=='OK');
+        this.marketSnapshot={...current,signals:fresh,source_states,metrics:{observed_contracts_total:this.seenContracts.size,activity_total:previous?.metrics?.activity_total??null},stale:unavailable||!current.signals.length,new_window_ms:Math.max(60000,Math.min(3600000,Number(this.env.DIT_NEW_PAIR_WINDOW_MS)||300000))};
         this.marketAt=Date.now();
-        if(current.signals.length&&this.store.kind==='supabase'){
-          try{await persistMarketSnapshot(this.store,current)}catch(e){
-            // The local scanner remains usable before the SQL migration is applied.
-            this.lastPublishError='market_snapshot_sync_unavailable';
-          }
+        if(this.marketSnapshot.signals.length&&this.store.kind==='supabase'&&
+          Date.now()-this.publishAt>=20_000){
+          this.publishAt=Date.now();
+          try{try{this.marketSnapshot.metrics.activity_total=await this.store.count?.('activity_events')??this.marketSnapshot.metrics.activity_total}catch{}try{fs.mkdirSync(path.dirname(this.marketLedgerPath),{recursive:true});fs.writeFileSync(this.marketLedgerPath+'.tmp',JSON.stringify({contracts:[...this.seenContracts]}));fs.renameSync(this.marketLedgerPath+'.tmp',this.marketLedgerPath)}catch{};await persistMarketSnapshot(this.store,this.marketSnapshot);this.lastPublishError=null;}
+          catch{this.lastPublishError='market_snapshot_sync_unavailable';}
         }
         return this.marketSnapshot;
       }catch(e){
         this.marketAt=Date.now();
         if(this.marketSnapshot?.signals?.length){
-          this.marketSnapshot={...this.marketSnapshot,stale:true};
+          this.marketSnapshot={...this.marketSnapshot,stale:true,source_error:String(e.message||'market unavailable').slice(0,120)};
           return this.marketSnapshot;
         }
         throw e;
       }
-    })().finally(()=>{this.marketInflight=null});
+    })().finally(()=>{this.marketInflight=null;});
     return this.marketInflight;
   }
   marketStatus(){
-    if(Date.now()-this.marketAt>20_000&&!this.marketInflight)this.refreshMarket().catch(()=>{});
+    if(Date.now()-this.marketAt>1000&&!this.marketInflight)this.refreshMarket().catch(()=>{});
     const snapshot=this.marketSnapshot||{signals:[],source_states:{},research_only:true};
-    const observedAge=Date.now()-Date.parse(snapshot.observed_at||'');
+    const upstream=(snapshot.signals||[]).map(x=>Date.parse(x.source_observed_at||x.provider_response_at||'')).filter(Number.isFinite);
+    const lastUpstream=upstream.length?Math.max(...upstream):NaN;
+    const observedAge=Date.now()-lastUpstream;
     return {...snapshot,stale:!!snapshot.stale||!Number.isFinite(observedAge)||observedAge>180_000,
       refreshing:!!this.marketInflight,last_checked_at:this.marketAt?new Date(this.marketAt).toISOString():null,ui_refresh_ms:1000};
   }

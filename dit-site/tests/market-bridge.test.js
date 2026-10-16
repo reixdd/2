@@ -45,3 +45,73 @@ test('JARVIS cross-check fills missing GMGN 5-minute buy/sell and volume metrics
  assert.equal(row.liquidity_usd,1200);
  assert.equal(row.providers.length,2);
 });
+
+test('JARVIS tape events populate live pair cards with original observation time and five-minute metrics',()=>{
+ const now=Date.UTC(2026,9,15,18,30,0);
+ const data=normalizeMarketResponses({tape:{ok:true,data:{items:[{
+  event_id:'real-event-01',chain:'sol',contract:address,
+  observed_at:(now-2500)/1000,
+  symbol:'TAPE',name:'Tape token',volume_5m:1275,buys_5m:22,sells_5m:8,
+  market_cap:95000,liquidity:11000
+ }]}}},{now});
+ assert.equal(data.signals.length,1);
+ assert.equal(data.signals[0].address,address);
+ assert.equal(data.signals[0].volume_5m_usd,1275);
+ assert.equal(data.signals[0].buys_5m,22);
+ assert.equal(data.signals[0].sells_5m,8);
+ assert.equal(data.signals[0].source_observed_at,new Date(now-2500).toISOString());
+});
+test('normalization does not invent an upstream observation timestamp for undated results',()=>{
+ const now=Date.UTC(2026,9,15,18,30,0);
+ const data=normalizeMarketResponses({trenches:{ok:true,data:{data:{new_creation:[{address,symbol:'UNKNOWN'}]}}}},{now});
+ assert.equal(data.signals[0].source_observed_at,null);
+ assert.equal(data.signals[0].received_at,new Date(now).toISOString());
+});
+test('one fast tape collection does not invoke upstream GMGN discovery routes',async()=>{
+ const called=[],now=Date.UTC(2026,9,15,18,30,0);
+ await collectJarvisMarkets({now,tapeOnly:true,fetchImpl:async url=>{
+   called.push(url);
+   return Response.json({items:[]});
+ }});
+ assert.equal(called.length,1);
+ assert.match(called[0],/\/api\/tape\?limit=/);
+});
+
+test('pair creation and token creation remain distinct and undated pairs cannot be called new',()=>{
+ const now=Date.parse('2026-10-15T20:00:00Z');
+ const pair=(now-50_000)/1000,token=(now-1_000_000)/1000;
+ const out=normalizeMarketResponses({trenches:{ok:true,data:{data:{new_creation:[{
+   address,symbol:'DUAL',pairCreatedAt:pair,creation_timestamp:token,
+   logo:'javascript:invalid',image_url:'https://cdn.example.org/real-image.webp'
+ }]}}}},{now});
+ assert.equal(out.signals.length,1);
+ assert.equal(out.signals[0].pair_created_at,new Date(pair*1000).toISOString());
+ assert.equal(out.signals[0].token_created_at,new Date(token*1000).toISOString());
+ assert.equal(out.signals[0].image_url,'https://cdn.example.org/real-image.webp');
+ const noAge=normalizeMarketResponses({trenches:{ok:true,data:{data:{new_creation:[{address,symbol:'UNDATED'}]}}}},{now});
+ assert.equal(noAge.signals[0].pair_created_at,null);
+});
+test('real image artwork is present for at least 30 of 60 diverse image regression fixtures',()=>{
+ const now=Date.parse('2026-10-15T20:00:00Z'),rows=[];
+ // Independently valid Solana base58 addresses; do not use fabricated market figures.
+ const alphabet='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+ for(let i=0;i<60;i++){
+  const suffix=alphabet[Math.floor(i/58)]+alphabet[i%58];
+  const contract='123456789ABCDEFGHJKLMNPQRSTUVWXYZ'+suffix;
+  rows.push({address:contract,symbol:'ART'+i,
+    logo:i%3===0?'https://cdn.example.org/real-'+i+'.png':i%3===1?'javascript:bad':'',
+    image_url:i%3===1?'https://images.example.org/good-'+i+'.webp':null});
+ }
+ const data=normalizeMarketResponses({tape:{ok:true,data:{items:rows}}},{now});
+ assert.equal(data.signals.length,60,'adapter retains a complete 60-token source fixture for filtering');
+ assert.equal(data.signals.filter(x=>x.image_url?.startsWith('https://')).length,40,'40 test coins include valid working artwork metadata');
+ assert.equal(data.signals.filter(x=>x.image_url===null).length,20,'20 deliberately missing artwork cases remain honest');
+});
+
+test('valid IPFS metadata imagery resolves to a safe public artwork URL after an invalid primary logo',()=>{
+ const cid='Qm'+'a'.repeat(44),now=Date.parse('2026-10-15T20:30:00Z');
+ const row={address,logo:'javascript:bad',metadata:{image:'ipfs://'+cid}};
+ const data=normalizeMarketResponses({trenches:{ok:true,data:{data:{new_creation:[row]}}}},{now});
+ assert.equal(data.signals.length,1);
+ assert.equal(data.signals[0].image_url,'https://ipfs.io/ipfs/'+cid);
+});
