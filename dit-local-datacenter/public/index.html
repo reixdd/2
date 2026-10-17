@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><title>DIT // Local Data Center</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="grid-noise" aria-hidden="true"></div>
+<section id="login-screen" class="login-shell">
+ <div class="login-card">
+  <div class="eyebrow"><span class="signal-dot"></span> LOOPBACK TERMINAL / PRIVATE ACCESS</div>
+  <div class="brand-logo">D<span>/</span>I<span>.</span>T</div>
+  <h1>LOCAL DATA CENTER<span class="blink">_</span></h1>
+  <p>Private research and concept-preparation console. Bound to this computer only. No wallet actions.</p>
+  <form id="login-form" autocomplete="off">
+   <label for="access-code">LOCAL ACCESS CODE</label>
+   <input type="password" id="access-code" required autocomplete="current-password" placeholder="Enter access code">
+   <button type="submit" class="primary">UNLOCK TERMINAL <span>↗</span></button>
+   <p id="login-error" class="error" role="status"></p>
+  </form>
+  <div class="login-foot">127.0.0.1 ONLY <span>•</span> LIVE SOURCES, NO FABRICATED FEED</div>
+ </div>
+</section>
+<div id="workspace" hidden>
+ <header class="topbar">
+  <div class="brand-mark"><span class="logo-pill">D<span>/</span>I<span>.</span>T</span><div><strong>LOCAL DATA CENTER</strong><small>PRIVATE RESEARCH / WINDOWS WORKSTATION</small></div></div>
+  <div class="right-head"><span id="source-status" class="connection"><span class="signal-dot"></span> CONNECTING</span><span id="clock" class="clock">--:--:--</span><button id="logout" class="icon-button">LOCK <span>↗</span></button></div>
+ </header>
+ <main class="main-content">
+  <div class="page-heading"><div><span class="eyebrow">/ OPERATOR INTELLIGENCE // DIT</span><h1>THE OBSERVATION ROOM<span class="cursor">_</span></h1><p>Agent concepts, verified source trails, and Meme Radar signals in one local command center.</p></div><div class="refresh-wrap"><button id="refresh" class="refresh">↻ &nbsp; REFRESH FEEDS</button><span id="updated-at" class="caption">Awaiting source snapshot</span></div></div>
+  <div class="metric-grid">
+   <div class="metric"><span>AGENT CONCEPTS</span><b id="metric-concepts">—</b><small>From live DIT API</small></div>
+   <div class="metric"><span>COMPLETE BRIEFS</span><b id="metric-ready">—</b><small>All required metadata</small></div>
+   <div class="metric"><span>MEME RADAR</span><b id="metric-market">—</b><small>Source-backed observations</small></div>
+   <div class="metric"><span>FEED HEALTH</span><b id="metric-health">WAIT</b><small id="metric-health-sub">Checking endpoints</small></div>
+  </div>
+  <div id="source-warning" class="source-warning" hidden></div>
+  <div class="work-panels">
+   <section class="list-panel">
+    <div class="panel-head"><div class="panel-number">01 / STREAM</div><div class="tabs"><button id="tab-concepts" class="tab active" aria-pressed="true">AGENT CONCEPTS</button><button id="tab-market" class="tab" aria-pressed="false">MEME RADAR</button></div></div>
+    <div class="filters"><label class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="Search name, ticker, agent, source" aria-label="Search records"></label><select id="sort" aria-label="Sort records"><option value="complete">MOST COMPLETE</option><option value="recent">MOST RECENT</option><option value="name">NAME A–Z</option></select></div>
+    <div class="list-heading"><span id="list-title">AGENT-GENERATED IDEAS</span><span id="list-count">0 RECORDS</span></div>
+    <div id="items" class="items" aria-live="polite"><div class="empty">AWAITING LIVE DATA…</div></div>
+   </section>
+   <section class="details-panel"><div class="panel-head"><div class="panel-number">02 / INSPECTOR</div><span class="readonly">RESEARCH & DRAFT PREPARATION</span></div><div id="details" class="details"><div class="detail-empty"><div class="orbit">◉</div><h2>SELECT A SIGNAL</h2><p>Choose an agent concept or market observation to inspect its evidence and metadata.</p></div></div></section>
+  </div>
+  <footer class="footer"><span>DIT / LOCAL DATA CENTER v1.0</span><span>ALL SOURCE DATA LABELED • NO TRADING, SIGNING, OR AUTOMATED DEPLOYMENT</span><span>127.0.0.1</span></footer>
+ </main>
+</div>
+<script type="module" src="/app.js"></script>
+</body></html>
